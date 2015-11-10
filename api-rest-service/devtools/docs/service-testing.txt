@@ -1,0 +1,74 @@
+====
+    (c) Copyright, 2008-2014 Massachusetts Institute of Technology.
+
+        This material may be reproduced by or for the
+        U.S. Government pursuant to the copyright license
+        under the clause at DFARS 252.227-7013 (June, 1995).
+====
+
+#
+# THIS DOCUMENT IS NOW STALE. TestMonkey is now automating this procedure. 
+#
+
+
+# Browser endpoint
+http://localhost:9080/papi-svc/v1/users/1
+
+# Returns a count of the number of User resources in the system 
+curl -X GET "http://localhost:8080/v1/users/"
+
+# Create user James Bond.
+# Assumes the existence of a file called papi-user-add.json with the following body:
+# {"userId":null,"firstName":"James","lastName":"Bond"}
+curl -H "Accept: application/json" -H "Content-type: application/json; charset=UTF-8" -X POST -d @papi-user-add.json "http://localhost:8080/v1/users"
+{"message":"ok","users":{"6":{"selfRef":null,"userId":6,"firstName":"James","lastName":"Bond"}},"count":0}
+
+# Returns the the User with ID 6:
+curl -X GET "http://localhost:8080/v1/users/6"
+
+# List all users. Showing that James Bond has been added.
+C:\temp>curl -X GET "http://phinics-data:8080/v1/users"
+{"message":"ok","users":{"1":{"selfRef":null,"userId":1,"firstName":"Santiago","lastName":"Paredes"},"2":{"selfRef":null,"userId":2,"firstName":"Glenn","lastName":"Primmer"},"3":{"selfRef":null,"userId":3,"firstName":"Amna","lastName":"Grieves"},"4":{"selfRef":null,"userId":4,"firstName":"Max","lastName":"Merfeld"},"5":{"selfRef":null,"u
+
+# Subscribing to the bus
+# Assumes existence of payload file containing: {"TOPICS":"t1+t2","TIMEOUT":"1000","SUBSCRIBERID":"1"}
+curl -H "Accept: application/json" -H "Content-type: application/json; charset=UTF-8" -X POST -d @papi-msgbus-subscribe.json "http://localhost:8080/v1/msgbus"
+
+# Post a messages to the msgbus.
+# The content below must be placed in the papireqbody.json file used below.
+# [{"msgType":"SampleBean","msgPayload":"{\"count\":7,\"msg\":\"Great to see you!!!\"}"}]
+curl -H "Accept: application/json" -H "Content-type: application/json; charset=UTF-8" -X POST -d @papi-msgbus-post.json "http://localhost:8080/v1/msgbus/1"
+
+
+
+
+
+# Update user Paredes to Paredez.  {uid} below refers to ID returned with response from the create call above.
+curl -H "Accept: application/json" -H "Content-type: application/json; charset=UTF-8" -X PUT -d @papi-user-update.json "http://localhost:8080/v1/users/1"
+
+
+
+
+
+# Read user Santiago Paredes.  {uid} below refers to ID returned with response from the create call above.
+curl -X GET "http://localhost:8080/papi-svc/v1/users/1"
+
+# Update user Paredes to Paredez.  {uid} below refers to ID returned with response from the create call above.
+curl -X PUT -d "lastName=Paredez" "http://localhost:8080/v1/users/1"
+
+# Remove user Paredez.  {uid} below refers to ID returned with response from the create call above.
+curl -X DELETE "http://localhost:8080/papi/rs/users/{uid}"
+
+# Subscribe to msgbus.
+curl -X POST "http://localhost:8080/papi/rs/msgbus?subscriberId=12345&topics=t1+t2&timeout=600"
+
+
+
+# Get messages from the msgbus.
+curl -H "Accept: application/json" -H "Content-type: application/json; charset=UTF-8" -X GET "http://localhost:8080/papi/rs/msgbus/12345"
+
+# Unsubscribe from msgbus.
+curl -X DELETE "http://localhost:8080/papi/rs/msgbus/12345
+
+
+curl -H "Content-type: application/json; charset=UTF-8" -X POST -d "firstName=Roberto&lastName=Carlos" "http://localhost:8080/v1/users"
