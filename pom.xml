@@ -46,6 +46,7 @@
 	</modules>
 
 	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<amqclient-version>2.7.1</amqclient-version>
 		<cxf.version>3.0.3</cxf.version>
 		<spring.version>4.1.4.RELEASE</spring.version>
