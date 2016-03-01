@@ -30,6 +30,8 @@
 package edu.mit.ll.em.api.rs.impl;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -37,18 +39,27 @@ import java.util.List;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import edu.mit.ll.em.api.util.APIConfig;
+import edu.mit.ll.nics.common.rabbitmq.RabbitFactory;
+import edu.mit.ll.nics.common.rabbitmq.RabbitPubSubProducer;
+
 import org.codehaus.jackson.map.ObjectMapper;
 import org.springframework.dao.DataAccessException;
 
 import edu.mit.ll.nics.common.entity.CollabRoom;
+import edu.mit.ll.nics.common.entity.Org;
+import edu.mit.ll.nics.common.entity.User;
+import edu.mit.ll.em.api.exception.DuplicateCollabRoomException;
 import edu.mit.ll.em.api.rs.CollabService;
 import edu.mit.ll.em.api.rs.IncidentService;
 import edu.mit.ll.em.api.rs.IncidentServiceResponse;
 import edu.mit.ll.em.api.util.APILogger;
-import edu.mit.ll.em.api.util.rabbitmq.RabbitFactory;
-import edu.mit.ll.em.api.util.rabbitmq.RabbitPubSubProducer;
 import edu.mit.ll.nics.nicsdao.impl.IncidentDAOImpl;
+import edu.mit.ll.nics.nicsdao.impl.OrgDAOImpl;
+import edu.mit.ll.nics.nicsdao.impl.UserDAOImpl;
+import edu.mit.ll.nics.nicsdao.impl.WorkspaceDAOImpl;
 import edu.mit.ll.nics.common.entity.Incident;
+import edu.mit.ll.nics.common.email.JsonEmail;
 
 
 /**
@@ -68,6 +79,15 @@ public class IncidentServiceImpl implements IncidentService {
 	
 	/** The Incident DAO */
 	private static final IncidentDAOImpl incidentDao = new IncidentDAOImpl();
+	
+	/** The Org DAO */
+	private static final OrgDAOImpl orgDao = new OrgDAOImpl();
+	
+	/** The User DAO */
+	private static final UserDAOImpl userDao = new UserDAOImpl();
+	
+	/** The User DAO */
+	private static final WorkspaceDAOImpl workspaceDao = new WorkspaceDAOImpl();
 	
 	private RabbitPubSubProducer rabbitProducer;
 	
@@ -107,6 +127,109 @@ public class IncidentServiceImpl implements IncidentService {
 			incidentResponse.setMessage("Unhandled exception. Unable to read all incidents: " + e.getMessage());			
 			response = Response.ok(incidentResponse).status(Status.INTERNAL_SERVER_ERROR).build();
 		}
+		return response;
+	}
+	
+	/**
+	 * Read and return all Incident items.
+	 * 
+	 * @param workspaceId
+	 * @param accessibleByUserId
+	 * 
+	 * @return Response IncidentResponse containing all Incidents with the specified workspace
+	 * @see IncidentResponse
+	 
+	public Response getIncidentsTree(Integer workspaceId, Integer accessibleByUserId) {
+
+	 * @return Response IncidentResponse containing all Incidents with the specified workspace and there children
+	 * @see IncidentResponse
+	 */
+	
+	public Response getIncidentsTree(Integer workspaceId, Integer accessibleByUserId) {
+		Response response = null;
+		IncidentServiceResponse incidentResponse = new IncidentServiceResponse();
+		List<edu.mit.ll.nics.common.entity.Incident> incidents = null;
+		try {
+			incidents = incidentDao.getIncidentsTree(workspaceId); 
+
+			
+			incidentResponse.setIncidents(incidents);
+			incidentResponse.setCount(incidents.size());
+			incidentResponse.setMessage("ok");
+			response = Response.ok(incidentResponse).status(Status.OK).build();			
+		} catch (DataAccessException e) { //(ICSDatastoreException e) {
+			APILogger.getInstance().e(CNAME, "Data access exception while getting Incidents Tree"
+					+ "in (workspaceid,accessibleByUserId): " + workspaceId + ", " 
+					+ accessibleByUserId + ": " + e.getMessage());
+			incidentResponse.setMessage("Data access failure. Unable to read all incidents in tree: " + e.getMessage());
+			incidentResponse.setCount(incidentResponse.getIncidents().size());
+			response = Response.ok(incidentResponse).status(Status.INTERNAL_SERVER_ERROR).build();			
+		} catch (Exception e) {
+			APILogger.getInstance().e(CNAME, "Unhandled exception while getting Incidents Tree"
+					+ "in (workspaceid,accessibleByUserId): " + workspaceId + ", " 
+					+ accessibleByUserId + ": " + e.getMessage());
+			
+			incidentResponse.setMessage("Unhandled exception. Unable to read all incidents in tree: " + e.getMessage());			
+			response = Response.ok(incidentResponse).status(Status.INTERNAL_SERVER_ERROR).build();
+		}
+		return response;
+	}
+
+	
+	/**
+	 * Updates the incident that was sent
+	 * 
+	 * @param workspaceId
+	 * @param Incident to update
+	 * 
+	 * @return Response IncidentResponse containing the updated incident
+	 * @see IncidentResponse
+	 */
+	public Response updateIncident(Integer workspaceId, Incident incident) {
+		Response response = null;
+		IncidentServiceResponse incidentResponse = new IncidentServiceResponse();
+		Incident updatedIncident = null;
+		
+		
+		if(incidentDao.getIncidentByName(incident.getIncidentname(), workspaceId) != null && 
+				incidentDao.getIncidentByName(incident.getIncidentname(), workspaceId).getIncidentid() != incident.getIncidentid()){
+			incidentResponse.setMessage(DUPLICATE_NAME);
+			return Response.ok(incidentResponse).status(Status.INTERNAL_SERVER_ERROR).build();
+		}
+		
+		try {
+			updatedIncident = incidentDao.updateIncident(workspaceId,incident); 
+			
+			if (updatedIncident != null) {
+				incidentResponse.setCount(1);
+				incidentResponse.setMessage(Status.OK.getReasonPhrase());
+				response = Response.ok(incidentResponse).status(Status.OK).build();
+			}
+			else{
+				incidentResponse.setMessage("Error updating incident");
+				incidentResponse.setCount(0);
+				response = Response.ok(incidentResponse).status(Status.INTERNAL_SERVER_ERROR).build();
+			}
+						
+		} catch (Exception e) {
+			incidentResponse.setMessage("updateIncident failed: " + e.getMessage());
+			APILogger.getInstance().e(CNAME, "Data access exception while updating Incident"
+					+ incident.getIncidentname() +  ": " + e.getMessage());
+			incidentResponse.setMessage("Data access failure. Unable to update incident: " + e.getMessage());
+			incidentResponse.setCount(incidentResponse.getIncidents().size());
+			response = Response.ok(incidentResponse).status(Status.INTERNAL_SERVER_ERROR).build();			
+		}
+		
+		
+		if (Status.OK.getStatusCode() == response.getStatus()) {
+			try {
+				String topic = String.format("iweb.NICS.ws.%s.updateIncident", workspaceId);
+				notifyIncident(updatedIncident, topic);
+			} catch (Exception e) {
+				APILogger.getInstance().e(CNAME,"Failed to publish a update Incident message event");
+			}
+		}
+		
 		return response;
 	}
 
@@ -187,15 +310,20 @@ public class IncidentServiceImpl implements IncidentService {
 	 *  @param incident Incident to be persisted
 	 *  
 	 *  @return Response
+	 * @throws Exception 
+	 * @throws DuplicateCollabRoomException 
+	 * @throws DataAccessException 
 	 *  
 	 *  @see IncidentResponse  
 	 *  
 	 */	
 	
-	public Response postIncident(Integer workspaceId, Incident incident) {
+	public Response postIncident(Integer workspaceId, Integer orgId, Integer userId, Incident incident) 
+			throws DataAccessException, DuplicateCollabRoomException, Exception {
 		
 		IncidentServiceResponse incidentResponse = new IncidentServiceResponse();
 		Response response = null;
+		JsonEmail email = null;
 		
 		if(incidentDao.getIncidentByName(incident.getIncidentname(), workspaceId) != null){
 			incidentResponse.setMessage(DUPLICATE_NAME);
@@ -223,16 +351,50 @@ public class IncidentServiceImpl implements IncidentService {
 		}
 		
 		//Create default rooms
+		CollabRoom incidentMap = createDefaultCollabRoom(newIncident.getUsersessionid(), INCIDENT_MAP);
+		incidentMap.getAdminUsers().add(userId);
+		
 		CollabService collabRoomEndpoint = new CollabServiceImpl();
-		collabRoomEndpoint.postCollabRoom(newIncident.getIncidentid(), createDefaultCollabRoom(
+		/*collabRoomEndpoint.createCollabRoomWithPermissions(newIncident.getIncidentid(),orgId, workspaceId,
+				incidentMap);*/
+		//Do not secure Incident Map Room yet - TODO
+		collabRoomEndpoint.createUnsecureCollabRoom(newIncident.getIncidentid(), createDefaultCollabRoom(
 				newIncident.getUsersessionid(), INCIDENT_MAP));
-		collabRoomEndpoint.postCollabRoom(newIncident.getIncidentid(), createDefaultCollabRoom(
+		
+		collabRoomEndpoint.createUnsecureCollabRoom(newIncident.getIncidentid(), createDefaultCollabRoom(
 				newIncident.getUsersessionid(), WORKING_MAP));
 		
 		if (Status.OK.getStatusCode() == response.getStatus()) {
 			try {
 				String topic = String.format("iweb.NICS.ws.%s.newIncident", workspaceId);
-				notifyNewIncident(newIncident, topic);
+				notifyIncident(newIncident, topic);
+				
+				try {
+					
+					String date = new SimpleDateFormat("EEE MMM d HH:mm:ss z yyyy").format(new Date());
+					String alertTopic = String.format("iweb.nics.email.alert");
+					String hostname = InetAddress.getLocalHost().getHostName();
+					User creator = userDao.getUserBySessionId(newIncident.getUsersessionid());
+					Org org = orgDao.getLoggedInOrg(creator.getUserId());		
+					List<String>  disList = orgDao.getOrgAdmins(org.getOrgId());
+					String toEmails = disList.toString().substring(1, disList.toString().length()-1);
+					String siteName = workspaceDao.getWorkspaceName(workspaceId);
+					
+					if(disList.size() > 0){
+						email = new JsonEmail(creator.getUsername(),toEmails,"Alert from NewIncident@" + hostname);
+						email.setBody(date + "\n\n" + "A new incident has been created: " + newIncident.getIncidentname() + "\n" + 
+										"Creator: " + creator.getUsername() + "\n" + 
+										"Location: " + newIncident.getLat() + "," + newIncident.getLon() + "\n" +
+										"Site: " + siteName);
+						
+						notifyNewIncidentEmail(email.toJsonObject().toString(),alertTopic);
+					}
+					
+				} catch (Exception e) {
+					APILogger.getInstance().e(CNAME,"Failed to send new Incident email alerts");
+				}
+				
+				
 			} catch (Exception e) {
 				APILogger.getInstance().e(CNAME,"Failed to publish a new Incident message event");
 			}
@@ -248,11 +410,18 @@ public class IncidentServiceImpl implements IncidentService {
 		return collabRoom;
 	}
 	
-	private void notifyNewIncident(Incident newIncident, String topic) throws IOException {
+	private void notifyIncident(Incident newIncident, String topic) throws IOException {
 		if (newIncident != null) {
 			ObjectMapper mapper = new ObjectMapper();
 			String message = mapper.writeValueAsString(newIncident);
 			getRabbitProducer().produce(topic, message);
+		}
+	}
+	
+	
+	private void notifyNewIncidentEmail(String email, String topic) throws IOException {
+		if (email != null) {
+			getRabbitProducer().produce(topic, email);
 		}
 	}
 
@@ -551,10 +720,13 @@ public class IncidentServiceImpl implements IncidentService {
 	 */
 	private RabbitPubSubProducer getRabbitProducer() throws IOException {
 		if (rabbitProducer == null) {
-			rabbitProducer = RabbitFactory.makeRabbitPubSubProducer();
+			rabbitProducer = RabbitFactory.makeRabbitPubSubProducer(
+					APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_HOSTNAME_KEY),
+					APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_EXCHANGENAME_KEY),
+					APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_USERNAME_KEY),
+					APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_USERPWD_KEY));
 		}
 		return rabbitProducer;
 	}
-	
 }
 

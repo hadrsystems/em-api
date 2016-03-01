@@ -39,7 +39,7 @@
 	<parent>
 		<artifactId>em-api</artifactId>
 		<groupId>edu.mit.ll.em.api</groupId>
-		<version>6.1</version>
+		<version>6.1.1</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 	<packaging>war</packaging>
@@ -104,6 +104,10 @@
 			<artifactId>messages</artifactId>
 		</dependency>
 		<dependency>
+                	<groupId>edu.mit.ll.nics.common</groupId>
+                	<artifactId>xml-email</artifactId>
+                </dependency>
+		<dependency>
 			<groupId>org.owasp.esapi</groupId>
 			<artifactId>esapi</artifactId>
 		</dependency>
@@ -159,6 +163,16 @@
 		<dependency>
 			<groupId>org.geotools</groupId>
 			<artifactId>gt-wfs</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.geotools.jdbc</groupId>
+			<artifactId>gt-jdbc-postgis</artifactId>
+			<exclusions>
+				<exclusion>
+					<artifactId>postgresql</artifactId>
+					<groupId>postgresql</groupId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.cxf</groupId>

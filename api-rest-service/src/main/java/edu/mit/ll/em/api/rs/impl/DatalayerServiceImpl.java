@@ -33,8 +33,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 import java.io.InputStream;
 import java.math.BigInteger;
 import java.nio.file.Files;
@@ -46,30 +44,34 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
-import javax.ws.rs.PathParam;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import org.apache.commons.io.FileUtils;
+import org.apache.commons.configuration.Configuration;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.cxf.jaxrs.ext.multipart.Attachment;
 import org.apache.cxf.jaxrs.ext.multipart.MultipartBody;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.geotools.data.FileDataStore;
+import org.geotools.data.FileDataStoreFinder;
+import org.geotools.data.simple.SimpleFeatureSource;
+import org.opengis.referencing.FactoryException;
 
+import edu.mit.ll.em.api.dataaccess.ShapefileDAO;
+import edu.mit.ll.em.api.rs.DatalayerDocumentServiceResponse;
 import edu.mit.ll.em.api.rs.DatalayerService;
 import edu.mit.ll.em.api.rs.DatalayerServiceResponse;
-import edu.mit.ll.em.api.rs.DatalayerDocumentServiceResponse;
 import edu.mit.ll.em.api.util.APIConfig;
-import edu.mit.ll.em.api.util.rabbitmq.RabbitFactory;
-import edu.mit.ll.em.api.util.rabbitmq.RabbitPubSubProducer;
-import edu.mit.ll.nics.common.entity.Chat;
-import edu.mit.ll.nics.common.entity.Form;
+import edu.mit.ll.em.api.util.FileUtil;
 import edu.mit.ll.nics.common.entity.User;
 import edu.mit.ll.nics.common.entity.UserOrg;
 import edu.mit.ll.nics.common.entity.datalayer.Datalayer;
@@ -77,18 +79,19 @@ import edu.mit.ll.nics.common.entity.datalayer.Datalayerfolder;
 import edu.mit.ll.nics.common.entity.datalayer.Datalayersource;
 import edu.mit.ll.nics.common.entity.datalayer.Datasource;
 import edu.mit.ll.nics.common.entity.datalayer.Document;
-import edu.mit.ll.nics.common.entity.datalayer.Folder;
 import edu.mit.ll.nics.common.entity.datalayer.Rootfolder;
+import edu.mit.ll.nics.common.geoserver.api.GeoServer;
+import edu.mit.ll.nics.common.rabbitmq.RabbitFactory;
+import edu.mit.ll.nics.common.rabbitmq.RabbitPubSubProducer;
 import edu.mit.ll.nics.nicsdao.DatalayerDAO;
 import edu.mit.ll.nics.nicsdao.DocumentDAO;
 import edu.mit.ll.nics.nicsdao.FolderDAO;
 import edu.mit.ll.nics.nicsdao.UserDAO;
-import edu.mit.ll.nics.nicsdao.UserOrgDAO;
+import edu.mit.ll.nics.nicsdao.impl.DatalayerDAOImpl;
 import edu.mit.ll.nics.nicsdao.impl.DocumentDAOImpl;
 import edu.mit.ll.nics.nicsdao.impl.FolderDAOImpl;
-import edu.mit.ll.nics.nicsdao.impl.DatalayerDAOImpl;
 import edu.mit.ll.nics.nicsdao.impl.UserDAOImpl;
-import edu.mit.ll.nics.nicsdao.impl.UserOrgDAOImpl;
+import edu.mit.ll.nics.nicsdao.impl.UserSessionDAOImpl;
 
 /**
  * 
@@ -104,15 +107,30 @@ public class DatalayerServiceImpl implements DatalayerService {
 	private static final FolderDAO folderDao = new FolderDAOImpl();
 	private static final DocumentDAO documentDao = new DocumentDAOImpl();
 	private static final UserDAO userDao = new UserDAOImpl();
-	private static final UserOrgDAO userOrgDao = new UserOrgDAOImpl();
+	private static final UserSessionDAOImpl usersessionDao = new UserSessionDAOImpl();
+	
+	private static String fileUploadPath;
+	private static String mapserverURL;
+	private static String geoserverWorkspace;
+	private static String geoserverDatastore;
+	private static String webserverURL;
 	
 	private RabbitPubSubProducer rabbitProducer;
 
+	public DatalayerServiceImpl() {
+		Configuration config = APIConfig.getInstance().getConfiguration();
+		fileUploadPath = config.getString(APIConfig.FILE_UPLOAD_PATH, "/opt/data/nics/upload");
+		geoserverWorkspace = config.getString(APIConfig.IMPORT_SHAPEFILE_WORKSPACE, "nics");
+		geoserverDatastore = config.getString(APIConfig.IMPORT_SHAPEFILE_STORE, "shapefiles");
+		mapserverURL = config.getString(APIConfig.EXPORT_MAPSERVER_URL);
+		webserverURL = config.getString(APIConfig.EXPORT_WEBSERVER_URL);
+	}
+	
 	@Override
 	public Response getDatalayers(String folderId) {
 		DatalayerServiceResponse datalayerResponse = new DatalayerServiceResponse();
 		try{
-			datalayerResponse.setDatalayers(datalayerDao.getDatalayerFolders(folderId));
+			datalayerResponse.setDatalayerfolders(datalayerDao.getDatalayerFolders(folderId));
 		}catch(Exception e){
 			logger.error("Failed to retrieve data layers", e);
 			datalayerResponse.setMessage("Failed to retrieve data layers");
@@ -163,7 +181,7 @@ public class DatalayerServiceImpl implements DatalayerService {
 	public Response postDataLayer(int workspaceId, String dataSourceId, Datalayer datalayer) {
 		DatalayerServiceResponse datalayerResponse = new DatalayerServiceResponse();
 		Response response = null;
-		Datalayer newDatalayer = null;
+		Datalayerfolder newDatalayerFolder = null;
 		
 		try{
 			datalayer.setCreated(new Date());
@@ -171,17 +189,15 @@ public class DatalayerServiceImpl implements DatalayerService {
 			datalayer.getDatalayersource().setDatasourceid(dataSourceId);
 			
 			String datalayerId = datalayerDao.insertDataLayer(dataSourceId, datalayer);
-			newDatalayer = datalayerDao.reloadDatalayer(datalayerId);
 
 			//Currently always uploads to Data
 			Rootfolder folder = folderDao.getRootFolder("Data", workspaceId);
-			int nextFolderIndex = folderDao.getNextFolderIndex(folder.getFolderid());
+			int nextFolderIndex = datalayerDao.getNextDatalayerFolderIndex(folder.getFolderid());
 				
 			datalayerDao.insertDataLayerFolder(folder.getFolderid(), datalayerId, nextFolderIndex);
-			Datalayerfolder dlf = datalayerDao.getDatalayerfolder(datalayerId, folder.getFolderid());
-			newDatalayer.setDatalayerfolders(new HashSet<Datalayerfolder>(Arrays.asList(dlf)));
+			newDatalayerFolder = datalayerDao.getDatalayerfolder(datalayerId, folder.getFolderid());
 			
-			datalayerResponse.setDatalayers(Arrays.asList(newDatalayer));
+			datalayerResponse.setDatalayerfolders(Arrays.asList(newDatalayerFolder));
 			datalayerResponse.setMessage("ok");
 			response = Response.ok(datalayerResponse).status(Status.OK).build();
 		}
@@ -193,7 +209,7 @@ public class DatalayerServiceImpl implements DatalayerService {
 		
 		if (Status.OK.getStatusCode() == response.getStatus()) {
 			try {
-				notifyChange(newDatalayer, "Data");
+				notifyChange(newDatalayerFolder, workspaceId);
 			} catch (IOException e) {
 				logger.error("Failed to publish DatalayerService message event", e);
 			}
@@ -202,18 +218,132 @@ public class DatalayerServiceImpl implements DatalayerService {
 		return response;
 	}
 	
-	public Response postDataLayerDocument(int workspaceId, String dataSourceId, int userOrgId, MultipartBody body, String username){
+	public Response postShapeDataLayer(int workspaceId, String displayName, MultipartBody body, String username) {
+		ShapefileDAO geoserverDao = ShapefileDAO.getInstance();
+		GeoServer geoserver = getGeoServer(APIConfig.getInstance().getConfiguration());
+		String dataSourceId = getMapserverDatasourceId();
+		if (dataSourceId == null) {
+			throw new WebApplicationException("Failed to find configured NICS wms datasource");
+		}
+		
+		Attachment aShape = body.getAttachment("shpFile");
+		if (aShape == null) {
+			throw new WebApplicationException("Required attachment 'shpFile' not found");
+		}
+		String shpFilename = aShape.getContentDisposition().getParameter("filename");
+		String batchName = shpFilename.replace(".shp", "").replace(" ", "_");
+		String layerName = batchName.concat(String.valueOf(System.currentTimeMillis()));
+		
+		//write all the uploaded files to the filesystem in a temp directory
+		Path shapesDirectory = Paths.get(fileUploadPath, "shapefiles");
+		Path batchDirectory = null;
+		try {
+			Files.createDirectories(shapesDirectory);
+			
+			batchDirectory = Files.createTempDirectory(shapesDirectory, batchName);
+			List<Attachment> attachments = body.getAllAttachments();
+			for(Attachment attachment : attachments) {
+				String filename = attachment.getContentDisposition().getParameter("filename");
+				String extension = FileUtil.getFileExtension(filename);
+				if (extension != null) {
+					Path path = batchDirectory.resolve(batchName.concat(extension));
+					InputStream is = attachment.getDataHandler().getInputStream();
+					Files.copy(is, path);
+				}
+			}
+			
+			//attempt to read our shapefile and accompanying files
+			Path shpPath = batchDirectory.resolve(batchName.concat(".shp"));
+			FileDataStore store = FileDataStoreFinder.getDataStore(shpPath.toFile());
+			SimpleFeatureSource featureSource = store.getFeatureSource();
+			
+			//attempt to insert our features into their own table
+			geoserverDao.insertFeatures(layerName, featureSource);
+		} catch (IOException | FactoryException e) {
+			try {
+				geoserverDao.removeFeaturesTable(layerName);
+			} catch (IOException ioe) { /* bury */}
+			throw new WebApplicationException("Failed to import shapefile", e);
+		} finally {
+			//always clean up our temp directory
+			if (batchDirectory != null) {
+				try {
+					FileUtil.deleteRecursively(batchDirectory);
+				} catch (IOException e) {
+					logger.error("Failed to cleanup shapefile batch directory", e);
+				}
+			}
+		}
+		
+		//add postgis layer to map server
+		if(!geoserver.addFeatureType(geoserverWorkspace, geoserverDatastore, layerName, "EPSG:3857")){
+			try {
+				geoserverDao.removeFeaturesTable(layerName);
+			} catch (IOException e) { /* bury */}
+			throw new WebApplicationException("Failed to create features " + layerName);
+		}
+		
+		//apply styling default or custom sld
+		String defaultStyleName = "defaultShapefileStyle";
+		Attachment aSld = body.getAttachment("sldFile");
+		if (aSld != null) {
+			String sldXml = aSld.getObject(String.class);
+			if (geoserver.addStyle(layerName, sldXml) ) {
+				defaultStyleName = layerName;
+			}
+		}
+		geoserver.updateLayerStyle(layerName, defaultStyleName);
+		geoserver.updateLayerEnabled(layerName, true);
+
+		//create datalayer and datalayersource for our new layer 
+		int usersessionid = usersessionDao.getUserSessionid(username);
+		
+		Datalayer datalayer = new Datalayer(); 
+		datalayer.setCreated(new Date());
+		datalayer.setBaselayer(false);
+		datalayer.setDisplayname(displayName);
+		datalayer.setUsersessionid(usersessionid);
+		
+		Datalayersource dlsource = new Datalayersource();
+		dlsource.setLayername(layerName);
+		dlsource.setCreated(new Date());
+		dlsource.setDatasourceid(dataSourceId);
+		datalayer.setDatalayersource(dlsource);
+		
+		String datalayerId = datalayerDao.insertDataLayer(dataSourceId, datalayer);
+		Rootfolder folder = folderDao.getRootFolder("Data", workspaceId);
+		int nextFolderIndex = datalayerDao.getNextDatalayerFolderIndex(folder.getFolderid());
+		datalayerDao.insertDataLayerFolder(folder.getFolderid(), datalayerId, nextFolderIndex);
+
+		//retrieve the new datalayerfolder to return to the client and broadcast
+		Datalayerfolder newDatalayerFolder = datalayerDao.getDatalayerfolder(datalayerId, folder.getFolderid());
+		
+		try {
+			notifyChange(newDatalayerFolder, workspaceId);
+		} catch (IOException e) {
+			logger.error("Failed to publish DatalayerService message event", e);
+		}
+		
+		DatalayerDocumentServiceResponse datalayerResponse = new DatalayerDocumentServiceResponse();
+		datalayerResponse.setSuccess(true);
+		datalayerResponse.setCount(1);
+		datalayerResponse.setDatalayerfolders(Arrays.asList(newDatalayerFolder));
+		return Response.ok(datalayerResponse).status(Status.OK).build();
+	}
+	
+	public Response postDataLayerDocument(int workspaceId, String fileExt, int userOrgId, MultipartBody body, String username){
 		
 		DatalayerDocumentServiceResponse datalayerResponse = new DatalayerDocumentServiceResponse();
 		Response response = null;
-		Datalayer newDatalayer = null;
+		Datalayerfolder newDatalayerFolder = null;
 		Datalayer datalayer = new Datalayer();
+		datalayer.setDatalayersource(new Datalayersource());
+		String dataSourceId = null;
 		Document doc = null;
 		ZipInputStream zipStream;
 		ZipEntry entry;
 		Boolean uploadedDataLayer = false;
-		String kmlFileName = null;
-		datalayer.setDatalayersource(new Datalayersource());
+		String fileName = null;
 		String filePath = null;
 		Boolean valid = false;
 		User user = null;
@@ -222,7 +352,7 @@ public class DatalayerServiceImpl implements DatalayerService {
 			
 			user = userDao.getUser(username);
 			Set<UserOrg> userOrgs = user.getUserorgs();
-			Iterator iter = userOrgs.iterator();
+			Iterator<UserOrg> iter = userOrgs.iterator();
 			
 			while(iter.hasNext()){
 				
@@ -258,9 +388,13 @@ public class DatalayerServiceImpl implements DatalayerService {
 				}
 				else{
 					
-					if(attachment.getContentDisposition().getParameter("filename").endsWith("kmz")){
+					if(attachment.getContentDisposition().getParameter("filename").endsWith(".kmz")){
 						filePath = APIConfig.getInstance().getConfiguration().getString(APIConfig.KMZ_UPLOAD_PATH,"/opt/data/nics/upload/kmz");
-					}else if(attachment.getContentDisposition().getParameter("filename").endsWith("kml")){
+					}else if(attachment.getContentDisposition().getParameter("filename").endsWith(".gpx")){
+						filePath = APIConfig.getInstance().getConfiguration().getString(APIConfig.GPX_UPLOAD_PATH,"/opt/data/nics/upload/gpx");
+					}else if(attachment.getContentDisposition().getParameter("filename").endsWith(".json")){
+						filePath = APIConfig.getInstance().getConfiguration().getString(APIConfig.JSON_UPLOAD_PATH,"/opt/data/nics/upload/geojson");
+					}else if(attachment.getContentDisposition().getParameter("filename").endsWith(".kml")){
 						filePath = APIConfig.getInstance().getConfiguration().getString(APIConfig.KML_UPLOAD_PATH,"/opt/data/nics/upload/kml");
 					}
 					
@@ -274,10 +408,16 @@ public class DatalayerServiceImpl implements DatalayerService {
 				
 				doc.setUsersessionid(datalayer.getUsersessionid());
 				doc = documentDao.addDocument(doc);
-
-				datalayer.setCreated(new Date());
-				datalayer.getDatalayersource().setCreated(new Date());
-				datalayer.getDatalayersource().setDatasourceid(dataSourceId);
+				
+				dataSourceId = getFileDatasourceId(fileExt);
+				
+				if(uploadedDataLayer = (dataSourceId != null)){
+				
+					datalayer.setCreated(new Date());
+					datalayer.getDatalayersource().setCreated(new Date());
+					datalayer.getDatalayersource().setDatasourceid(dataSourceId);
+				
+				}
 				
 				uploadedDataLayer = doc.getFilename().endsWith(".kmz");
 				
@@ -296,7 +436,7 @@ public class DatalayerServiceImpl implements DatalayerService {
 				            try
 				            {
 				            	if(entry.getName().endsWith(".kml")){
-				            		kmlFileName = entry.getName();
+				            		fileName = entry.getName();
 				            	}
 				            	
 				            	if(entry.getName().contains("/")){
@@ -332,29 +472,31 @@ public class DatalayerServiceImpl implements DatalayerService {
 						uploadedDataLayer = false;
 			        }
 				
-				}else {
-					uploadedDataLayer = doc.getFilename().endsWith(".kml");
-					kmlFileName = doc.getFilename();
+				}
+				else if(uploadedDataLayer = doc.getFilename().endsWith(".gpx")){
+					fileName = doc.getFilename();
+				}
+				else if(uploadedDataLayer = doc.getFilename().endsWith(".json")){
+					fileName = doc.getFilename();
+				}
+				else if(uploadedDataLayer = doc.getFilename().endsWith(".kml")){
+					fileName = doc.getFilename();
 				}
 				
 			}
 			
 			if(uploadedDataLayer){
+				datalayer.getDatalayersource().setLayername(fileName);
 				
-				datalayer.getDatalayersource().setLayername(kmlFileName);
-			
 				String datalayerId = datalayerDao.insertDataLayer(dataSourceId, datalayer);
-				newDatalayer = datalayerDao.reloadDatalayer(datalayerId);
 				
 				Rootfolder folder = folderDao.getRootFolder("Data", workspaceId);
-				int nextFolderIndex = folderDao.getNextFolderIndex(folder.getFolderid());
+				int nextFolderIndex = datalayerDao.getNextDatalayerFolderIndex(folder.getFolderid());
 					
 				datalayerDao.insertDataLayerFolder(folder.getFolderid(), datalayerId, nextFolderIndex);
-				Datalayerfolder dlf = datalayerDao.getDatalayerfolder(datalayerId, folder.getFolderid());
-				
-				newDatalayer.setDatalayerfolders(new HashSet<Datalayerfolder>(Arrays.asList(dlf)));
+				newDatalayerFolder = datalayerDao.getDatalayerfolder(datalayerId, folder.getFolderid());
 
-				datalayerResponse.setDatalayers(Arrays.asList(newDatalayer));
+				datalayerResponse.setDatalayerfolders(Arrays.asList(newDatalayerFolder));
 				datalayerResponse.setMessage("ok");
 				datalayerResponse.setSuccess(true);
 				response = Response.ok(datalayerResponse).status(Status.OK).build();
@@ -375,7 +517,7 @@ public class DatalayerServiceImpl implements DatalayerService {
 		
 		if (Status.OK.getStatusCode() == response.getStatus()) {
 			try {
-				notifyChange(newDatalayer, "Data");
+				notifyChange(newDatalayerFolder, workspaceId);
 			} catch (IOException e) {
 				logger.error("Failed to publish DatalayerService message event", e);
 			}
@@ -432,6 +574,65 @@ public class DatalayerServiceImpl implements DatalayerService {
 		return doc;
 	}
 	
+	
+	private String getMapserverDatasourceId() {
+		if(mapserverURL == null) {
+			return null;
+		}
+		String wmsMapserverURL = mapserverURL.concat("/wms");
+		
+		String datasourceId = datalayerDao.getDatasourceId(wmsMapserverURL);
+		if (datasourceId == null) {
+			int datasourcetypeid = datalayerDao.getDatasourceTypeId("wms");
+			if (datasourcetypeid != -1) {
+				Datasource ds = new Datasource();
+				ds.setInternalurl(wmsMapserverURL);
+				ds.setDatasourcetypeid(datasourcetypeid);
+				ds.setDisplayname("NICS WMS Server");
+				datasourceId = datalayerDao.insertDataSource(ds);
+			}
+		}
+		return datasourceId;
+	}
+	
+	private String getFileDatasourceId(String fileExt) {
+		if(webserverURL == null) {
+			return null;
+		}
+		String webServerURL = webserverURL.concat("/" + fileExt + "/");
+		
+		String datasourceId = datalayerDao.getDatasourceId(webServerURL);
+		if (datasourceId == null) {
+			int datasourcetypeid = datalayerDao.getDatasourceTypeId(fileExt);
+			if (datasourcetypeid != -1) {
+				Datasource ds = new Datasource();
+				ds.setInternalurl(webServerURL);
+				ds.setDatasourcetypeid(datasourcetypeid);
+				datasourceId = datalayerDao.insertDataSource(ds);
+			}
+		}
+		return datasourceId;
+	}
+	
+	private GeoServer getGeoServer(Configuration config) {
+		String geoserverUrl = config.getString(APIConfig.EXPORT_MAPSERVER_URL);
+		if (geoserverUrl == null) {
+			logger.error("API configuration error " + APIConfig.EXPORT_MAPSERVER_URL);
+		}
+		
+		String geoserverUsername = config.getString(APIConfig.EXPORT_MAPSERVER_USERNAME);
+		if (geoserverUsername == null) {
+			logger.error("API configuration error " + APIConfig.EXPORT_MAPSERVER_USERNAME);
+		}
+		
+		String geoserverPassword = config.getString(APIConfig.EXPORT_MAPSERVER_PASSWORD);
+		if (geoserverPassword == null) {
+			logger.error("API configuration error " + APIConfig.EXPORT_MAPSERVER_PASSWORD);
+		}
+		
+		return new GeoServer(geoserverUrl.concat(APIConfig.EXPORT_REST_URL), geoserverUsername, geoserverPassword);
+	}
+	
 	private String getFileExtension(Attachment attachment) {
 		String filename = attachment.getContentDisposition().getParameter("filename");
 		
@@ -442,18 +643,22 @@ public class DatalayerServiceImpl implements DatalayerService {
 		return null;
 	}
 	
-	private void notifyChange(Datalayer datalayer, String rootName) throws IOException {
-		if (datalayer != null) {
-			String topic = String.format("iweb.nics.data.newdatalayer.%s", rootName);
+	private void notifyChange(Datalayerfolder datalayerfolder, int workspaceId) throws IOException {
+		if (datalayerfolder != null) {
+			String topic = String.format("iweb.NICS.%s.datalayer.new", workspaceId);
 			ObjectMapper mapper = new ObjectMapper();
-			String message = mapper.writeValueAsString(datalayer);
+			String message = mapper.writeValueAsString(datalayerfolder);
 			getRabbitProducer().produce(topic, message);
 		}
 	}
 	
 	private RabbitPubSubProducer getRabbitProducer() throws IOException {
 		if (rabbitProducer == null) {
-			rabbitProducer = RabbitFactory.makeRabbitPubSubProducer();
+			rabbitProducer = RabbitFactory.makeRabbitPubSubProducer(
+					APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_HOSTNAME_KEY),
+					APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_EXCHANGENAME_KEY),
+					APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_USERNAME_KEY),
+					APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_USERPWD_KEY));
 		}
 		return rabbitProducer;
 	}

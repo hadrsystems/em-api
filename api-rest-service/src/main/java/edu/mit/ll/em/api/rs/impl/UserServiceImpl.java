@@ -30,38 +30,33 @@
 package edu.mit.ll.em.api.rs.impl;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.security.MessageDigest;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.HashSet;
-
-import javax.ws.rs.PathParam;
-import javax.ws.rs.core.Cookie;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+
+import edu.mit.ll.nics.common.rabbitmq.RabbitFactory;
+import edu.mit.ll.nics.common.rabbitmq.RabbitPubSubProducer;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.StringUtils;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.dao.DataAccessException;
 
-import edu.mit.ll.em.api.dataaccess.ICSDatastoreException;
-import edu.mit.ll.em.api.dataaccess.IncidentDAO;
 import edu.mit.ll.em.api.dataaccess.MessageBusProducer;
-import edu.mit.ll.em.api.dataaccess.OrgDAO;
-import edu.mit.ll.em.api.dataaccess.SystemRoleDAO;
-import edu.mit.ll.em.api.dataaccess.UserDAO;
-import edu.mit.ll.em.api.dataaccess.UserOrgDAO;
 import edu.mit.ll.em.api.rs.FieldMapResponse;
+import edu.mit.ll.em.api.rs.NewUserOrgResponse;
 import edu.mit.ll.em.api.rs.RegisterUser;
 import edu.mit.ll.em.api.rs.UserOrgResponse;
 import edu.mit.ll.em.api.rs.UserProfileResponse;
@@ -73,9 +68,6 @@ import edu.mit.ll.em.api.util.APILogger;
 import edu.mit.ll.em.api.util.NetUtil;
 import edu.mit.ll.em.api.util.SADisplayConstants;
 import edu.mit.ll.em.api.util.UserInfoValidator;
-import edu.mit.ll.em.api.util.rabbitmq.RabbitFactory;
-import edu.mit.ll.em.api.util.rabbitmq.RabbitPubSubProducer;
-import edu.mit.ll.nics.common.entity.Chat;
 import edu.mit.ll.nics.common.entity.CurrentUserSession;
 //import edu.mit.ll.em.api.rs.User;
 import edu.mit.ll.nics.common.entity.User;
@@ -87,7 +79,6 @@ import edu.mit.ll.nics.common.entity.SADisplayMessageEntity;
 import edu.mit.ll.nics.common.entity.UserOrg;
 import edu.mit.ll.nics.common.entity.UserOrgWorkspace;
 import edu.mit.ll.nics.common.messages.sadisplay.SADisplayMessage;
-import edu.mit.ll.nics.nicsdao.UserSessionDAO;
 import edu.mit.ll.nics.nicsdao.impl.IncidentDAOImpl;
 import edu.mit.ll.nics.nicsdao.impl.OrgDAOImpl;
 import edu.mit.ll.nics.nicsdao.impl.SystemRoleDAOImpl;
@@ -96,7 +87,7 @@ import edu.mit.ll.nics.nicsdao.impl.UserOrgDAOImpl;
 import edu.mit.ll.nics.nicsdao.impl.UserSessionDAOImpl;
 import edu.mit.ll.nics.nicsdao.impl.WorkspaceDAOImpl;
 import edu.mit.ll.nics.sso.util.SSOUtil;
-import edu.mit.ll.soa.sso.exception.InitializationException;
+import edu.mit.ll.nics.common.email.JsonEmail;
 
 /**
  * 
@@ -104,6 +95,9 @@ import edu.mit.ll.soa.sso.exception.InitializationException;
  *
  */
 public class UserServiceImpl implements UserService {
+	
+	/** CNAME - the name of this class for referencing in loggers */
+	private static final String CNAME = UserServiceImpl.class.getName();
 	
 	private static String FAILURE = "An error occurred while registering your account.";
 	private static String FAILURE_NAMES = "A first and last name is required.";
@@ -116,14 +110,15 @@ public class UserServiceImpl implements UserService {
 	private static String FAILURE_EMAIL = "An email address is required.";
 	private static String FAILURE_OTHER_EMAIL = "The 'Other Email' is invalid";
 	private static String SUCCESS = "success";
+	private static String SAFECHARS = "Valid input includes letters, numbers, spaces, and these special "
+			+ "characters: , _ # ! . -";
 	
 	private static final APILogger log = APILogger.getInstance();
-	
-	private UserProfileResponse UserProfileResponse;
 	
 	private final UserDAOImpl userDao = new UserDAOImpl();
 	private final UserOrgDAOImpl userOrgDao = new UserOrgDAOImpl();
 	private final UserSessionDAOImpl userSessDao = new UserSessionDAOImpl();
+	private final OrgDAOImpl orgDao = new OrgDAOImpl();
 	
 	private RabbitPubSubProducer rabbitProducer;
 
@@ -220,7 +215,7 @@ public class UserServiceImpl implements UserService {
 		Response response = null;
 		UserResponse userResponse = new UserResponse();
 		int userId = userDao.isEnabled(username);
-		if(userId != -1 && userOrgDao.hasEnabledOrgs(userId, workspaceId)){
+		if(userId != -1 && userOrgDao.hasEnabledOrgs(userId, workspaceId) > 0){
 			userResponse.setCount(1);
 			userResponse.setMessage(Status.OK.getReasonPhrase());
 			response = Response.ok(userResponse).status(Status.OK).build();
@@ -258,7 +253,35 @@ public class UserServiceImpl implements UserService {
 		
 		return makeUnsupportedOpRequestResponse();
 	}
-
+	
+	public Response addUserToOrg(Collection<Integer> userIds, int orgId, int workspaceId){
+		NewUserOrgResponse userResponse = new NewUserOrgResponse();
+		List<Integer> users = new ArrayList<Integer>();
+		List<Integer> failedUsers = new ArrayList<Integer>();
+		try{
+			for(Integer userId : userIds){
+				if(userOrgDao.getUserOrgById(orgId, userId, workspaceId) == null){
+					UserOrg userorg = createUserOrg(orgId, userId, null);
+	
+					List<UserOrgWorkspace> userOrgWorkspaces = new ArrayList<UserOrgWorkspace>();
+					userOrgWorkspaces.addAll(createUserOrgWorkspaceEntities(userorg, true));
+					
+					if(userDao.addUserToOrg((new Integer(userId)).longValue(), Arrays.asList(userorg), userOrgWorkspaces)){
+						users.add(userId);
+					}else{
+						failedUsers.add(userId);
+					}
+				}else{
+					failedUsers.add(userId);
+				}
+			}
+			userResponse.setFailedUsers(failedUsers);
+			userResponse.setUsers(users);
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		return Response.ok(userResponse).status(Status.OK).build();
+	}
 	
 	/**
 	 * Creation of a single User item.
@@ -492,6 +515,32 @@ public class UserServiceImpl implements UserService {
 					
 					if(!login || !created) {
 						successMessage += " (but not identity: " + statusMessage + "): ";
+					}else if(login && created){
+						
+						try {
+							String fromEmail = APIConfig.getInstance().getConfiguration().getString(APIConfig.NEW_USER_ALERT_EMAIL);
+							String date = new SimpleDateFormat("EEE MMM d HH:mm:ss z yyyy").format(new Date());
+							String alertTopic = String.format("iweb.nics.email.alert");
+							String hostname = InetAddress.getLocalHost().getHostName();
+							List<String>  disList = orgDao.getOrgAdmins(org.getOrgId());
+							String toEmails = disList.toString().substring(1, disList.toString().length()-1);
+							
+							if(disList.size() > 0 && !fromEmail.isEmpty()){
+								JsonEmail email = new JsonEmail(fromEmail,toEmails,
+										"Alert from RegisterAccount@" + hostname);
+								email.setBody(date + "\n\n" + "A new user has registered: " + user.getUsername() + "\n" + 
+												"Name: " + user.getFirstname() + " " + user.getLastname() + "\n" + 
+												"Organization: " + org.getName() + "\n" +
+												"Email: " + user.getUsername() + "\n" + 
+												"Other Information: " + registerUser.getOtherInfo());
+								
+								notifyNewUserEmail(email.toJsonObject().toString(),alertTopic);
+							}
+							
+						} catch (Exception e) {
+							APILogger.getInstance().e(CNAME,"Failed to send new User email alerts");
+						}
+						
 					}
 					
 				} catch(DataAccessException e) { //catch(ICSDatastoreException e) {
@@ -694,6 +743,9 @@ public class UserServiceImpl implements UserService {
 		return contact;
 	}
 	
+	public Response getSystemRoles(){
+		return Response.ok(userOrgDao.getSystemRoles()).status(Status.OK).build();
+	}
 	
 	/**
 	 *  Read a single User item.
@@ -738,6 +790,34 @@ public class UserServiceImpl implements UserService {
 		response = Response.ok(userResponse).status(Status.OK).build();
 
 		return response;
+	}
+	
+	public Response findUser(String firstName, String lastName, boolean exact){
+		Response response = null;
+		UserResponse userResponse = new UserResponse();
+		List<User> foundUsers = null;
+		
+		if(firstName != null){
+			if(lastName != null){
+				foundUsers = userDao.findUser(firstName, lastName, exact);
+			}else{
+				foundUsers = userDao.findUserByFirstName(firstName, exact);
+			}
+		}else if(lastName != null){
+			foundUsers = userDao.findUserByLastName(lastName, exact);
+		}
+		
+		if(foundUsers != null){
+			userResponse.setUsers(foundUsers);
+			userResponse.setCount(foundUsers.size());
+			userResponse.setMessage(Status.OK.toString());
+			response = Response.ok(userResponse).status(Status.OK).build();
+		}else{
+			userResponse.setMessage("No users found") ;
+			response = Response.ok(userResponse).status(Status.NOT_FOUND).build();	
+		}
+
+		return response;	
 	}
 
 	
@@ -831,24 +911,59 @@ public class UserServiceImpl implements UserService {
 	public Response setUserEnabled(int userOrgWorkspaceId, int userId, 
 			int workspaceId, boolean enabled, String requestingUser){
 		Response response = null;
-		User responseUser = new User();
 		UserResponse userResponse = new UserResponse();
 		
 		int systemRoleId = userOrgDao.getSystemRoleId(requestingUser, userOrgWorkspaceId);
-		if(systemRoleId == SADisplayConstants.ADMIN_ROLE_ID ||
-				systemRoleId == SADisplayConstants.SUPER_ROLE_ID){
+		
+		//TO DO: Check to see if user is admin in org or super admin in ANY org
+		if((systemRoleId == SADisplayConstants.ADMIN_ROLE_ID ||
+				systemRoleId == SADisplayConstants.SUPER_ROLE_ID) ||
+				userOrgDao.isUserRole(requestingUser, SADisplayConstants.SUPER_ROLE_ID)){
 			
 			int count = userOrgDao.setUserOrgEnabled(userOrgWorkspaceId, enabled);
 			
-			responseUser.setUserId(userId);
 			if(count == 1){
-				if(!enabled && !userOrgDao.hasEnabledOrgs(userId, workspaceId)){
+				userResponse.setOrgCount(userOrgDao.hasEnabledOrgs(userId, workspaceId));
+				if(!enabled && userResponse.getOrgCount() == 0){
 					userDao.setUserEnabled(userId, false);
-					responseUser.setEnabled(false);
 				}else if(enabled){
 					userDao.setUserEnabled(userId, true);
-					responseUser.setEnabled(true);
+				/*	
+					try {
+						
+						String date = new SimpleDateFormat("EEE MMM d HH:mm:ss z yyyy").format(new Date());
+						String alertTopic = String.format("iweb.nics.email.alert");
+						String hostname = InetAddress.getLocalHost().getHostName();
+						User newUser = userDao.getUserById(userId);
+						UserOrg userOrg = userOrgDao.getUserOrg(userOrgWorkspaceId);
+						Org org = orgDao.getOrganization(userOrg.getOrgid());
+						List<String>  disList = orgDao.getOrgAdmins(org.getOrgId());
+					
+						System.out.println("DUALERT");
+						System.out.println(disList.toString().substring(1, disList.toString().length()-1));
+						System.out.println(org.getName());
+						System.out.println(disList.size());
+						System.out.println(requestingUser);
+						System.out.println("DUALERT");
+						
+						if(disList.size() > 0){
+							email = new JsonEmail(requestingUser,disList.toString().substring(1, disList.toString().length()-1),
+									"Alert from RegisterAccount@" + hostname);
+							email.setBody(date + "\n\n" + "A new user has registered: " + newUser.getUsername() + "\n" + 
+											"Name: " + newUser.getFirstname() + " " + newUser.getLastname() + "\n" + 
+											"Organization: " + org.getName() + "\n" +
+											"Email: " + newUser.getUsername() + "\n" + 
+											"Other Information: ");
+							
+							notifyNewUserEmail(email.toJsonObject().toString(),alertTopic);
+						}
+						
+					} catch (Exception e) {
+						APILogger.getInstance().e(CNAME,"Failed to send new User email alerts");
+					}*/
+					
 				}
+				User responseUser = userDao.getUserById(userId);
 				userResponse.setUsers(Arrays.asList(responseUser));
 			}
 			userResponse.setMessage(Status.OK.getReasonPhrase());
@@ -901,19 +1016,28 @@ public class UserServiceImpl implements UserService {
 	}
 	
 	public Response getUserProfile(String username, int userOrgId, 
-			int workspaceId, String orgName, String requestingUser){
+			int workspaceId, int orgId, int rUserOrgId, String requestingUser){
 		Response response = null;
 		UserProfileResponse profileResponse = new UserProfileResponse();
 		
 		if(!username.equalsIgnoreCase(requestingUser)){
-			return Response.status(Status.BAD_REQUEST).entity(
+			
+			//User is not requesting their own profile
+			int requestingUserRole = userOrgDao.getSystemRoleIdForUserOrg(requestingUser, rUserOrgId);
+			
+			//Verify the request user is an admin for the organization or a super user for any other organization
+			if(requestingUserRole != SADisplayConstants.ADMIN_ROLE_ID &&
+					!userOrgDao.isUserRole(requestingUser, SADisplayConstants.SUPER_ROLE_ID)){
+			
+				return Response.status(Status.BAD_REQUEST).entity(
 					Status.FORBIDDEN.getReasonPhrase()).build();
+			}
 		}
 		
 		try{
 			
 			OrgDAOImpl orgDao = new OrgDAOImpl();
-			Org org = orgDao.getOrganization(orgName); 
+			Org org = orgDao.getOrganization(orgId); 
 			edu.mit.ll.nics.common.entity.User user = userDao.getUser(username);
 			
 			UserOrg userOrg = userOrgDao.getUserOrgById(org.getOrgId(), user.getUserId(), workspaceId);
@@ -923,7 +1047,7 @@ public class UserServiceImpl implements UserService {
 			profileResponse.setIncidentTypes(incidentDao.getIncidentTypes());
 			profileResponse.setUserOrgId(userOrgId);
 			profileResponse.setUsername(username);
-			profileResponse.setOrgName(orgName);
+			profileResponse.setOrgName(org.getName());
 			profileResponse.setOrgId(org.getOrgId());
 			profileResponse.setOrgPrefix(org.getPrefix());
 			profileResponse.setWorkspaceId(workspaceId);
@@ -934,6 +1058,8 @@ public class UserServiceImpl implements UserService {
 			profileResponse.setDescription(userOrg.getDescription());
 			profileResponse.setJobTitle(userOrg.getJobTitle());
 			profileResponse.setSysRoleId(userOrg.getSystemroleid());
+			profileResponse.setIsSuperUser(userOrgDao.isUserRole(username, SADisplayConstants.SUPER_ROLE_ID));
+			profileResponse.setIsAdminUser(userOrgDao.isUserRole(username, SADisplayConstants.ADMIN_ROLE_ID));
 			profileResponse.setMessage("ok");
 			
 			response = Response.ok(profileResponse).status(Status.OK).build();
@@ -950,17 +1076,25 @@ public class UserServiceImpl implements UserService {
 		return response;
 	}
 	
-	public Response postUserProfile(edu.mit.ll.em.api.rs.User user, String requestingUser){
+	public Response postUserProfile(edu.mit.ll.em.api.rs.User user, String requestingUser, int rUserOrgId){
 		
 		Response response = null;
 		UserProfileResponse profileResponse = new UserProfileResponse();
 		SSOUtil ssoUtil = null;
 		String propPath = APIConfig.getInstance().getConfiguration().getString("ssoToolsPropertyPath", null);
 		
-		//Only the user can update his/her profile - for now
-		if(!userDao.getAllUserInfoById(user.getUserId()).getUsername().equalsIgnoreCase(requestingUser)){
-			return Response.status(Status.BAD_REQUEST).entity(
+		if(!user.getUserName().equalsIgnoreCase(requestingUser)){
+			
+			//User is not requesting their own profile
+			int requestingUserRole = userOrgDao.getSystemRoleIdForUserOrg(requestingUser, rUserOrgId);
+			if( (requestingUserRole != SADisplayConstants.SUPER_ROLE_ID &&
+				requestingUserRole != SADisplayConstants.ADMIN_ROLE_ID) &&
+				//Verify the request user is a super user for any other organization
+				!userOrgDao.isUserRole(requestingUser,SADisplayConstants.SUPER_ROLE_ID)){
+			
+				return Response.status(Status.BAD_REQUEST).entity(
 					Status.FORBIDDEN.getReasonPhrase()).build();
+			}
 		}
 		
 		try{
@@ -1004,7 +1138,7 @@ public class UserServiceImpl implements UserService {
 						if(updatedProfile){
 							
 							userDao.updateNames(user.getUserId(),user.getFirstName(),user.getLastName());
-							userOrgDao.updateUserOrg(user.getUserOrgId(),user.getJobTitle(),user.getRank(),user.getJobDesc());
+							userOrgDao.updateUserOrg(user.getUserOrgId(),user.getJobTitle(),user.getRank(),user.getJobDesc(), user.getSysRoleId());
 						
 							dbUser = userDao.getAllUserInfoById(user.getUserId());
 							userOrg = userOrgDao.getUserOrg(user.getUserOrgId());
@@ -1027,7 +1161,7 @@ public class UserServiceImpl implements UserService {
 				updatedProfile = true;
 				
 				userDao.updateNames(user.getUserId(),user.getFirstName(),user.getLastName());
-				userOrgDao.updateUserOrg(user.getUserOrgId(),user.getJobTitle(),user.getRank(),user.getJobDesc());
+				userOrgDao.updateUserOrg(user.getUserOrgId(),user.getJobTitle(),user.getRank(),user.getJobDesc(), user.getSysRoleId());
 				
 				dbUser = userDao.getAllUserInfoById(user.getUserId());
 				userOrg = userOrgDao.getUserOrg(user.getUserOrgId());
@@ -1052,7 +1186,7 @@ public class UserServiceImpl implements UserService {
 					profileResponse.setMessage("Incorrect password");
 				}
 				else{
-					profileResponse.setMessage("Failed to update user profile");
+					profileResponse.setMessage("Error updating user profile");
 				}
 				response = Response.ok(profileResponse).status(Status.INTERNAL_SERVER_ERROR).build();
 			}
@@ -1087,8 +1221,8 @@ public class UserServiceImpl implements UserService {
 			// TODO: fix int vs. long issue
 			long userId = userDao.getMyUserID(username);
 			//List<Object[]> userOrgs = OrgDAO.getInstance().getUserOrgs(workspaceId, userId);
-			OrgDAOImpl orgDao = new OrgDAOImpl();
-			List<Map<String, Object>> userOrgs = orgDao.getUserOrgsWithOrgName(Integer.parseInt(""+userId), workspaceId);
+			
+			List<Map<String, Object>> userOrgs = this.orgDao.getUserOrgsWithOrgName(Integer.parseInt(""+userId), workspaceId);
 			// TODO: remove old hibernate 
 			userOrgResponse.setUserOrgs(userOrgs);
 			
@@ -1259,32 +1393,27 @@ public class UserServiceImpl implements UserService {
 				
 		if(user.getDescription() != null && !user.getDescription().isEmpty() 
 				&& !EntityEncoder.validateInputValue(user.getDescription())) {
-			return "Invalid input in Description field";
+			return "Invalid input in Job Description field. " + SAFECHARS;
 		}
 		
 		if(user.getJobTitle() != null && !user.getJobTitle().isEmpty() 
 				&& !EntityEncoder.validateInputValue(user.getJobTitle())) {
-			return "Invalid input in Job Title field";
-		}
-		
-		if(user.getOrganization() != null && !user.getOrganization().isEmpty()
-				&& !EntityEncoder.validateInputValue(user.getOrganization())) {
-			return "Invalid input in Organization";
+			return "Invalid input in Job Title field. " + SAFECHARS;
 		}
 		
 		if(user.getOtherInfo() != null && !user.getOtherInfo().isEmpty()
 				&& !EntityEncoder.validateInputValue(user.getOtherInfo())) {
-			return "Invalid input in Other Info field";
+			return "Invalid input in Other Info field. " + SAFECHARS;
 		}
 		
 		if(user.getRadioNumber() != null && !user.getRadioNumber().isEmpty()
 				&& !EntityEncoder.validateInputValue(user.getRadioNumber())) {
-			return "Invalid input in Radio Number field";
+			return "Invalid input in Radio Number field. " + SAFECHARS;
 		}
 		
 		if(user.getRank() != null && !user.getRank().isEmpty() 
 				&& !EntityEncoder.validateInputValue(user.getRank())) {
-			return "Invalid input in Rank field";
+			return "Invalid input in Rank field. " + SAFECHARS;
 		}
 		
 		String[] teams = user.getTeams();
@@ -1292,7 +1421,7 @@ public class UserServiceImpl implements UserService {
 			for(String team : teams) {
 				if(team != null && !team.isEmpty()
 						&& !EntityEncoder.validateInputValue(team)) {
-					return "Invalid input in one of the IMT fields: " + team;
+					return "Invalid input in one of the IMT fields: " + team + ". " + SAFECHARS;
 				}
 			}
 		}
@@ -1317,13 +1446,6 @@ public class UserServiceImpl implements UserService {
 	 * @throws Exception
 	 */
 	public UserOrg createUserOrg(int orgid, int userid, RegisterUser user) throws Exception {
-		SystemRoleDAOImpl sysRoleDao = new SystemRoleDAOImpl();		
-		//int systemroleid = SystemRoleDAO.getInstance().getSystemRoleId(SADisplayConstants.USER_ROLE);
-		int systemroleid = sysRoleDao.getSystemRoleId(SADisplayConstants.USER_ROLE);
-		
-		if(systemroleid == -1) {
-			// failed to get role id...
-		}
 		UserOrg userorg = new UserOrg();
 
 		// TODO:ID user_org_workspace needs it, so can't let DAO get it?
@@ -1337,12 +1459,14 @@ public class UserServiceImpl implements UserService {
 		userorg.setUserorgid(userorgid);
 		userorg.setOrgid(orgid);
 		userorg.setCreated(Calendar.getInstance().getTime());
-		userorg.setSystemroleid(systemroleid);
+		userorg.setSystemroleid(SADisplayConstants.USER_ROLE_ID);
 		userorg.setUserid(userid);
 		
-		userorg.setJobTitle(user.getJobTitle());
-		userorg.setDescription(user.getDescription());
-		userorg.setRank(user.getRank());
+		if(user!=null){
+			userorg.setJobTitle(user.getJobTitle());
+			userorg.setDescription(user.getDescription());
+			userorg.setRank(user.getRank());
+		}
 		
 		return userorg;
 	}
@@ -1369,11 +1493,10 @@ public class UserServiceImpl implements UserService {
 		CurrentUserSession session = null;
 		boolean existing = false;
 		try{
-			if(userSessDao.hasCurrentUserSession(workspaceId, (int)userId)){
-				long currentUserSessionId = this.userSessDao.getCurrentUserSessionid(userId);
-				
-				if(this.userSessDao.removeUserSession(currentUserSessionId)){
-					this.notifyLogout(currentUserSessionId);
+			CurrentUserSession cus = userSessDao.getCurrentUserSession(userId);
+			if(cus != null){
+				if(this.userSessDao.removeUserSession(cus.getCurrentusersessionid())){
+					this.notifyLogout(workspaceId, cus.getCurrentusersessionid());
 				}else{
 					existing = true;
 				}
@@ -1386,6 +1509,13 @@ public class UserServiceImpl implements UserService {
 					userResponse.setMessage(Status.OK.getReasonPhrase());
 					userResponse.setUserSession(session);
 					response = Response.ok(userResponse).status(Status.OK).build();
+					
+					try {
+						User user = userDao.getUserWithSession(userId);
+						notifyLogin(workspaceId, user);
+					} catch (IOException e) {
+						APILogger.getInstance().e("UserServiceImpl", "Failed to publish ChatMsgService message event" + e.getMessage());
+					}
 				}
 			}
 			
@@ -1403,19 +1533,38 @@ public class UserServiceImpl implements UserService {
 		return response;
 	}
 	
-	private void notifyLogout(long currentUserSessionId) throws IOException {
-		String topic = String.format("iweb.NICS.logout.%d", currentUserSessionId);
-		getRabbitProducer().produce(topic, "logout");
+	private void notifyLogin(int workspaceId, User user) throws IOException {
+		if (user != null) {
+			String topic = String.format("iweb.NICS.%d.login", workspaceId);
+			ObjectMapper mapper = new ObjectMapper();
+			String message = mapper.writeValueAsString(user);
+			getRabbitProducer().produce(topic, message);
+		}
+	}
+	
+	private void notifyLogout(int workspaceId, long currentUserSessionId) throws IOException {
+		String topic = String.format("iweb.NICS.%d.logout", workspaceId);
+		getRabbitProducer().produce(topic, Long.toString(currentUserSessionId));
+	}
+	
+	private void notifyNewUserEmail(String email, String topic) throws IOException {
+		if (email != null) {
+			getRabbitProducer().produce(topic, email);
+		}
 	}
 	
 	private RabbitPubSubProducer getRabbitProducer() throws IOException {
 		if (rabbitProducer == null) {
-			rabbitProducer = RabbitFactory.makeRabbitPubSubProducer();
+			rabbitProducer = RabbitFactory.makeRabbitPubSubProducer(
+					APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_HOSTNAME_KEY),
+					APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_EXCHANGENAME_KEY),
+					APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_USERNAME_KEY),
+					APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_USERPWD_KEY));
 		}
 		return rabbitProducer;
 	}
 	
-	public Response removeUserSession(long currentUserSessionId){
+	public Response removeUserSession(int workspaceId, long currentUserSessionId){
 		Response response = null;
 		UserResponse  userResponse = new UserResponse();
 		
@@ -1426,7 +1575,7 @@ public class UserServiceImpl implements UserService {
 				response = Response.ok(userResponse).status(Status.OK).build();
 			}
 			
-			notifyLogout(currentUserSessionId);
+			notifyLogout(workspaceId, currentUserSessionId);
 			
 		} catch(Exception e) {
 			APILogger.getInstance().e("UserServiceImpl", "Exception creating UserSession");

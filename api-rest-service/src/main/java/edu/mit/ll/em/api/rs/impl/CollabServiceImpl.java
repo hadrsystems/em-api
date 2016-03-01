@@ -38,6 +38,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -45,6 +46,10 @@ import javax.ws.rs.HeaderParam;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+
+import edu.mit.ll.em.api.util.APIConfig;
+import edu.mit.ll.nics.common.rabbitmq.RabbitFactory;
+import edu.mit.ll.nics.common.rabbitmq.RabbitPubSubProducer;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -56,11 +61,11 @@ import edu.mit.ll.em.api.rs.CollabRoomPermissionResponse;
 import edu.mit.ll.em.api.rs.CollabService;
 import edu.mit.ll.em.api.rs.CollabServiceResponse;
 import edu.mit.ll.em.api.rs.CollabPresenceStatus;
+import edu.mit.ll.em.api.rs.FieldMapResponse;
 import edu.mit.ll.em.api.util.SADisplayConstants;
-import edu.mit.ll.em.api.util.rabbitmq.RabbitFactory;
-import edu.mit.ll.em.api.util.rabbitmq.RabbitPubSubProducer;
 import edu.mit.ll.nics.common.entity.CollabRoom;
 import edu.mit.ll.nics.nicsdao.impl.CollabRoomDAOImpl;
+import edu.mit.ll.nics.nicsdao.impl.OrgDAOImpl;
 import edu.mit.ll.nics.nicsdao.impl.UserDAOImpl;
 import edu.mit.ll.nics.nicsdao.impl.UserOrgDAOImpl;
 
@@ -76,6 +81,7 @@ public class CollabServiceImpl implements CollabService {
 	/** User DAO */
 	private static final UserOrgDAOImpl userOrgDao = new UserOrgDAOImpl();
 	private static final UserDAOImpl userDao = new UserDAOImpl();
+	private static final OrgDAOImpl orgDao = new OrgDAOImpl();
 	
 	private static final Log logger = LogFactory.getLog(CollabServiceImpl.class);
 	
@@ -137,11 +143,17 @@ public class CollabServiceImpl implements CollabService {
 	}
 	
 	//Not an endpoint. Method used by other EM-API classes to create a room
-	public Response postCollabRoom(int incidentId, CollabRoom collabroom){
-		return this.postCollabRoomWithPermissions(incidentId, collabroom);
+	public Response createCollabRoomWithPermissions(int incidentId, int orgId, int workspaceId, CollabRoom collabroom){
+		return this.postCollabRoomWithPermissions(incidentId, orgId, workspaceId, collabroom);
+	}
+	
+	//Not an endpoint. Method used by other EM-API classes to create a room
+	public CollabRoom createUnsecureCollabRoom(int incidentId, CollabRoom collabroom) throws DataAccessException, DuplicateCollabRoomException, Exception{
+		return this.createCollabRoom(incidentId, collabroom);
 	}
 
-	public Response postCollabRoom(int userOrgId, int incidentId, CollabRoom collabroom, String username) {
+	public Response postCollabRoom(int userOrgId, int orgId, 
+			int workspaceId, int incidentId, CollabRoom collabroom, String username) {
 		Response response = null;
 		CollabServiceResponse collabResponse = new CollabServiceResponse();
 		CollabRoom newCollabRoom = null;
@@ -152,7 +164,7 @@ public class CollabServiceImpl implements CollabService {
 			int systemRoleId = userOrgDao.getSystemRoleIdForUserOrg(username, userOrgId);
 			if(systemRoleId == SADisplayConstants.ADMIN_ROLE_ID ||
 					systemRoleId == SADisplayConstants.SUPER_ROLE_ID){
-				return this.postCollabRoomWithPermissions(incidentId, collabroom);
+				return this.postCollabRoomWithPermissions(incidentId, orgId, workspaceId, collabroom);
 			}else{
 				collabResponse.setMessage("Access Denied. User does not have permission to secure a room");
 				response = Response.ok(collabResponse).status(Status.INTERNAL_SERVER_ERROR).build();
@@ -189,7 +201,7 @@ public class CollabServiceImpl implements CollabService {
 		return response;
 	}
 	
-	public Response postCollabRoomWithPermissions(int incidentId, CollabRoom collabroom) {
+	public Response postCollabRoomWithPermissions(int incidentId, int orgId, int workspaceId, CollabRoom collabroom) {
 		
 		Response response = null;
 		CollabRoom newCollabRoom = null;
@@ -198,7 +210,9 @@ public class CollabServiceImpl implements CollabService {
 			newCollabRoom = this.createCollabRoom(incidentId, collabroom);
 			
 			collabResponse =
-					this.secureRoom(newCollabRoom.getCollabRoomId(), collabroom);
+					this.secureRoom(newCollabRoom.getCollabRoomId(), 
+							orgId, workspaceId,
+							collabroom.getAdminUsers(), collabroom.getReadWriteUsers());
 			
 			newCollabRoom.setAdminUsers(collabResponse.getAdminUsers());
 			newCollabRoom.setReadWriteUsers(collabResponse.getReadWriteUsers());
@@ -313,6 +327,40 @@ public class CollabServiceImpl implements CollabService {
 		return response;
 	}
 	
+	public Response updateCollabRoomPermission(FieldMapResponse secureUsers, int collabRoomId, long userId, 
+			int orgId, int workspaceId, String username){
+		if(userDao.getUserId(username) != userId){
+			return Response.status(Status.BAD_REQUEST).entity(Status.FORBIDDEN.getReasonPhrase()).build();
+		}
+		
+		//TODO: Check for permissions
+		
+		//Remove current security if there is any...
+		collabDao.unsecureRoom(collabRoomId);
+		List<Integer> adminUsers = (List<Integer>) secureUsers.getData().get(0).get("admin");
+		List<Integer> readWriteUsers = (List<Integer>) secureUsers.getData().get(0).get("readWrite");
+		
+		CollabRoomPermissionResponse collabResponse = this.secureRoom(
+				collabRoomId, orgId, workspaceId, adminUsers, readWriteUsers);
+		
+		try {
+			CollabRoom room = collabDao.getCollabRoomById(collabRoomId);
+			room.setAdminUsers(collabResponse.getAdminUsers());
+			room.setReadWriteUsers(collabResponse.getReadWriteUsers());
+			notifyUpdateChange(room);
+		} catch (IOException e) {
+			logger.error("Failed to publish CollabServiceImpl collabroom event", e);
+		} catch (DataAccessException e) {
+			logger.error("Failed to publish CollabServiceImpl collabroom event", e);
+			e.printStackTrace();
+		} catch (Exception e) {
+			logger.error("Failed to publish CollabServiceImpl collabroom event", e);
+			e.printStackTrace();
+		}
+		
+		return Response.ok(collabResponse).status(Status.OK).build();
+	}
+	
 	public Response unsecureRoom(long collabRoomId, long userId, String username){
 		Response response = null;
 		CollabRoomPermissionResponse collabResponse = new CollabRoomPermissionResponse();
@@ -351,18 +399,25 @@ public class CollabServiceImpl implements CollabService {
 		return response; 
 	}
 	
-	private CollabRoomPermissionResponse secureRoom(int collabRoomId, CollabRoom collabroom){
+	private CollabRoomPermissionResponse secureRoom(int collabRoomId, int orgId, int workspaceId,
+			Collection<Integer> adminUsers, Collection <Integer> readWriteUsers){
 		CollabRoomPermissionResponse collabResponse = new CollabRoomPermissionResponse();
+		Collection<Integer> adminIds = userOrgDao.getSuperUsers();
+		
+		//Remove duplicates
+		adminUsers.removeAll(adminIds);
+		//Add Super users back
+		adminUsers.addAll(adminIds);
 		try{
-			for(Integer userId : collabroom.getAdminUsers()){
+			for(Integer userId : adminUsers){
 				if(!collabDao.secureRoom(collabRoomId, userId, SADisplayConstants.ADMIN_ROLE_ID)){
 					collabResponse.addFailedAdmin(userId);
 				}else{
 					collabResponse.addAdminUser(userId);
 				}
 			}
-			if(collabroom.getReadWriteUsers()!=null){
-				for(Integer userId : collabroom.getReadWriteUsers()){
+			if(readWriteUsers !=null){
+				for(Integer userId : readWriteUsers){
 					if(!collabDao.secureRoom(collabRoomId, userId, SADisplayConstants.USER_ROLE_ID)){
 						collabResponse.addFailedReadWrite(userId);
 					}else{
@@ -381,6 +436,44 @@ public class CollabServiceImpl implements CollabService {
 		}
 		return collabResponse;
 	}
+	
+	public Response getCollabRoomSecureUsers(int collabRoomId, String username){
+		Response response = null;
+		
+		if(collabDao.hasPermissions(userDao.getUserId(username), collabRoomId)){
+			FieldMapResponse dataResponse = new FieldMapResponse();
+	        dataResponse.setData(collabDao.getCollabRoomSecureUsers(collabRoomId));
+			
+			dataResponse.setMessage(Status.OK.getReasonPhrase());
+			response = Response.ok(dataResponse).status(Status.OK).build();
+		}else{
+			response = Response.ok(Status.FORBIDDEN.toString()).status(Status.OK).build();
+		}
+
+		return response;
+	}
+	
+	public Response getCollabRoomUnSecureUsers(int collabRoomId, int orgId, 
+			int workspaceId, String username){
+		Response response = null;
+		FieldMapResponse dataResponse = new FieldMapResponse();
+        
+		if(collabRoomId != -1 && collabDao.hasPermissions(userDao.getUserId(username), collabRoomId)){
+			dataResponse.setData(collabDao.getUsersWithoutPermission(collabRoomId, orgId, workspaceId));
+			
+			dataResponse.setMessage(Status.OK.getReasonPhrase());
+			response = Response.ok(dataResponse).status(Status.OK).build();
+		}else if(collabRoomId == -1){
+			dataResponse.setData(userDao.getUsers(orgId, workspaceId));
+			
+			dataResponse.setMessage(Status.OK.getReasonPhrase());
+			response = Response.ok(dataResponse).status(Status.OK).build();
+		}else{
+			response = Response.ok(Status.FORBIDDEN.toString()).status(Status.OK).build();
+		}
+
+		return response;
+	} 
 	
 	private CollabRoom createCollabRoom(int incidentId, CollabRoom collabroom) 
 			throws DataAccessException, DuplicateCollabRoomException, Exception{
@@ -436,7 +529,11 @@ public class CollabServiceImpl implements CollabService {
 	
 	private RabbitPubSubProducer getRabbitProducer() throws IOException {
 		if (rabbitProducer == null) {
-			rabbitProducer = RabbitFactory.makeRabbitPubSubProducer();
+			rabbitProducer = RabbitFactory.makeRabbitPubSubProducer(
+					APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_HOSTNAME_KEY),
+					APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_EXCHANGENAME_KEY),
+					APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_USERNAME_KEY),
+							APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_USERPWD_KEY));
 		}
 		return rabbitProducer;
 	}

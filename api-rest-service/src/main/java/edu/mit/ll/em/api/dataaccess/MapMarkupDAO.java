@@ -44,6 +44,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import edu.mit.ll.nics.common.rabbitmq.RabbitFactory;
+import edu.mit.ll.nics.common.rabbitmq.RabbitPubSubProducer;
 import org.apache.commons.collections.ListUtils;
 import org.eclipse.jetty.util.log.Log;
 import org.json.JSONArray;
@@ -61,8 +63,6 @@ import edu.mit.ll.em.api.util.GeomUtil;
 import edu.mit.ll.em.api.util.GeomUtilException;
 import edu.mit.ll.em.api.util.NetUtil;
 import edu.mit.ll.em.api.util.TimeUtil;
-import edu.mit.ll.em.api.util.rabbitmq.RabbitFactory;
-import edu.mit.ll.em.api.util.rabbitmq.RabbitPubSubProducer;
 import edu.mit.ll.nics.common.entity.CollabRoom;
 import edu.mit.ll.nics.common.entity.CollabroomFeature;
 import edu.mit.ll.nics.common.entity.DeletedFeature;
@@ -83,7 +83,11 @@ public class MapMarkupDAO extends BaseDAO {
 
 	private MapMarkupDAO() {
 		try {
-			producer = RabbitFactory.makeRabbitPubSubProducer();
+			producer = RabbitFactory.makeRabbitPubSubProducer(
+					APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_HOSTNAME_KEY),
+					APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_EXCHANGENAME_KEY),
+					APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_USERNAME_KEY),
+					APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_USERPWD_KEY));
 		} catch (IOException e) {
 			throw new ExceptionInInitializerError(
 					CNAME

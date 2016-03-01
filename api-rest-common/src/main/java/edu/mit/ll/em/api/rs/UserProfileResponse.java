@@ -67,6 +67,10 @@ public class UserProfileResponse {
 	
 	private int sysRoleId;
 	
+	private boolean isSuperUser;
+	
+	private boolean isAdminUser;
+	
 	public String getMessage() {
 		return message;
 	}
@@ -83,8 +87,26 @@ public class UserProfileResponse {
 				", username=" + username + 
 				", orgName=" + orgName + 
 				", message=" + message + 
+				", isSuperUser=" + isSuperUser + 
+				", isAdminUser=" + isAdminUser + 
 		"]";
 	}	
+	
+	public void setIsSuperUser(boolean isSuperUser){
+		this.isSuperUser = isSuperUser;
+	}
+	
+	public boolean getIsSuperUser(){
+		return isSuperUser;
+	}
+	
+	public void setIsAdminUser(boolean isAdminUser){
+		this.isAdminUser = isAdminUser;
+	}
+	
+	public boolean getIsAdminUser(){
+		return isAdminUser;
+	}
 	
 	public void setIncidentTypes(Collection<IncidentType> incidentTypes){
 		this.incidentTypes = incidentTypes;

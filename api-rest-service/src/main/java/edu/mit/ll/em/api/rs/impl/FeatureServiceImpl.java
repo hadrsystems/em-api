@@ -51,6 +51,8 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriBuilder;
 
+import edu.mit.ll.nics.common.rabbitmq.RabbitFactory;
+import edu.mit.ll.nics.common.rabbitmq.RabbitPubSubProducer;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -66,8 +68,6 @@ import edu.mit.ll.em.api.rs.QueryConstraintHelper;
 import edu.mit.ll.em.api.rs.QueryConstraintParms;
 import edu.mit.ll.em.api.util.APIConfig;
 import edu.mit.ll.em.api.util.SADisplayConstants;
-import edu.mit.ll.em.api.util.rabbitmq.RabbitFactory;
-import edu.mit.ll.em.api.util.rabbitmq.RabbitPubSubProducer;
 import edu.mit.ll.nics.common.entity.CollabroomFeature;
 import edu.mit.ll.nics.common.entity.Feature;
 import edu.mit.ll.nics.common.entity.UserFeature;
@@ -247,7 +247,7 @@ public class FeatureServiceImpl implements FeatureService {
 	 * 
 	 * @return Response A FeatureServiceResponse
 	 */
-	public Response postCollabRoomFeature(int collabRoomId, String feature, String requestingUser) {
+	public Response postCollabRoomFeature(int collabRoomId, int geoType , String feature , String requestingUser) {
 		
 		if(!collabRoomDao.hasPermissions(userDao.getUserId(requestingUser), collabRoomId)){
 			return getAccessDeniedResponse();
@@ -257,7 +257,7 @@ public class FeatureServiceImpl implements FeatureService {
 		Feature newFeature = null;
 		FeatureServiceResponse featureResponse = new FeatureServiceResponse();
 		try {
-			newFeature = this.addNewFeature(feature);
+			newFeature = this.addNewFeature(feature, geoType);
 			if(newFeature != null){
 				//Add CollabRoom Feature
 				CollabroomFeature collabroomFeature = new CollabroomFeature();
@@ -306,7 +306,7 @@ public class FeatureServiceImpl implements FeatureService {
 		
 		FeatureServiceResponse featureResponse = new FeatureServiceResponse();
 		try {	
-			Feature newFeature = this.addNewFeature(feature);
+			Feature newFeature = this.addNewFeature(feature, 3857);
 			if(newFeature != null){
 				//Add User Feature
 				UserFeature userFeature = new UserFeature();
@@ -398,7 +398,7 @@ public class FeatureServiceImpl implements FeatureService {
 	 * @return
 	 * @throws Exception
 	 */
-	private Feature addNewFeature(String featureProperties) throws Exception {
+	private Feature addNewFeature(String featureProperties, int geoType) throws Exception {
 		//Use JAXSON to parse the JSON object? - since geometry field
 		//is a String - we could do this instead
 		/*JsonNode node = mapper.readTree(featureProperties);
@@ -412,7 +412,7 @@ public class FeatureServiceImpl implements FeatureService {
 	            mapper.getTypeFactory().constructCollectionType(
 	                    List.class, String.class));
 		
-		return featureDao.getFeature(featureDao.addFeature(feature, fields));
+		return featureDao.getFeature(featureDao.addFeature(feature, fields, geoType));
 	}
 	
 	/**
@@ -737,7 +737,11 @@ public class FeatureServiceImpl implements FeatureService {
 	 */
 	private RabbitPubSubProducer getRabbitProducer() throws IOException {
 		if (rabbitProducer == null) {
-			rabbitProducer = RabbitFactory.makeRabbitPubSubProducer();
+			rabbitProducer = RabbitFactory.makeRabbitPubSubProducer(
+					APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_HOSTNAME_KEY),
+					APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_EXCHANGENAME_KEY),
+					APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_USERNAME_KEY),
+					APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_USERPWD_KEY));
 		}
 		return rabbitProducer;
 	}

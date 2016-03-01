@@ -32,14 +32,14 @@ package edu.mit.ll.em.api.rs;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import edu.mit.ll.nics.common.entity.datalayer.Datalayer;
+import edu.mit.ll.nics.common.entity.datalayer.Datalayerfolder;
 import edu.mit.ll.nics.common.entity.datalayer.Datasource;
 
 public class DatalayerServiceResponse {
 
 	private String message;
 	
-	private Collection<Datalayer> datalayers = new ArrayList<Datalayer>();
+	private Collection<Datalayerfolder> datalayerfolders = new ArrayList<Datalayerfolder>();
 	private Collection<Datasource> datasources = new ArrayList<Datasource>();
 	
 	private int count;
@@ -52,12 +52,12 @@ public class DatalayerServiceResponse {
 		this.message = message;
 	}
 
-	public Collection<Datalayer> getDatalayers() {
-		return datalayers;
+	public Collection<Datalayerfolder> getDatalayers() {
+		return datalayerfolders;
 	}
 
-	public void setDatalayers(Collection<Datalayer> datalayers) {
-		this.datalayers = datalayers;
+	public void setDatalayerfolders(Collection<Datalayerfolder> datalayerfolders) {
+		this.datalayerfolders = datalayerfolders;
 	}
 	
 	public Collection<Datasource> getDatasources() {
@@ -69,7 +69,7 @@ public class DatalayerServiceResponse {
 	}
 
 	public String toString() {
-		return "DatalayerServiceResponse [datalayers=" + datalayers + ", "
+		return "DatalayerServiceResponse [datalayers=" + datalayerfolders + ", "
 				+ "message=" + message + "]";
 	}
 

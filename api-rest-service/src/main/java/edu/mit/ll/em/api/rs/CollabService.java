@@ -44,6 +44,9 @@ import javax.ws.rs.core.Cookie;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import org.springframework.dao.DataAccessException;
+
+import edu.mit.ll.em.api.exception.DuplicateCollabRoomException;
 import edu.mit.ll.nics.common.entity.CollabRoom;
 
 @Path("/collabroom/{incidentId}")
@@ -63,13 +66,43 @@ public interface CollabService {
 			@DefaultValue("-1") @QueryParam("userId") Integer userId,
 			@HeaderParam("CUSTOM-uid") String username);
 	
+	@GET
+	@Path("/users/{collabroomId}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getCollabRoomSecureUsers(
+			@PathParam("collabroomId") int collabRoomId, 
+			@HeaderParam("CUSTOM-uid") String username);
+	
+	@GET
+	@Path("/users/{workspaceId}/unsecure/{collabroomId}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getCollabRoomUnSecureUsers(
+			@PathParam("collabroomId") int collabRoomId, 
+			@QueryParam("orgId") int orgId,
+			@PathParam("workspaceId") int workspaceId,
+			@HeaderParam("CUSTOM-uid") String username);
+	
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response postCollabRoom(
 			@QueryParam("userOrgId") int userOrgId,
+			@QueryParam("orgId") int orgId,
+			@QueryParam("workspaceId") int workspaceId,
 			@PathParam("incidentId") int incidentId, 
 			CollabRoom collabroom,
+			@HeaderParam("CUSTOM-uid") String username);
+	
+	@POST
+	@Path("/secure/{collabroomId}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response updateCollabRoomPermission(
+			FieldMapResponse secureUsers,
+			@PathParam("collabroomId") int collabRoomId,
+			@QueryParam("userId") long userId,
+			@QueryParam("orgId") int orgId,
+			@QueryParam("workspaceId") int workspaceId,
 			@HeaderParam("CUSTOM-uid") String username);
 
 	@GET
@@ -89,14 +122,22 @@ public interface CollabService {
 			CollabPresenceStatus state);
 	
 	@DELETE
-	@Path(value = "/unsecure/{collabroomId}")
+	@Path("/unsecure/{collabroomId}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response unsecureRoom(
 			@PathParam("collabroomId") long collabroomId, 
 			@QueryParam("userId") long userId,
 			@HeaderParam("CUSTOM-uid") String username);
 	
-	public Response postCollabRoom(
-			@PathParam("incidentId") int incidentId, 
+	
+	public Response createCollabRoomWithPermissions(
+			int incidentId,
+			int orgId,
+			int workspaceId,
 			CollabRoom collabroom);
+	
+	public CollabRoom createUnsecureCollabRoom(
+			int incidentId,
+			CollabRoom collabroom)
+			throws DataAccessException, DuplicateCollabRoomException, Exception;
 }

@@ -33,13 +33,13 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import edu.mit.ll.nics.common.rabbitmq.RabbitPubSubProducer;
 import org.joda.time.DateTime;
 
 import com.google.gson.Gson;
 
 import edu.mit.ll.em.api.entity.TaskAssignmentEvent;
 import edu.mit.ll.em.api.rs.MsgEnvelope;
-import edu.mit.ll.em.api.util.rabbitmq.RabbitPubSubProducer;
 
 
 public class RabbitPubSubProducerTest {

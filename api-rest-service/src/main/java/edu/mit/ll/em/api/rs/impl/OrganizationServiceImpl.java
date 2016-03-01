@@ -29,13 +29,18 @@
  */
 package edu.mit.ll.em.api.rs.impl;
 
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 import org.springframework.dao.DataAccessException;
 
+import edu.mit.ll.em.api.rs.OrgOrgTypeServiceResponse;
 import edu.mit.ll.em.api.rs.OrganizationService;
 import edu.mit.ll.em.api.rs.OrganizationServiceResponse;
 import edu.mit.ll.em.api.util.APILogger;
@@ -121,6 +126,38 @@ public class OrganizationServiceImpl implements OrganizationService {
 		return response;
 	}
 	
+	/**
+	 * Read and return orgs for specified user and workspace ids
+	 * 
+	 * @return Response
+	 * @see OrganizationResponse
+	 */
+	public Response getAdminOrgs(Integer workspaceId, Integer userId) {
+		Response response = null;
+		OrganizationServiceResponse organizationResponse = new OrganizationServiceResponse();
+		List<Org> organizations = null;
+		try {			
+			organizations = orgDao.getAdminOrgs(userId, workspaceId);
+			organizationResponse.getOrganizations().addAll(organizations);
+			organizationResponse.setMessage("ok");
+			if(organizations != null) {
+				organizationResponse.setCount(organizationResponse.getOrganizations().size());
+			}
+			response = Response.ok(organizationResponse).status(Status.OK).build();			
+		} catch (DataAccessException e) {			
+			organizationResponse.setMessage("data access failure. Unable to read organizations for userid and "
+					+ "workspaceid: " + userId + ", " + workspaceId + ": " + e.getMessage());
+			organizationResponse.setCount(organizationResponse.getOrganizations().size());
+			response = Response.ok(organizationResponse).status(Status.INTERNAL_SERVER_ERROR).build();			
+		} catch(Exception e) {
+			organizationResponse.setMessage("failure. Unhandled exception reading organizations for "
+					+ "userid and workspaceid: "+ userId + ", " + workspaceId + ": " + e.getMessage());
+			organizationResponse.setCount(organizationResponse.getOrganizations().size());
+			response = Response.ok(organizationResponse).status(Status.INTERNAL_SERVER_ERROR).build();
+		}
+		return response;
+	}
+	
 
 	/**
 	 * Returns an OrganizationServiceResponse with orgTypes set to all orgTypes
@@ -178,6 +215,134 @@ public class OrganizationServiceImpl implements OrganizationService {
 			orgTypeMapResponse.setCount(orgTypeMapResponse.getOrgOrgTypes().size());
 			response = Response.ok(orgTypeMapResponse).status(Status.INTERNAL_SERVER_ERROR).build();
 		}		
+		
+		return response;
+	}
+
+	/**
+	 * Returns a admin list set to an  organization's distribution list in the database based on incidentId
+	 * 
+	 * @return	Response
+	 * @see OrganizationServiceResponse
+	 */
+	public Response getOrgAdminList(Integer orgId) {
+		Response response = null;
+		OrganizationServiceResponse orgAdminListResponse = new OrganizationServiceResponse();
+		List<String> orgAdminList = null;
+		try {			
+			System.out.println("My orgId is " + orgId);
+			orgAdminList = orgDao.getOrgAdmins(orgId);
+			orgAdminListResponse.setOrgAdminList(orgAdminList);
+			orgAdminListResponse.setMessage("ok");
+					
+			response = Response.ok(orgAdminListResponse).status(Status.OK).build();	
+		} catch(Exception e) {
+			APILogger.getInstance().e("OrganizationServiceImpl", "Unhandled exception while querying getAdminList()");
+			orgAdminListResponse.setMessage("failure. Unable to read admin List.");
+			response = Response.ok(orgAdminListResponse).status(Status.INTERNAL_SERVER_ERROR).build();
+
+		}
+		return response;
+	}
+	public Response postOrganization(Org org){
+		Response response = null;
+		OrganizationServiceResponse orgResponse = new OrganizationServiceResponse();
+		Org newOrg = null;
+		
+		try{
+			int orgId = orgDao.addOrg(org);
+			newOrg = orgDao.getOrganization(orgId);
+			newOrg.setOrgTypes(new HashSet<OrgOrgType>(orgDao.getOrgTypes(orgId)));
+			
+			orgResponse.setMessage(Status.OK.getReasonPhrase());
+			orgResponse.setOrganizations(Arrays.asList(newOrg));
+			orgResponse.setCount(1);
+			response = Response.ok(orgResponse).status(Status.OK).build();
+
+		} catch (Exception e) {
+			orgResponse.setMessage("Unhandled exception while persisting Org: " + e.getMessage());
+			response = Response.ok(orgResponse).status(Status.INTERNAL_SERVER_ERROR).build();
+		}
+		
+		return response;
+		
+		/* Notify Super Users?  
+		if (Status.OK.getStatusCode() == response.getStatus()) {
+			try {
+				notifyChange(newChat);
+			} catch (IOException e) {
+				logger.error("Failed to publish ChatMsgService message event", e);
+			}
+		}
+		*/
+	}
+	
+	public Response postOrgOrgType(int orgId, int orgTypeId){
+		Response response = null;
+		OrgOrgTypeServiceResponse serviceResponse = new OrgOrgTypeServiceResponse();
+		try{
+			int ret = orgDao.addOrgOrgType(orgId, orgTypeId);
+			if(ret == 1){
+				serviceResponse.setOrgId(orgId);
+				serviceResponse.setOrgTypeId(orgTypeId);
+				response = Response.ok(serviceResponse).status(Status.OK).build();
+			}else{
+				response = Response.ok("There was an error adding the organziation to the orgtype.")
+						.status(Status.INTERNAL_SERVER_ERROR).build();
+			}
+		} catch (Exception e) {
+			response = Response.ok(e.getMessage()).status(Status.INTERNAL_SERVER_ERROR).build();
+
+		}
+		
+		return response;
+	}
+
+	/**
+	 * Returns a OrganizationServiceResponse with an organization based on organization name
+	 * 
+	 * @return	Response
+	 * @see OrganizationServiceResponse
+	 */
+	public Response getOrganization(String orgName) {
+		Response response = null;
+		OrganizationServiceResponse organizationResponse = new OrganizationServiceResponse();
+		Org oneOrg = null;
+		
+		try {
+			oneOrg = orgDao.getOrganization(orgName);
+			organizationResponse.getOrganizations().add(oneOrg);
+			organizationResponse.setMessage("ok");
+			if(oneOrg != null) {
+				organizationResponse.setCount(1);
+			}			
+			response = Response.ok(organizationResponse).status(Status.OK).build();	
+		} catch(Exception e) {
+			APILogger.getInstance().e("OrganizationServiceImpl", "Unhandled exception while querying getOrganization()");
+			organizationResponse.setMessage("failure. Unable to read Org.");
+			response = Response.ok(organizationResponse).status(Status.INTERNAL_SERVER_ERROR).build();
+		}
+		
+		return response;
+	}
+	
+	public Response removeOrgOrgType(int orgId, int orgTypeId){
+		Response response = null;
+		OrgOrgTypeServiceResponse serviceResponse = new OrgOrgTypeServiceResponse();
+		
+		try{
+			int ret = orgDao.removeOrgOrgType(orgId, orgTypeId);
+			if(ret == 1){
+				serviceResponse.setOrgId(orgId);
+				serviceResponse.setOrgTypeId(orgTypeId);
+				response = Response.ok(serviceResponse).status(Status.OK).build();
+			}else{
+				response = Response.ok("There was an error removing the organziation from the orgtype.")
+						.status(Status.INTERNAL_SERVER_ERROR).build();
+			}
+		} catch (Exception e) {
+			response = Response.ok(e.getMessage()).status(Status.INTERNAL_SERVER_ERROR).build();
+		}
 		
 		return response;
 	}

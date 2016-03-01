@@ -41,6 +41,8 @@ public class OrganizationServiceResponse {
 
 	private String message;
 	
+	private List<String> orgAdminList;
+	
 	private Collection<Org> Organizations = new ArrayList<Org>();
 	
 	private List<OrgType> orgTypes = new ArrayList<OrgType>();
@@ -91,10 +93,19 @@ public class OrganizationServiceResponse {
 			this.count = orgOrgTypes.size();
 		}
 	}
+	public List<String> getOrgAdminList() {
+		return orgAdminList;
+	}
+	public void setOrgAdminList(List<String> orgAdminList) {
+		this.orgAdminList = orgAdminList;
+		if(orgAdminList != null) {
+			this.count = orgAdminList.size();
+		}
+	}
 	
 	public String toString() {
 		return "OrganizationServiceResponse [Organizations=" + Organizations + ", message="
-				+ message + ", OrgTypes=" + orgTypes + ", OrgOrgTypes=" + orgOrgTypes + "]";
+				+ message + ", OrgTypes=" + orgTypes + ", OrgOrgTypes=" + orgOrgTypes + ", OrgAdminList=" + orgAdminList + "]";
 	}
 
 	public int getCount() {

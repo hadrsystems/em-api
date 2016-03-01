@@ -33,6 +33,7 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.CookieParam;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -129,7 +130,7 @@ public interface SSOManagementService {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response enableUser(@PathParam("email") String email, @PathParam("flag") String flag,
-			@PathParam("userorgworkspaceid") int userorgWorkspaceId, String username);
+			@PathParam("userorgworkspaceid") int userorgWorkspaceId, @HeaderParam("CUSTOM-uid") String username);
 	
 	
 	// TODO:SSO more methods we'll want to implement

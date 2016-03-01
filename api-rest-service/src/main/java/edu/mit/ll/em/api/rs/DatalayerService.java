@@ -42,7 +42,6 @@ import javax.ws.rs.core.Response;
 import org.apache.cxf.jaxrs.ext.multipart.Multipart;
 import org.apache.cxf.jaxrs.ext.multipart.MultipartBody;
 
-import edu.mit.ll.nics.common.entity.Form;
 import edu.mit.ll.nics.common.entity.datalayer.Datalayer;
 import edu.mit.ll.nics.common.entity.datalayer.Datasource;
 
@@ -73,6 +72,17 @@ public interface DatalayerService {
 			@PathParam("userOrgId") int userOrgId,
 			MultipartBody body,
 			@HeaderParam("CUSTOM-uid") String username);
+	
+	@POST
+	@Path("/shapefile")
+	@Consumes(MediaType.MULTIPART_FORM_DATA)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response postShapeDataLayer(
+			@PathParam("workspaceId") int workspaceId,
+			@Multipart("displayName") String displayName,
+			MultipartBody body,
+			@HeaderParam("CUSTOM-uid") String username);
+	
 	
 	@GET
 	@Path("/sources/{type}")

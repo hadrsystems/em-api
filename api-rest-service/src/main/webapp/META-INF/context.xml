@@ -41,4 +41,8 @@ type="javax.sql.DataSource" or type="org.apache.commons.dbcp.BasicDataSource"
 <Resource name="jboss/sadisplayDatasource" auth="Container" type="javax.sql.DataSource"
     maxActive="100" maxIdle="30" maxWait="10000" username="nics" password="nicspassword"
     driverClassName="org.postgresql.Driver" url="jdbc:postgresql://localhost:5432/nics" />
+
+<Resource name="jboss/shapefileDatasource" auth="Container" type="javax.sql.DataSource"
+    maxActive="100" maxIdle="30" maxWait="10000" username="nics" password="nicspassword"
+    driverClassName="org.postgresql.Driver" url="jdbc:postgresql://localhost:5432/nics.shapefiles" />
 </Context>

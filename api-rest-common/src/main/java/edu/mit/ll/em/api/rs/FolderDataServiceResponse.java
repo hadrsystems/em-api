@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import edu.mit.ll.nics.common.entity.datalayer.Datalayer;
+import edu.mit.ll.nics.common.entity.datalayer.Datalayerfolder;
 import edu.mit.ll.nics.common.entity.datalayer.Folder;
 
 public class FolderDataServiceResponse {
@@ -41,7 +42,7 @@ public class FolderDataServiceResponse {
 	private String rootId;
 	
 	private Collection<Folder> folders = new ArrayList<Folder>();
-	private Collection<Datalayer> datalayers = new ArrayList<Datalayer>();
+	private Collection<Datalayerfolder> datalayerfolders = new ArrayList<Datalayerfolder>();
 	
 	private int count;
 
@@ -61,12 +62,12 @@ public class FolderDataServiceResponse {
 		this.folders = folders;
 	}
 	
-	public Collection<Datalayer> getDatalayers() {
-		return datalayers;
+	public Collection<Datalayerfolder> getDatalayerfolders() {
+		return datalayerfolders;
 	}
 
-	public void setDatalayers(Collection<Datalayer> datalayers) {
-		this.datalayers = datalayers;
+	public void setDatalayerfolders(Collection<Datalayerfolder> datalayerfolders) {
+		this.datalayerfolders = datalayerfolders;
 	}
 	
 	public String getRootId(){
@@ -79,7 +80,7 @@ public class FolderDataServiceResponse {
 
 	public String toString() {
 		return "RootFolderServiceResponse [folders=" + folders + ", "
-				+ "datalayers=" + datalayers + ","
+				+ "datalayers=" + datalayerfolders + ","
 				+ "rootId=" + rootId + ","
 				+ "message=" + message + "]";
 	}

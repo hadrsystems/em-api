@@ -43,6 +43,9 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import org.springframework.dao.DataAccessException;
+
+import edu.mit.ll.em.api.exception.DuplicateCollabRoomException;
 import edu.mit.ll.nics.common.entity.Incident;
 
 @Path("/incidents/{workspaceId}")
@@ -52,7 +55,22 @@ public interface IncidentService {
 	public Response getIncidents(
 			@PathParam("workspaceId") Integer workspaceId,
 			@QueryParam("accessibleByUserId") Integer userId);
+	
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path(value = "/getincidenttree")
+	public Response getIncidentsTree(
+			@PathParam("workspaceId") Integer workspaceId,
+			@QueryParam("accessibleByUserId") Integer userId);
 
+	@POST
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path(value = "/update")
+	public Response updateIncident(
+			@PathParam("workspaceId") Integer workspaceId,
+			Incident incident);
+	
 	/*@DELETE
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response deleteIncidents(@PathParam("workspaceId") Integer workspaceId);*/
@@ -69,7 +87,10 @@ public interface IncidentService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response postIncident(
 			@PathParam("workspaceId") Integer workspaceId,
-			Incident incident);
+			@QueryParam("orgId") Integer orgId,
+			@QueryParam("userId") Integer userId,
+			Incident incident)
+			throws DataAccessException, DuplicateCollabRoomException, Exception;
 	
 	@GET
 	@Path(value = "/getincidentbyname")

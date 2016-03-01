@@ -37,7 +37,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>edu.mit.ll.em.api</groupId>
 	<artifactId>em-api</artifactId>
-	<version>6.1</version>
+	<version>6.1.1</version>
 	<packaging>pom</packaging>
 
 	<modules>
@@ -46,7 +46,7 @@
 	</modules>
 
 	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+                <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<amqclient-version>2.7.1</amqclient-version>
 		<cxf.version>3.0.3</cxf.version>
 		<spring.version>4.1.4.RELEASE</spring.version>
@@ -61,7 +61,7 @@
 		<compiler.plugin.version>2.5.1</compiler.plugin.version>
 		<java.compiler.version>1.7</java.compiler.version>
 		<kml-jaxb.version>2.2</kml-jaxb.version>
-		<geotools.version>10.2</geotools.version>
+		<geotools.version>11.5</geotools.version>
 		<postgresql.version>9.3-1102-jdbc4</postgresql.version>
 		<jackson.core.version>2.0.0</jackson.core.version>
 		<license.plugin.version>1.9.0</license.plugin.version>
@@ -104,10 +104,10 @@
 				<version>${project.version}</version>
 			</dependency>
 			<dependency>
-				<groupId>edu.mit.ll.nics.common</groupId>
-				<artifactId>nics-dao</artifactId>
-				<version>${project.version}</version>
-			</dependency>
+                                <groupId>edu.mit.ll.nics.common</groupId>
+                                <artifactId>xml-email</artifactId>
+                                <version>${project.version}</version>
+                        </dependency>
 			<dependency>
 				<groupId>org.postgresql</groupId>
 				<artifactId>postgresql</artifactId>

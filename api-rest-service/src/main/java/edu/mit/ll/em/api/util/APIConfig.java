@@ -45,6 +45,8 @@ public class APIConfig {
 	
 	public static final String CACHE_USER_REFRESHMINUTES = "em.api.cache.user.refreshminutes";
 	
+	public static final String NEW_USER_ALERT_EMAIL = "em.api.user.alert.email";
+	
 	public static final String RABBIT_HOSTNAME_KEY = "em.api.rabbitmq.hostname";
 	public static final String RABBIT_USERNAME_KEY = "em.api.rabbitmq.username";
 	public static final String RABBIT_USERPWD_KEY = "em.api.rabbitmq.userpwd";
@@ -84,6 +86,8 @@ public class APIConfig {
 	public static final String FILE_UPLOAD_PATH = "em.api.service.file.upload.path";
 	public static final String KML_UPLOAD_PATH = "em.api.service.kml.upload.path";
 	public static final String KMZ_UPLOAD_PATH = "em.api.service.kmz.upload.path";
+	public static final String GPX_UPLOAD_PATH = "em.api.service.gpx.upload.path";
+	public static final String JSON_UPLOAD_PATH = "em.api.service.geojson.upload.path";
 	
 	// KML Export
 	public static final String KML_EXPORT_URL = "em.api.service.export.kmlExportURL";
@@ -96,7 +100,10 @@ public class APIConfig {
 	public static final String EXPORT_COLLABROOM_STORE = "em.api.service.export.collabroomStore";
 	public static final String EXPORT_WORKSPACE_NAME = "em.api.service.export.workspaceName";
 	public static final String EXPORT_REST_URL = "/rest";
+	public static final String EXPORT_WEBSERVER_URL = "em.api.service.export.webserverURL";
 	
+	public static final String IMPORT_SHAPEFILE_WORKSPACE = "em.api.service.import.shapefileWorkspace";
+	public static final String IMPORT_SHAPEFILE_STORE = "em.api.service.import.shapefileStore";
 	
 	private Configuration config;
 	

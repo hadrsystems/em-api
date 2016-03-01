@@ -27,10 +27,12 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+import edu.mit.ll.nics.common.rabbitmq.RabbitQueueProducer;
+
 import java.io.IOException;
 import java.util.Calendar;
 
-import edu.mit.ll.em.api.util.rabbitmq.RabbitQueueProducer;
 
 public class RabbitQueueProducerTest {
 

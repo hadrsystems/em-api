@@ -27,51 +27,43 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+package edu.mit.ll.em.api.rs;
 
-import com.rabbitmq.client.ConsumerCancelledException;
-import com.rabbitmq.client.ShutdownSignalException;
-import edu.mit.ll.nics.common.rabbitmq.RabbitPubSubConsumer;
-import edu.mit.ll.nics.common.rabbitmq.RabbitPubSubMsg;
+public class OrgOrgTypeServiceResponse {
 
-public class RabbitPubSubConsumerTest {
+	private String message;
 	
-	private static String DEFAULT_BINDING_KEY = "LDDRS.notifications.forms";
+	private int orgId;
 	
-	private static String[] getBindingKeys(String args[], int keyOffset) {
-		List<String> keyList = new ArrayList<String>();
-		while (keyOffset < args.length) {
-			keyList.add(args[keyOffset++]);
-		}
-		String[] ret = null;
-		if (keyList.size() > 0) {
-			ret = keyList.toArray(new String[keyList.size()]);
-		} else {
-			ret = new String[1];
-			ret[0] = DEFAULT_BINDING_KEY;
-		}
-		return ret;
+	private int orgTypeId;
+
+	public String getMessage() {
+		return message;
 	}
 
-	public static void main(String args[]) 
-			throws IOException, ShutdownSignalException, 
-			ConsumerCancelledException, InterruptedException {
-		String rabbitHost = (args.length > 0) ? args[0] : "localhost";
-		String exchangeName = (args.length > 1) ? args[1] : "XYZ";
-		String bindingKeys[] = getBindingKeys(args, 2);
-		
-		RabbitPubSubConsumer c = new RabbitPubSubConsumer(
-				rabbitHost, exchangeName, bindingKeys);
-		
-		for (int n = 0; n < 40; ++n) {			
-			RabbitPubSubMsg m = c.consume();
-			System.out.println(" [x] Received '" + m.getMsg() + "'" + 
-					" with routingKey: " + m.getRoutingKey());
-		}
-		System.out.println("Consumer is now shutting down...");
-		c.destroy();
-		System.out.println("Done.");		
+	public void setMessage(String message) {
+		this.message = message;
+	}
+	
+	public int getOrgTypeId(){
+		return this.orgTypeId;
+	}
+
+	public void setOrgTypeId(int orgTypeId){
+		this.orgTypeId = orgTypeId;
+	}
+	
+	public int getOrgId(){
+		return this.orgId;
+	}
+	
+	public void setOrgId(int orgId){
+		this.orgId = orgId;
+	}
+	
+	public String toString() {
+		return "OrgOrgTypeServiceResponse [orgId=" + orgId + ", message="
+				+ message + ", orgTypeId=" + orgTypeId +"]";
 	}
 }
+

@@ -29,12 +29,18 @@
  */
 package edu.mit.ll.em.api.rs;
 
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+
+import edu.mit.ll.nics.common.entity.datalayer.Folder;
 
 @Path("/folder/{workspaceId}")
 public interface FolderService {
@@ -51,5 +57,38 @@ public interface FolderService {
 	public Response getChildFolders(
 			@PathParam("workspaceId") int workspaceId,
 			@PathParam("folderId") String folderId);
+	
+	@POST
+	@Path(value = "/create")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response postFolder(
+			@PathParam("workspaceId") int workspaceId,
+			Folder folder);
+	
+	@POST
+	@Path(value = "/update")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response updateFolder(
+			@PathParam("workspaceId") int workspaceId,
+			Folder folder);
+	
+	@DELETE
+	@Path(value = "/{folderId}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response deleteFolder(
+			@PathParam("workspaceId") int workspaceId,
+			@PathParam("folderId") String folderId);
+	
+	@POST
+	@Path(value = "/move/{parentFolderId}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response moveFolder(
+			@PathParam("workspaceId") int workspaceId,
+			@PathParam("parentFolderId") String parentFolderId,
+			@QueryParam("folderId") String folderId,
+			@QueryParam("datalayerfolderId") Integer datalayerfolderId,
+			@QueryParam("index") int index);
 }
 

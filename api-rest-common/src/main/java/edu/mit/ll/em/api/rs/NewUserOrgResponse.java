@@ -27,51 +27,49 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-import java.io.IOException;
+package edu.mit.ll.em.api.rs;
+
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
 
-import com.rabbitmq.client.ConsumerCancelledException;
-import com.rabbitmq.client.ShutdownSignalException;
-import edu.mit.ll.nics.common.rabbitmq.RabbitPubSubConsumer;
-import edu.mit.ll.nics.common.rabbitmq.RabbitPubSubMsg;
+import edu.mit.ll.nics.common.entity.CurrentUserSession;
+import edu.mit.ll.nics.common.entity.User;
 
-public class RabbitPubSubConsumerTest {
+public class NewUserOrgResponse {
+
+	private String message;
 	
-	private static String DEFAULT_BINDING_KEY = "LDDRS.notifications.forms";
+	private Collection<Integer> users = new ArrayList<Integer>();
 	
-	private static String[] getBindingKeys(String args[], int keyOffset) {
-		List<String> keyList = new ArrayList<String>();
-		while (keyOffset < args.length) {
-			keyList.add(args[keyOffset++]);
-		}
-		String[] ret = null;
-		if (keyList.size() > 0) {
-			ret = keyList.toArray(new String[keyList.size()]);
-		} else {
-			ret = new String[1];
-			ret[0] = DEFAULT_BINDING_KEY;
-		}
-		return ret;
+	private Collection<Integer> failedUsers = new ArrayList<Integer>();
+	
+	public String getMessage() {
+		return message;
 	}
 
-	public static void main(String args[]) 
-			throws IOException, ShutdownSignalException, 
-			ConsumerCancelledException, InterruptedException {
-		String rabbitHost = (args.length > 0) ? args[0] : "localhost";
-		String exchangeName = (args.length > 1) ? args[1] : "XYZ";
-		String bindingKeys[] = getBindingKeys(args, 2);
-		
-		RabbitPubSubConsumer c = new RabbitPubSubConsumer(
-				rabbitHost, exchangeName, bindingKeys);
-		
-		for (int n = 0; n < 40; ++n) {			
-			RabbitPubSubMsg m = c.consume();
-			System.out.println(" [x] Received '" + m.getMsg() + "'" + 
-					" with routingKey: " + m.getRoutingKey());
-		}
-		System.out.println("Consumer is now shutting down...");
-		c.destroy();
-		System.out.println("Done.");		
+	public void setMessage(String message) {
+		this.message = message;
+	}
+
+	public Collection<Integer> getUsers() {
+		return users;
+	}
+
+	public void setUsers(Collection<Integer> users) {
+		this.users = users;
+	}
+	
+	public Collection<Integer> getFailedUsers() {
+		return failedUsers;
+	}
+
+	public void setFailedUsers(Collection<Integer> failedUsers) {
+		this.failedUsers = failedUsers;
+	}
+
+	@Override
+	public String toString() {
+		return "NewUserOrgResponse [users=" + users + ", failedUsers=" + failedUsers + ", message="
+				+ message + "]";
 	}
 }

@@ -47,6 +47,9 @@ public class UserResponse {
 	// TODO: Really used for returning a count REST request; i.e., do not get
 	// the list of users just the count.
 	private long count;
+	
+	//Number of organizations the user is enabled in
+	private int orgCount;
 
 	public String getMessage() {
 		return message;
@@ -69,11 +72,20 @@ public class UserResponse {
 			count = users.size();
 		}
 	}
+	
+	public void setOrgCount(int orgs){
+		this.orgCount = orgs;
+	}
+	
+	public int getOrgCount(){
+		return this.orgCount;
+	}
 
 	@Override
 	public String toString() {
-		return "UserResponse [users=" + users + ", session=" + session + ", message="
-				+ message + "]";
+		return "UserResponse [users=" + users + ", session=" + session 
+				+ ", message=" + message 
+				+ ", orgCount=" + orgCount + "]";
 	}
 
 	public long getCount() {

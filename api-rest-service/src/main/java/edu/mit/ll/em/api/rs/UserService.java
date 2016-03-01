@@ -32,17 +32,13 @@ package edu.mit.ll.em.api.rs;
 import java.util.Collection;
 
 import javax.ws.rs.Consumes;
-import javax.ws.rs.CookieParam;
-import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Cookie;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -57,6 +53,11 @@ public interface UserService {
 	
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/systemroles")
+	public Response getSystemRoles();
+	
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/active")
 	public Response getActiveUsers(@PathParam("workspaceId") int workspaceId);
 	
@@ -66,20 +67,29 @@ public interface UserService {
 	public Response isAdmin(@PathParam("userOrgId") int userOrgId);
 	
 	@GET
-	@Path(value = "/username/{username}/userOrgId/{userOrgId}/orgName/{orgName}")
+	@Path(value = "/username/{username}/userOrgId/{userOrgId}/orgId/{orgId}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getUserProfile(
 			@PathParam("username")String username, 
 			@PathParam("userOrgId")int userOrgId, 
 			@PathParam("workspaceId")int workspaceId, 
-			@PathParam("orgName")String orgName,
+			@PathParam("orgId") int orgId,
+			@QueryParam("requestingUserOrgId") int rUserOrgId,
 			@HeaderParam("CUSTOM-uid") String requestingUser);
 	
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/updateprofile")
-	public Response postUserProfile(User user, @HeaderParam("CUSTOM-uid") String requestingUser);
+	public Response postUserProfile(User user, @HeaderParam("CUSTOM-uid") String requestingUser, @QueryParam("requestingUserOrgId") int rUserOrgId);
+	
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/find")
+	public Response findUser(
+			@QueryParam("firstName") String firstName,
+			@QueryParam("lastName") String lastName,
+			@QueryParam("exact") boolean exact);
 	
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
@@ -180,6 +190,11 @@ public interface UserService {
 	@POST
 	@Path(value= "/removesession")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response removeUserSession(@QueryParam("currentUserSessionId") long currentUserSessionId);
+	public Response removeUserSession(@PathParam("workspaceId") int workspaceId, @QueryParam("currentUserSessionId") long currentUserSessionId);
+	
+	@POST
+	@Path(value= "/userorg")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response addUserToOrg(Collection<Integer> userIds,  @QueryParam("orgId") int orgId, @PathParam("workspaceId") int workspaceId);
 	
 }

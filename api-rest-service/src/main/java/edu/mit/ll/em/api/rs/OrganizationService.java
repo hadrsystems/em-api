@@ -30,6 +30,7 @@
 package edu.mit.ll.em.api.rs;
 
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -37,11 +38,18 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import edu.mit.ll.nics.common.entity.Org;
+
 @Path("/orgs/{workspaceId}")
 public interface OrganizationService {
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getOrganizations(@PathParam("workspaceId") Integer workspaceId, @QueryParam("userId") Integer userId);
+	
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/admin")
+	public Response getAdminOrgs(@PathParam("workspaceId") Integer workspaceId, @QueryParam("userId") Integer userId);
 	
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
@@ -57,4 +65,35 @@ public interface OrganizationService {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/typemap")
 	public Response getOrganizationTypeMap();
+	
+
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/adminlist/{orgId}")
+	public Response getOrgAdminList(@PathParam("orgId") Integer orgId);
+	
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/org/{orgName}")
+	public Response getOrganization(@PathParam("orgName")String orgName);
+	
+
+	@POST
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response postOrganization(Org org);
+	
+	@POST
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/orgtype/add/{orgId}/{orgTypeId}")
+	public Response postOrgOrgType(
+			@PathParam("orgId") int orgId,
+			@PathParam("orgTypeId") int orgTypeId);
+	
+	@POST
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/orgtype/remove/{orgId}/{orgTypeId}")
+	public Response removeOrgOrgType(
+			@PathParam("orgId") int orgId,
+			@PathParam("orgTypeId") int orgTypeId);
+
 }

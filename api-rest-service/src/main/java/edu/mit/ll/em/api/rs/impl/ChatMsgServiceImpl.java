@@ -37,6 +37,9 @@ import java.util.List;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import edu.mit.ll.em.api.util.APIConfig;
+import edu.mit.ll.nics.common.rabbitmq.RabbitFactory;
+import edu.mit.ll.nics.common.rabbitmq.RabbitPubSubProducer;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -45,8 +48,6 @@ import edu.mit.ll.em.api.rs.ChatMsgService;
 import edu.mit.ll.em.api.rs.ChatMsgServiceResponse;
 import edu.mit.ll.em.api.rs.ChatOptionalParams;
 import edu.mit.ll.em.api.rs.QueryConstraintHelper;
-import edu.mit.ll.em.api.util.rabbitmq.RabbitFactory;
-import edu.mit.ll.em.api.util.rabbitmq.RabbitPubSubProducer;
 import edu.mit.ll.nics.common.entity.Chat;
 import edu.mit.ll.nics.nicsdao.ChatDAO;
 import edu.mit.ll.nics.nicsdao.impl.ChatDAOImpl;
@@ -110,7 +111,7 @@ public class ChatMsgServiceImpl implements ChatMsgService {
 	 * Creates a single chat message
 	 * 
 	 * @param collabroomId
-	 * @param chatMsg
+	 * @param chat
 	 * 
 	 * @return Response A ChatMsgServiceResponse
 	 */
@@ -164,7 +165,11 @@ public class ChatMsgServiceImpl implements ChatMsgService {
 	
 	private RabbitPubSubProducer getRabbitProducer() throws IOException {
 		if (rabbitProducer == null) {
-			rabbitProducer = RabbitFactory.makeRabbitPubSubProducer();
+			rabbitProducer = RabbitFactory.makeRabbitPubSubProducer(
+					APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_HOSTNAME_KEY),
+					APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_EXCHANGENAME_KEY),
+					APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_USERNAME_KEY),
+					APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_USERPWD_KEY));
 		}
 		return rabbitProducer;
 	}

@@ -44,6 +44,10 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import edu.mit.ll.nics.common.entity.*;
+import edu.mit.ll.nics.common.rabbitmq.RabbitFactory;
+import edu.mit.ll.nics.common.rabbitmq.RabbitPubSubProducer;
+import edu.mit.ll.nics.nicsdao.impl.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.cxf.jaxrs.ext.multipart.Attachment;
 import org.apache.cxf.jaxrs.ext.multipart.MultipartBody;
@@ -66,20 +70,7 @@ import edu.mit.ll.em.api.rs.ReportService;
 import edu.mit.ll.em.api.rs.ReportServiceResponse;
 import edu.mit.ll.em.api.util.APIConfig;
 import edu.mit.ll.em.api.util.APILogger;
-import edu.mit.ll.em.api.util.rabbitmq.RabbitFactory;
-import edu.mit.ll.em.api.util.rabbitmq.RabbitPubSubProducer;
-import edu.mit.ll.nics.common.entity.Image;
-import edu.mit.ll.nics.common.entity.Location;
-import edu.mit.ll.nics.common.entity.Form;
-import edu.mit.ll.nics.common.entity.FormType;
-import edu.mit.ll.nics.common.entity.Incident;
-import edu.mit.ll.nics.common.entity.User;
 import edu.mit.ll.nics.common.rabbitmq.client.RabbitProducer;
-import edu.mit.ll.nics.nicsdao.impl.FormDAOImpl;
-import edu.mit.ll.nics.nicsdao.impl.IncidentDAOImpl;
-import edu.mit.ll.nics.nicsdao.impl.PhiDAOImpl;
-import edu.mit.ll.nics.nicsdao.impl.UserDAOImpl;
-import edu.mit.ll.nics.nicsdao.impl.UserSessionDAOImpl;
 
 /**
  * 
@@ -95,6 +86,7 @@ public class ReportServiceImpl implements ReportService {
 	private static final FormDAOImpl formDao = new FormDAOImpl();
 	private static final PhiDAOImpl phiDao = new PhiDAOImpl();
 	private static final UserSessionDAOImpl userSessDao = new UserSessionDAOImpl();
+    private static final UxoreportDAOImpl uxoreportDao = new UxoreportDAOImpl();
 	
 	private RabbitPubSubProducer rabbitProducer = null;
 	
@@ -759,7 +751,7 @@ public class ReportServiceImpl implements ReportService {
 				reportResponse.getReports().add(ret);
 				response = Response.ok(reportResponse).status(Status.OK).build();
 				try {
-					String topic = String.format("NICS.incident.%d.report.SR.new", form.getIncidentid());
+					String topic = String.format("iweb.NICS.incident.%d.report.SR.new", form.getIncidentid());
 					notifyNewReport(topic, form);
 				} catch (IOException e) {
 					APILogger.getInstance().e("ReportServiceImpl", "Exception publishing new form with type id: " + 
@@ -931,7 +923,7 @@ public class ReportServiceImpl implements ReportService {
 				response = Response.ok(reportResponse).status(Status.OK).build();
 				
 				try {
-					String topic = String.format("NICS.incident.%d.report.DMGRPT.new", form.getIncidentid());
+					String topic = String.format("iweb.NICS.incident.%d.report.DMGRPT.new", form.getIncidentid());
 					notifyNewReport(topic, form);
 				} catch (IOException e) {
 					APILogger.getInstance().e("ReportServiceImpl", "Exception publishing new form with type id: " + 
@@ -1101,7 +1093,8 @@ public class ReportServiceImpl implements ReportService {
 				response = Response.ok(reportResponse).status(Status.OK).build();
 				
 				try {
-					String topic = String.format("NICS.incident.%d.report.DMGRPT.new", form.getIncidentid());
+					String topic = String.format("iweb.NICS.incident.%d.report.UXO.new", form.getIncidentid());
+					System.out.println("DANS TOPIC : " +  topic);
 					notifyNewReport(topic, form);
 				} catch (IOException e) {
 					APILogger.getInstance().e("ReportServiceImpl", "Exception publishing new form with type id: " + 
@@ -1122,8 +1115,26 @@ public class ReportServiceImpl implements ReportService {
 			reportResponse.setMessage(e.getMessage()) ;
 			response = Response.ok(reportResponse).status(Status.EXPECTATION_FAILED).build();
 		}
-		
-			return response;
+
+        try
+        {
+            Uxoreport report = new Uxoreport();
+            report.setMessage(msg.toString());
+            report.setIncidentid(incidentId);
+            report.setLat(lla.y);
+            report.setLon(lla.x);
+
+            APILogger.getInstance().i(CNAME, "Trying to insert uxoreport");
+            uxoreportDao.persistUxoreport(report);
+            APILogger.getInstance().i(CNAME, "Inserted uxoreport");
+        } catch (Exception e)
+        {
+            APILogger.getInstance().e(CNAME, "Exception trying to insert uxoreport");
+            e.printStackTrace();
+        }
+
+
+        return response;
 	}
 		
 	private boolean validLocation(Coordinate lla) {
@@ -1151,7 +1162,11 @@ public class ReportServiceImpl implements ReportService {
 	 */
 	private RabbitPubSubProducer getRabbitProducer() throws IOException {
 		if (rabbitProducer == null) {
-			rabbitProducer = RabbitFactory.makeRabbitPubSubProducer();
+			rabbitProducer = RabbitFactory.makeRabbitPubSubProducer(
+					APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_HOSTNAME_KEY),
+					APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_EXCHANGENAME_KEY),
+					APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_USERNAME_KEY),
+					APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_USERPWD_KEY));
 		}
 		return rabbitProducer;
 	}

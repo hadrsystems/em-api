@@ -65,6 +65,7 @@ public interface FeatureService {
 	@Path(value = "/collabroom/{collabRoomId}")
 	public Response postCollabRoomFeature(
 			@PathParam("collabRoomId") int collabRoomId,
+			@DefaultValue("3857") @QueryParam("geoType") int geoType,
 			String feature,
 			@HeaderParam("CUSTOM-uid") String username);
 	

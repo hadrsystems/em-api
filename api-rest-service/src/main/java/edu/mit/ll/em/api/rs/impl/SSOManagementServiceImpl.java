@@ -54,6 +54,7 @@ import edu.mit.ll.em.api.rs.UserResponse;
 import edu.mit.ll.em.api.util.APIConfig;
 import edu.mit.ll.em.api.util.APILogger;
 import edu.mit.ll.em.api.util.SADisplayConstants;
+import edu.mit.ll.nics.nicsdao.impl.UserDAOImpl;
 import edu.mit.ll.nics.nicsdao.impl.UserOrgDAOImpl;
 import edu.mit.ll.nics.sso.util.SSOUtil;
 
@@ -353,12 +354,13 @@ public class SSOManagementServiceImpl implements SSOManagementService {
 		UserResponse userResponse = new UserResponse();
 		
 		int systemRoleId = userOrgDao.getSystemRoleId(username, userOrgWorkspaceId);
-		if(systemRoleId == SADisplayConstants.ADMIN_ROLE_ID ||
-				systemRoleId == SADisplayConstants.SUPER_ROLE_ID){
+		
+		if(((systemRoleId == SADisplayConstants.ADMIN_ROLE_ID ||
+				systemRoleId == SADisplayConstants.SUPER_ROLE_ID)) ||
+				userOrgDao.isUserRole(username, SADisplayConstants.SUPER_ROLE_ID)){
 		
 			if(email == null || email.isEmpty() 
 					|| flag == null || flag.isEmpty()) {
-				
 				return Response.ok("Invalid parameters").status(Status.BAD_REQUEST).build();
 			}
 			

@@ -31,8 +31,8 @@ import java.io.IOException;
 
 import com.rabbitmq.client.ConsumerCancelledException;
 import com.rabbitmq.client.ShutdownSignalException;
+import edu.mit.ll.nics.common.rabbitmq.RabbitQueueConsumer;
 
-import edu.mit.ll.em.api.util.rabbitmq.RabbitQueueConsumer;
 
 public class RabbitQueueConsumerTest {
 	
