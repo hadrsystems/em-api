@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2015, Massachusetts Institute of Technology (MIT)
+ * Copyright (c) 2008-2016, Massachusetts Institute of Technology (MIT)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,7 @@ package edu.mit.ll.em.api.rs;
 import java.util.Collection;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
@@ -188,6 +189,14 @@ public interface UserService {
 			@HeaderParam("CUSTOM-uid") String requestingUser);
 	
 	@POST
+	@Path(value= "/updatesession")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response updateUserSession(@QueryParam("userId") long userId, @QueryParam("displayName") String displayName,
+			@QueryParam("userOrgId") int userOrgId, @QueryParam("systemRoleId") int systemRoleId, 
+			@PathParam("workspaceId") int workspaceId, @QueryParam("sessionId") String sessionId,
+			@HeaderParam("CUSTOM-uid") String requestingUser);
+	
+	@POST
 	@Path(value= "/removesession")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response removeUserSession(@PathParam("workspaceId") int workspaceId, @QueryParam("currentUserSessionId") long currentUserSessionId);
@@ -196,5 +205,29 @@ public interface UserService {
 	@Path(value= "/userorg")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response addUserToOrg(Collection<Integer> userIds,  @QueryParam("orgId") int orgId, @PathParam("workspaceId") int workspaceId);
+	
+	@GET
+	@Path(value = "/contactinfo")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getUsersContactInfo(@PathParam("workspaceId") int workspaceId, 
+			@QueryParam("userName") String userName);
+	
+	@POST
+	@Path(value = "/updatecontactinfo")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response addContactInfo(@PathParam("workspaceId") int workspaceId, 
+			@QueryParam("userName") String userName,
+			@QueryParam("contactTypeId") int contactTypeId,
+			@QueryParam("value") String value,
+			@HeaderParam("CUSTOM-uid") String requestingUser);
+	
+	@DELETE
+	@Path(value = "/deletecontactinfo")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response deleteContactInfo(@PathParam("workspaceId") int workspaceId, 
+			@QueryParam("userName") String userName,
+			@QueryParam("contactTypeId") int contactTypeId,
+			@QueryParam("value") String value,
+			@HeaderParam("CUSTOM-uid") String requestingUser);
 	
 }

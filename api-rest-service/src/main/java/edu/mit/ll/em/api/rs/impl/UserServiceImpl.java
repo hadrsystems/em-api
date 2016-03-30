@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2015, Massachusetts Institute of Technology (MIT)
+ * Copyright (c) 2008-2016, Massachusetts Institute of Technology (MIT)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -39,8 +39,13 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
+import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
@@ -1498,6 +1503,7 @@ public class UserServiceImpl implements UserService {
 				if(this.userSessDao.removeUserSession(cus.getCurrentusersessionid())){
 					this.notifyLogout(workspaceId, cus.getCurrentusersessionid());
 				}else{
+					//This will fall through to the null session exception
 					existing = true;
 				}
 			}
@@ -1527,6 +1533,161 @@ public class UserServiceImpl implements UserService {
 			}
 		} catch(Exception e) {
 			APILogger.getInstance().e("UserServiceImpl", "Exception creating UserSession");
+			response = Response.ok(userResponse).status(Status.INTERNAL_SERVER_ERROR).build();
+		}
+		
+		return response;
+	}
+	public Response updateUserSession(long userId, String displayName, int userorgId,
+			int systemRoleId, int workspaceId, String sessionId, String requestingUser) {
+		
+		Response response = null;
+		UserResponse  userResponse = new UserResponse();
+
+		if(userDao.getUserId(requestingUser) != userId){
+            return Response.status(Status.BAD_REQUEST).entity(
+                    Status.FORBIDDEN.getReasonPhrase()).build();
+        }
+
+		CurrentUserSession session = null;
+		boolean existing = false;
+		try{
+			CurrentUserSession cus = userSessDao.getCurrentUserSession(userId);
+			if(cus != null){
+				if(this.userSessDao.removeUserSession(cus.getCurrentusersessionid())){
+					//this.notifyLogout(workspaceId, cus.getCurrentusersessionid());
+				}else{
+					existing = true;
+				}
+			}
+			
+			if(!existing){
+				session = userSessDao.createUserSession(userId, displayName, userorgId, systemRoleId, workspaceId, sessionId);
+				if(session != null){
+					userResponse.setCount(1);
+					userResponse.setMessage(Status.OK.getReasonPhrase());
+					userResponse.setUserSession(session);
+					response = Response.ok(userResponse).status(Status.OK).build();
+					
+					try {
+						User user = userDao.getUserWithSession(userId);
+						notifyLogin(workspaceId, user);
+					} catch (IOException e) {
+						APILogger.getInstance().e("UserServiceImpl", "Failed to publish ChatMsgService message event" + e.getMessage());
+					}
+				}
+			}
+			
+			if(session == null){
+				APILogger.getInstance().e("UserServiceImpl", "The usersession was not created for " + displayName);
+				userResponse.setCount(1);
+				userResponse.setMessage(Status.NOT_FOUND.getReasonPhrase());
+				response = Response.ok(userResponse).status(Status.INTERNAL_SERVER_ERROR).build();
+			}
+		} catch(Exception e) {
+			APILogger.getInstance().e("UserServiceImpl", "Exception creating UserSession");
+			response = Response.ok(userResponse).status(Status.INTERNAL_SERVER_ERROR).build();
+		}
+		
+		return response;
+	}
+	
+	public Response getUsersContactInfo(int workspaceId,  String userName){
+		
+		Response response = null;
+		UserResponse  userResponse = new UserResponse();
+		List<Contact> contacts = null;
+		User user = null;
+		
+		try{
+			contacts = userDao.getAllUserContacts(userName);
+			
+			if(contacts != null){
+				user = new User();
+				user.setContacts(new HashSet<Contact>(contacts));
+				userResponse.getUsers().add(user);
+				userResponse.setMessage(Status.OK.getReasonPhrase());
+				userResponse.setCount(contacts.size());
+				response = Response.ok(userResponse).status(Status.OK).build();
+			}
+			else{
+				userResponse.setMessage(Status.EXPECTATION_FAILED.getReasonPhrase());
+				userResponse.setCount(0);
+				response = Response.ok(userResponse).status(Status.INTERNAL_SERVER_ERROR).build();
+			}
+			
+			
+		} catch(Exception e) {
+			APILogger.getInstance().e("UserServiceImpl", "Exception getting Contacts");
+			response = Response.ok(userResponse).status(Status.INTERNAL_SERVER_ERROR).build();
+		}
+		
+		
+		return response;
+	}
+	
+	public Response addContactInfo(int workspaceId, String userName, int contactId, String value , String requestingUser){
+			
+		Response response = null;
+		UserResponse  userResponse = new UserResponse();
+		
+		if(!userName.equalsIgnoreCase(requestingUser)){
+			return Response.status(Status.BAD_REQUEST).entity(
+					Status.FORBIDDEN.getReasonPhrase()).build();
+		}
+		
+		try{
+			
+			boolean updated = userDao.addContact(userName, contactId, value);
+			
+			if(updated){
+				userResponse.setMessage(Status.OK.getReasonPhrase());
+				userResponse.setCount(1);
+				response = Response.ok(userResponse).status(Status.OK).build();
+			}
+			else{
+				userResponse.setMessage(Status.EXPECTATION_FAILED.getReasonPhrase());
+				userResponse.setCount(0);
+				response = Response.ok(userResponse).status(Status.INTERNAL_SERVER_ERROR).build();
+			}
+			
+			
+		} catch(Exception e) {
+			APILogger.getInstance().e("UserServiceImpl", "Exception updating Contacts");
+			response = Response.ok(userResponse).status(Status.INTERNAL_SERVER_ERROR).build();
+		}
+		
+		
+		return response;
+	}
+	
+	public Response deleteContactInfo(int workspaceId, String userName, int contactTypeId, String value, String requestingUser){
+		
+		Response response = null;
+		UserResponse  userResponse = new UserResponse();
+		
+		if(!userName.equalsIgnoreCase(requestingUser)){
+			return Response.status(Status.BAD_REQUEST).entity(
+					Status.FORBIDDEN.getReasonPhrase()).build();
+		}
+		
+		try{
+			
+			boolean deleted = userDao.deleteContact(userName,contactTypeId,value);
+			
+			if(deleted){
+				userResponse.setMessage(Status.OK.getReasonPhrase());
+				userResponse.setCount(1);
+				response = Response.ok(userResponse).status(Status.OK).build();
+			}
+			else{
+				userResponse.setMessage(Status.EXPECTATION_FAILED.getReasonPhrase());
+				userResponse.setCount(0);
+				response = Response.ok(userResponse).status(Status.INTERNAL_SERVER_ERROR).build();
+			}
+			
+		} catch(Exception e) {
+			APILogger.getInstance().e("UserServiceImpl", "Exception updating Contacts");
 			response = Response.ok(userResponse).status(Status.INTERNAL_SERVER_ERROR).build();
 		}
 		

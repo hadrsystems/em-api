@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2015, Massachusetts Institute of Technology (MIT)
+ * Copyright (c) 2008-2016, Massachusetts Institute of Technology (MIT)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -309,4 +309,5 @@ public final class SADisplayConstants {
 	public static final String USER_ENABLED = USER_ESCAPED + ".enabled";
 	public static final String USER_ENABLED_PARAM = "user_enabled";
 	public static final String PASSWORD_CHANGED = "passwordchanged";
+	public static final String INCIDENT_MAP = "Incident Map";
 }

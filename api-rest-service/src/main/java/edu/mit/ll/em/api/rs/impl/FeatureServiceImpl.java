@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2015, Massachusetts Institute of Technology (MIT)
+ * Copyright (c) 2008-2016, Massachusetts Institute of Technology (MIT)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -135,7 +135,7 @@ public class FeatureServiceImpl implements FeatureService {
 		UTCRange dateRange = QueryConstraintHelper.makeDateRange(optionalParams);
 		
 		if(userDao.getUserId(requestingUser) == userId && 
-				collabRoomDao.hasPermissions(userId, collabroomId)){
+				collabRoomDao.hasPermissions(userId, collabroomId, false)){
 			List<Feature> features = featureDao.getFeatureState(collabroomId, dateRange, geoType);
 			buildDocumentUrls(features);
 			
@@ -185,7 +185,7 @@ public class FeatureServiceImpl implements FeatureService {
 		Long featureId = null;
 		FeatureServiceResponse featureResponse = new FeatureServiceResponse();
 		
-		if(!collabRoomDao.hasPermissions(userDao.getUserId(requestingUser), collabRoomId)){
+		if(!collabRoomDao.hasPermissions(userDao.getUserId(requestingUser), collabRoomId, false)){
 			return getAccessDeniedResponse();
 		}
 		
@@ -249,7 +249,7 @@ public class FeatureServiceImpl implements FeatureService {
 	 */
 	public Response postCollabRoomFeature(int collabRoomId, int geoType , String feature , String requestingUser) {
 		
-		if(!collabRoomDao.hasPermissions(userDao.getUserId(requestingUser), collabRoomId)){
+		if(!collabRoomDao.hasPermissions(userDao.getUserId(requestingUser), collabRoomId, false)){
 			return getAccessDeniedResponse();
 		}
 		
@@ -360,7 +360,7 @@ public class FeatureServiceImpl implements FeatureService {
 	 */
 	public Response deleteCollabRoomFeature(int collabRoomId, long featureId, String requestingUser){
 		
-		if(!collabRoomDao.hasPermissions(userDao.getUserId(requestingUser), collabRoomId)){
+		if(!collabRoomDao.hasPermissions(userDao.getUserId(requestingUser), collabRoomId, false)){
 			return getAccessDeniedResponse();
 		}
 		

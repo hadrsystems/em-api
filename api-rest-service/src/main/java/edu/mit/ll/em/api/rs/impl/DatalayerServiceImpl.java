@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2015, Massachusetts Institute of Technology (MIT)
+ * Copyright (c) 2008-2016, Massachusetts Institute of Technology (MIT)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -392,7 +392,8 @@ public class DatalayerServiceImpl implements DatalayerService {
 						filePath = APIConfig.getInstance().getConfiguration().getString(APIConfig.KMZ_UPLOAD_PATH,"/opt/data/nics/upload/kmz");
 					}else if(attachment.getContentDisposition().getParameter("filename").endsWith(".gpx")){
 						filePath = APIConfig.getInstance().getConfiguration().getString(APIConfig.GPX_UPLOAD_PATH,"/opt/data/nics/upload/gpx");
-					}else if(attachment.getContentDisposition().getParameter("filename").endsWith(".json")){
+					}else if(attachment.getContentDisposition().getParameter("filename").endsWith(".json") || 
+							attachment.getContentDisposition().getParameter("filename").endsWith(".geojson")){
 						filePath = APIConfig.getInstance().getConfiguration().getString(APIConfig.JSON_UPLOAD_PATH,"/opt/data/nics/upload/geojson");
 					}else if(attachment.getContentDisposition().getParameter("filename").endsWith(".kml")){
 						filePath = APIConfig.getInstance().getConfiguration().getString(APIConfig.KML_UPLOAD_PATH,"/opt/data/nics/upload/kml");

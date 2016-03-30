@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2015, Massachusetts Institute of Technology (MIT)
+ * Copyright (c) 2008-2016, Massachusetts Institute of Technology (MIT)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -118,7 +118,15 @@ public class CollabServiceImpl implements CollabService {
 			List<CollabRoom> secureRooms = collabDao.getSecuredRooms(userId, incidentId);
 			
 			for(CollabRoom room : secureRooms){
-				if(collabDao.getCollabRoomSystemRole(room.getCollabRoomId(), userId) ==
+				if(room.getName().equalsIgnoreCase(SADisplayConstants.INCIDENT_MAP)){
+					int roleId = collabDao.getCollabRoomSystemRole(room.getCollabRoomId(), userId);
+					if(roleId == SADisplayConstants.USER_ROLE_ID){
+						room.setReadWriteUsers(Arrays.asList(userId));
+					}else if(roleId == SADisplayConstants.ADMIN_ROLE_ID){
+						room.setAdminUsers(Arrays.asList(userId));
+						adminRooms.add(room.getCollabRoomId());
+					}
+				}else if(collabDao.getCollabRoomSystemRole(room.getCollabRoomId(), userId) ==
 						SADisplayConstants.ADMIN_ROLE_ID){
 						adminRooms.add(room.getCollabRoomId());
 				}

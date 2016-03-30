@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2015, Massachusetts Institute of Technology (MIT)
+ * Copyright (c) 2008-2016, Massachusetts Institute of Technology (MIT)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -352,14 +352,15 @@ public class IncidentServiceImpl implements IncidentService {
 		
 		//Create default rooms
 		CollabRoom incidentMap = createDefaultCollabRoom(newIncident.getUsersessionid(), INCIDENT_MAP);
-		incidentMap.getAdminUsers().add(userId);
+		List<Integer> admins = orgDao.getOrgAdmins(orgId,workspaceId);
+		if(!admins.contains(userId)){
+			incidentMap.getAdminUsers().add(userId);
+		}
+		incidentMap.getAdminUsers().addAll(admins);
 		
 		CollabService collabRoomEndpoint = new CollabServiceImpl();
-		/*collabRoomEndpoint.createCollabRoomWithPermissions(newIncident.getIncidentid(),orgId, workspaceId,
-				incidentMap);*/
-		//Do not secure Incident Map Room yet - TODO
-		collabRoomEndpoint.createUnsecureCollabRoom(newIncident.getIncidentid(), createDefaultCollabRoom(
-				newIncident.getUsersessionid(), INCIDENT_MAP));
+		collabRoomEndpoint.createCollabRoomWithPermissions(newIncident.getIncidentid(),orgId, workspaceId,
+				incidentMap);
 		
 		collabRoomEndpoint.createUnsecureCollabRoom(newIncident.getIncidentid(), createDefaultCollabRoom(
 				newIncident.getUsersessionid(), WORKING_MAP));
