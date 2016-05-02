@@ -34,7 +34,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>edu.mit.ll.em.api</groupId>
 	<artifactId>em-api</artifactId>
-	<version>6.1.2</version>
+	<version>6.2</version>
 	<packaging>pom</packaging>
 
 	<modules>
@@ -62,6 +62,7 @@
 		<postgresql.version>9.3-1102-jdbc4</postgresql.version>
 		<jackson.core.version>2.0.0</jackson.core.version>
 		<license.plugin.version>1.9.0</license.plugin.version>
+    		<jersey.version>2.17</jersey.version>
 	</properties>
 	<dependencyManagement>
 		<dependencies>
@@ -298,6 +299,11 @@
 				<artifactId>cxf-rt-frontend-jaxws</artifactId>
 				<version>${cxf.version}</version>
 			</dependency>
+			<dependency>
+			       <groupId>org.glassfish.jersey.core</groupId>
+			       <artifactId>jersey-client</artifactId>
+			       <version>${jersey.version}</version>
+		      </dependency>
 		</dependencies>
 	</dependencyManagement>
 

@@ -46,6 +46,7 @@ import edu.mit.ll.em.api.rs.export.ShapeExportFile;
 import edu.mit.ll.em.api.rs.export.WFSGetCapabilitiesExport;
 import edu.mit.ll.em.api.rs.export.WMSGetCapabilitiesExport;
 import edu.mit.ll.em.api.util.APIConfig;
+import edu.mit.ll.em.api.util.SADisplayConstants;
 import edu.mit.ll.nics.common.entity.CollabRoom;
 import edu.mit.ll.nics.common.entity.Incident;
 import edu.mit.ll.nics.common.entity.IncidentIncidentType;
@@ -334,18 +335,24 @@ public class DatalayerExportImpl implements DatalayerExport{
 	 */
 	private boolean hasPermissions(long userId, int incidentId, int collabRoomId){
 		try{
-			//List<CollabRoom> rooms = CollabDAO.getInstance().getAccessibleCollabRooms(userId, incidentId);
+			String incidentMap = APIConfig.getInstance().getConfiguration().getString(
+					APIConfig.INCIDENT_MAP, SADisplayConstants.INCIDENT_MAP);
 			
-			List<CollabRoom> rooms = collabDao.getAccessibleCollabRooms(userId, incidentId);
+			//Does not allow users who are not read/write or admins to export the incident map
+			/*List<CollabRoom> rooms = collabDao.getAccessibleCollabRooms(userId, incidentId, incidentMap);
 			for(Iterator<CollabRoom> itr = rooms.iterator(); itr.hasNext();){
 				if(itr.next().getCollabRoomId() == collabRoomId){
 					return true;
 				}
-			}
+			}*/
+			
+			//Allows users to export the Incident Map
+			return collabDao.hasPermissions(userId, collabRoomId, incidentMap);
+			
 		}catch(Exception e){
 			return false;
 		}
-		return false;
+		//return false;
 	}
 	
 	/**

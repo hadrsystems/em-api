@@ -105,7 +105,9 @@ public class CollabServiceImpl implements CollabService {
 	 * @see CollabServiceResponse
 	 */
 	public Response getCollabRoom(int incidentId, Integer userId, String username) {
-		
+		String incidentMap = APIConfig.getInstance().getConfiguration().getString(
+				APIConfig.INCIDENT_MAP, SADisplayConstants.INCIDENT_MAP);
+				
 		Response response = null;
 		CollabServiceResponse collabResponse = new CollabServiceResponse();
 		
@@ -115,10 +117,12 @@ public class CollabServiceImpl implements CollabService {
 		
 		try {
 			List<Integer> adminRooms = new ArrayList<Integer>();
-			List<CollabRoom> secureRooms = collabDao.getSecuredRooms(userId, incidentId);
+			List<CollabRoom> secureRooms = collabDao.getSecuredRooms(userId, incidentId, incidentMap);
+			
+			List<CollabRoom> collabRooms = collabDao.getAccessibleCollabRooms(userId, incidentId, incidentMap);
 			
 			for(CollabRoom room : secureRooms){
-				if(room.getName().equalsIgnoreCase(SADisplayConstants.INCIDENT_MAP)){
+				if(room.getName().equalsIgnoreCase(incidentMap)){
 					int roleId = collabDao.getCollabRoomSystemRole(room.getCollabRoomId(), userId);
 					if(roleId == SADisplayConstants.USER_ROLE_ID){
 						room.setReadWriteUsers(Arrays.asList(userId));
@@ -126,14 +130,15 @@ public class CollabServiceImpl implements CollabService {
 						room.setAdminUsers(Arrays.asList(userId));
 						adminRooms.add(room.getCollabRoomId());
 					}
-				}else if(collabDao.getCollabRoomSystemRole(room.getCollabRoomId(), userId) ==
+					collabRooms.add(0, room);
+				}else{
+					if(collabDao.getCollabRoomSystemRole(room.getCollabRoomId(), userId) ==
 						SADisplayConstants.ADMIN_ROLE_ID){
 						adminRooms.add(room.getCollabRoomId());
+					}
+					collabRooms.add(room);
 				}
 			}
-			
-			List<CollabRoom> collabRooms = collabDao.getAccessibleCollabRooms(userId, incidentId);
-			collabRooms.addAll(secureRooms);
 			
 			collabResponse.setAdminRooms(adminRooms);
 			collabResponse.setMessage(Status.OK.getReasonPhrase());
@@ -321,12 +326,15 @@ public class CollabServiceImpl implements CollabService {
 	}
 	
 	public Response validateSubsription(int collabRoomId, String username){
+		String incidentMap = APIConfig.getInstance().getConfiguration().getString(
+				APIConfig.INCIDENT_MAP, SADisplayConstants.INCIDENT_MAP);
+		
 		Response response = null;
 		CollabRoomPermissionResponse collabResponse = new CollabRoomPermissionResponse();
 		long userId = userDao.getUserId(username);
 		
 		//verify the user has permissions
-		if(collabDao.hasPermissions(userId, collabRoomId)){
+		if(collabDao.hasPermissions(userId, collabRoomId, incidentMap)){ //Everyone can susbscribe to the incidentmap
 			response = Response.ok(collabResponse).status(Status.OK).build();
 		}else{
 			response = Response.status(Status.BAD_REQUEST).entity(Status.FORBIDDEN.getReasonPhrase()).build();

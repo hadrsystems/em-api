@@ -39,6 +39,7 @@ public class CollabPresenceStatus {
 	
 	private String username;
 	private String nickname;
+	private String organization;
 	private CollabPresenceStatus.Status status;
 	private Date timestamp;
 
@@ -64,6 +65,14 @@ public class CollabPresenceStatus {
 
 	public String getUsername() {
 		return username;
+	}
+
+	public String getOrganization() {
+		return organization;
+	}
+
+	public void setOrganization(String organization) {
+		this.organization = organization;
 	}
 
 	public CollabPresenceStatus.Status getStatus() {

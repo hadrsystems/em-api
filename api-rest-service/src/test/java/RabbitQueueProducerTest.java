@@ -27,7 +27,6 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 import edu.mit.ll.nics.common.rabbitmq.RabbitQueueProducer;
 
 import java.io.IOException;

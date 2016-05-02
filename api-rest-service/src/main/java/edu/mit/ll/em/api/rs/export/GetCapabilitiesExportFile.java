@@ -45,6 +45,8 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import edu.mit.ll.em.api.util.APIConfig;
+import edu.mit.ll.em.api.util.SADisplayConstants;
 import edu.mit.ll.nics.common.entity.CollabRoom;
 import edu.mit.ll.nics.common.ws.client.XMLRequest;
 import edu.mit.ll.nics.nicsdao.impl.CollabRoomDAOImpl;
@@ -91,6 +93,9 @@ public abstract class GetCapabilitiesExportFile extends DatalayerExportFile{
 	 */
 	@Override
 	public File getResponse(){
+		String incidentMap = APIConfig.getInstance().getConfiguration().getString(
+				APIConfig.INCIDENT_MAP, SADisplayConstants.INCIDENT_MAP);
+		
 		File responseFile = null;
 		try{
 			//Build the request URL
@@ -101,7 +106,7 @@ public abstract class GetCapabilitiesExportFile extends DatalayerExportFile{
 			Document document = (Document) request.getRequest(url.toString());
 			
 			//Retrieve a list of collab rooms that the user has access to
-			List<CollabRoom> rooms = collabRoomDao.getAccessibleCollabRooms(userId, incidentId);
+			List<CollabRoom> rooms = collabRoomDao.getAccessibleCollabRooms(userId, incidentId, incidentMap);
 			
 			//Build a response document
 			this.response = this.getNewDocument(document);

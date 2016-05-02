@@ -40,6 +40,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 import edu.mit.ll.em.api.util.APIConfig;
+import edu.mit.ll.em.api.util.SADisplayConstants;
 import edu.mit.ll.nics.common.rabbitmq.RabbitFactory;
 import edu.mit.ll.nics.common.rabbitmq.RabbitPubSubProducer;
 
@@ -51,12 +52,14 @@ import edu.mit.ll.nics.common.entity.Org;
 import edu.mit.ll.nics.common.entity.User;
 import edu.mit.ll.em.api.exception.DuplicateCollabRoomException;
 import edu.mit.ll.em.api.rs.CollabService;
+import edu.mit.ll.em.api.rs.FieldMapResponse;
 import edu.mit.ll.em.api.rs.IncidentService;
 import edu.mit.ll.em.api.rs.IncidentServiceResponse;
 import edu.mit.ll.em.api.util.APILogger;
 import edu.mit.ll.nics.nicsdao.impl.IncidentDAOImpl;
 import edu.mit.ll.nics.nicsdao.impl.OrgDAOImpl;
 import edu.mit.ll.nics.nicsdao.impl.UserDAOImpl;
+import edu.mit.ll.nics.nicsdao.impl.UserOrgDAOImpl;
 import edu.mit.ll.nics.nicsdao.impl.WorkspaceDAOImpl;
 import edu.mit.ll.nics.common.entity.Incident;
 import edu.mit.ll.nics.common.email.JsonEmail;
@@ -72,7 +75,6 @@ public class IncidentServiceImpl implements IncidentService {
 	/** CNAME - the name of this class for referencing in loggers */
 	private static final String CNAME = IncidentServiceImpl.class.getName();
 	
-	private static final String INCIDENT_MAP = "Incident Map";
 	private static final String WORKING_MAP = "Working Map";
 	
 	private static final String DUPLICATE_NAME = "Incident name already exists.";
@@ -85,6 +87,9 @@ public class IncidentServiceImpl implements IncidentService {
 	
 	/** The User DAO */
 	private static final UserDAOImpl userDao = new UserDAOImpl();
+	
+	/** The User DAO */
+	private static final UserOrgDAOImpl userOrgDao = new UserOrgDAOImpl();
 	
 	/** The User DAO */
 	private static final WorkspaceDAOImpl workspaceDao = new WorkspaceDAOImpl();
@@ -128,6 +133,73 @@ public class IncidentServiceImpl implements IncidentService {
 			response = Response.ok(incidentResponse).status(Status.INTERNAL_SERVER_ERROR).build();
 		}
 		return response;
+	}
+	
+	public Response findArchivedIncidents(Integer workspaceId, String orgPrefix, String name){
+		FieldMapResponse mapResponse = new FieldMapResponse();
+		if(orgPrefix != null){
+			mapResponse.setData(incidentDao.findArchivedIncidentsByPrefix(workspaceId, orgPrefix));
+		}else{
+			mapResponse.setData(incidentDao.findArchivedIncidentsByName(workspaceId, name));
+		}
+		
+		return Response.ok(mapResponse).status(Status.OK).build();
+	}
+	
+	public Response activateIncident(int workspaceId, int incidentId, String username){
+		if(userOrgDao.isUserRole(username, SADisplayConstants.SUPER_ROLE_ID) ||
+				incidentDao.isAdmin(workspaceId, incidentId, username)){
+		
+			boolean ret = incidentDao.setIncidentActive(incidentId, true);
+			if(ret){
+				String topic = String.format("iweb.NICS.ws.%s.newIncident", workspaceId);
+				try{
+					this.notifyIncident(incidentDao.getIncident(incidentId), topic);
+					return Response.ok(Status.OK.toString()).status(Status.OK).build();
+				}catch(Exception e){
+					return Response.ok("The incident was activated successfully, but there "
+							+ "was an error notifying the users.").status(Status.INTERNAL_SERVER_ERROR).build();
+				}
+			}
+			return Response.ok("There was an error activating the incident").status(Status.INTERNAL_SERVER_ERROR).build();
+		}else{
+			return Response.ok(Status.FORBIDDEN).status(Status.FORBIDDEN).build();
+		}
+	}
+	
+	public Response archiveIncident(int workspaceId, int incidentId, String username){
+		if(userOrgDao.isUserRole(username, SADisplayConstants.SUPER_ROLE_ID) ||
+				incidentDao.isAdmin(workspaceId, incidentId, username)){
+			boolean ret = incidentDao.setIncidentActive(incidentId, false);
+			if(ret){
+				String topic = String.format("iweb.NICS.ws.%s.removeIncident", workspaceId);
+				try{
+					this.notifyIncident(incidentId, topic);
+					return Response.ok(Status.OK.toString()).status(Status.OK).build();
+				}catch(Exception e){
+					return Response.ok("The incident was activated successfully, but there "
+							+ "was an error notifying the users.").status(Status.INTERNAL_SERVER_ERROR).build();
+				}
+			}
+			return Response.ok("There was an error activating the incident").status(Status.INTERNAL_SERVER_ERROR).build();
+		}else{
+			return Response.ok(Status.FORBIDDEN).status(Status.FORBIDDEN).build();
+		}
+
+	}
+	
+	public Response getActiveIncidents(Integer workspaceId, Integer orgId){
+		return this.getIncidents(workspaceId, orgId, true);
+	}	
+	
+	public Response getArchivedIncidents(Integer workspaceId, Integer orgId){
+		return this.getIncidents(workspaceId, orgId, false);
+	}
+	
+	private Response getIncidents(Integer workspaceId, Integer orgId, boolean active){
+		FieldMapResponse response = new FieldMapResponse();
+		response.setData(incidentDao.getActiveIncidents(workspaceId, orgId, active));
+		return Response.ok(response).status(Status.OK).build();
 	}
 	
 	/**
@@ -351,7 +423,9 @@ public class IncidentServiceImpl implements IncidentService {
 		}
 		
 		//Create default rooms
-		CollabRoom incidentMap = createDefaultCollabRoom(newIncident.getUsersessionid(), INCIDENT_MAP);
+		CollabRoom incidentMap = createDefaultCollabRoom(newIncident.getUsersessionid(), 
+				APIConfig.getInstance().getConfiguration().getString(APIConfig.INCIDENT_MAP, 
+						SADisplayConstants.INCIDENT_MAP));
 		List<Integer> admins = orgDao.getOrgAdmins(orgId,workspaceId);
 		if(!admins.contains(userId)){
 			incidentMap.getAdminUsers().add(userId);
@@ -374,11 +448,12 @@ public class IncidentServiceImpl implements IncidentService {
 					
 					String date = new SimpleDateFormat("EEE MMM d HH:mm:ss z yyyy").format(new Date());
 					String alertTopic = String.format("iweb.nics.email.alert");
+					String newIncidentUsers = APIConfig.getInstance().getConfiguration().getString(APIConfig.NEW_INCIDENT_USERS_EMAIL);
 					String hostname = InetAddress.getLocalHost().getHostName();
 					User creator = userDao.getUserBySessionId(newIncident.getUsersessionid());
 					Org org = orgDao.getLoggedInOrg(creator.getUserId());		
 					List<String>  disList = orgDao.getOrgAdmins(org.getOrgId());
-					String toEmails = disList.toString().substring(1, disList.toString().length()-1);
+					String toEmails = disList.toString().substring(1, disList.toString().length()-1) + ", " + newIncidentUsers;
 					String siteName = workspaceDao.getWorkspaceName(workspaceId);
 					
 					if(disList.size() > 0){
@@ -417,6 +492,10 @@ public class IncidentServiceImpl implements IncidentService {
 			String message = mapper.writeValueAsString(newIncident);
 			getRabbitProducer().produce(topic, message);
 		}
+	}
+	
+	private void notifyIncident(int incidentId, String topic) throws IOException {
+		getRabbitProducer().produce(topic, (new Integer(incidentId).toString()));
 	}
 	
 	
@@ -526,6 +605,14 @@ public class IncidentServiceImpl implements IncidentService {
 		response = Response.ok(incidentResponse).status(Status.OK).build();
 
 		return response;
+	}
+	
+	public Response getIncidentOrgs(Integer workspaceId){
+		FieldMapResponse dataResponse = new FieldMapResponse();
+        dataResponse.setData(incidentDao.getIncidentOrg(workspaceId));
+        
+        dataResponse.setMessage(Status.OK.getReasonPhrase());
+		return Response.ok(dataResponse).status(Status.OK).build();
 	}
 	
 	

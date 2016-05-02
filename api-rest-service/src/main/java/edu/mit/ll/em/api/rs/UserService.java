@@ -132,6 +132,17 @@ public interface UserService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response postUser(@PathParam("workspaceId") int workspaceId, RegisterUser user);
 
+
+	@POST
+	@Path("/{userOrgWorkspaceId}/{userId}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response setUserActive(
+			@PathParam("userOrgWorkspaceId") int userOrgWorkspaceId,
+			@PathParam("userId") int userId,
+			@QueryParam("active") boolean active,
+			@HeaderParam("CUSTOM-uid") String requestingUser);
+
 	/*@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
@@ -226,8 +237,7 @@ public interface UserService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response deleteContactInfo(@PathParam("workspaceId") int workspaceId, 
 			@QueryParam("userName") String userName,
-			@QueryParam("contactTypeId") int contactTypeId,
-			@QueryParam("value") String value,
+			@QueryParam("contactId") int contactId,
 			@HeaderParam("CUSTOM-uid") String requestingUser);
 	
 }

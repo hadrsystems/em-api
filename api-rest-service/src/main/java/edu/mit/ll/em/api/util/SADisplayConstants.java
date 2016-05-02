@@ -310,4 +310,5 @@ public final class SADisplayConstants {
 	public static final String USER_ENABLED_PARAM = "user_enabled";
 	public static final String PASSWORD_CHANGED = "passwordchanged";
 	public static final String INCIDENT_MAP = "Incident Map";
+	public static final Object PASSWORD = "password";
 }

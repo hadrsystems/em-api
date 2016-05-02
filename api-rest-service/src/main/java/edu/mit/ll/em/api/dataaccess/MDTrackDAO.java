@@ -30,6 +30,7 @@
 package edu.mit.ll.em.api.dataaccess;
 
 
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Set;
@@ -54,6 +55,8 @@ import edu.mit.ll.em.api.util.TimeUtil;
 import edu.mit.ll.nics.common.entity.Mdt;
 import edu.mit.ll.nics.common.entity.UserInfo;
 import edu.mit.ll.nics.common.entity.User;
+import edu.mit.ll.nics.common.rabbitmq.RabbitFactory;
+import edu.mit.ll.nics.common.rabbitmq.RabbitPubSubProducer;
 import edu.mit.ll.nics.common.rabbitmq.client.RabbitProducer;
 import edu.mit.ll.nics.nicsdao.impl.UserDAOImpl;
 
@@ -67,7 +70,7 @@ public class MDTrackDAO extends BaseDAO {
 	private static GeometryFactory geomFactory= new GeometryFactory(new PrecisionModel(), 4326);
 
 	// Rabbit producer
-	private RabbitProducer producer;
+	private RabbitPubSubProducer producer;
 
 	// MDT GML Properties
 	
@@ -99,7 +102,6 @@ public class MDTrackDAO extends BaseDAO {
 		String host = validateRabbitHostName();
 		String username = validateRabbitUsername();
 		String userpwd = validateRabbitUserpwd();
-		producer = new RabbitProducer(username, userpwd, host, 5672); // TODO:refactor use property for port
 		valid = validateMDTProperties();
 	}
 	
@@ -158,7 +160,7 @@ public class MDTrackDAO extends BaseDAO {
 			// TODO:LDDRS-1119 decide whether or not to only specify certain fields, and if
 			// the toGML honors it
 			// TODO: make topic configurable
-			this.producer.sendMessage(gmlTopic, jsonPli.toGML(false));
+			this.getRabbitProducer().produce(gmlTopic, jsonPli.toGML(false));
 			ret = true;
 		} catch(Exception e) {
 			// fail TODO: add logging
@@ -537,6 +539,17 @@ public class MDTrackDAO extends BaseDAO {
 		
 		validated = true;
 		return true;
+	}
+	
+	private RabbitPubSubProducer getRabbitProducer() throws IOException {
+		if (this.producer == null) {
+			this.producer = RabbitFactory.makeRabbitPubSubProducer(
+					APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_HOSTNAME_KEY),
+					APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_EXCHANGENAME_KEY),
+					APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_USERNAME_KEY),
+					APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_USERPWD_KEY));
+		}
+		return producer;
 	}
 }
 

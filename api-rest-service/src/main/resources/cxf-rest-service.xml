@@ -44,8 +44,17 @@
 	<bean id="loggingFeature" class="org.apache.cxf.feature.LoggingFeature" />
 
 	<jaxrs:server id="apiv1Resource" address="/">
+		<jaxrs:properties>
+			<entry key="attachment-directory" value="temp"/>
+			<!-- 50MB-->
+			<entry key="attachment-memory-threshold" value="51200000"/>
+
+			<entry key="attachment-max-size" value="51200000"/>
+		</jaxrs:properties>
+
 		<jaxrs:serviceBeans>
 			<bean class="edu.mit.ll.em.api.rs.impl.ChatMsgServiceImpl" />
+			<bean class="edu.mit.ll.em.api.rs.impl.AnnouncementServiceImpl" />
 			<bean class="edu.mit.ll.em.api.rs.impl.CollabServiceImpl" />
 			<bean class="edu.mit.ll.em.api.rs.impl.DatalayerExportImpl" />
 			<bean class="edu.mit.ll.em.api.rs.impl.DatalayerServiceImpl" />

@@ -31,6 +31,8 @@ package edu.mit.ll.em.api.rs.impl;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -38,14 +40,10 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
-import javax.ws.rs.PathParam;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
@@ -59,7 +57,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.dao.DataAccessException;
 
-import edu.mit.ll.em.api.dataaccess.MessageBusProducer;
 import edu.mit.ll.em.api.rs.FieldMapResponse;
 import edu.mit.ll.em.api.rs.NewUserOrgResponse;
 import edu.mit.ll.em.api.rs.RegisterUser;
@@ -70,11 +67,9 @@ import edu.mit.ll.em.api.rs.UserSearchParams;
 import edu.mit.ll.em.api.rs.UserService;
 import edu.mit.ll.em.api.util.APIConfig;
 import edu.mit.ll.em.api.util.APILogger;
-import edu.mit.ll.em.api.util.NetUtil;
 import edu.mit.ll.em.api.util.SADisplayConstants;
 import edu.mit.ll.em.api.util.UserInfoValidator;
 import edu.mit.ll.nics.common.entity.CurrentUserSession;
-//import edu.mit.ll.em.api.rs.User;
 import edu.mit.ll.nics.common.entity.User;
 import edu.mit.ll.nics.common.entity.Contact;
 import edu.mit.ll.nics.common.entity.ContactType;
@@ -83,10 +78,8 @@ import edu.mit.ll.nics.common.entity.Org;
 import edu.mit.ll.nics.common.entity.SADisplayMessageEntity;
 import edu.mit.ll.nics.common.entity.UserOrg;
 import edu.mit.ll.nics.common.entity.UserOrgWorkspace;
-import edu.mit.ll.nics.common.messages.sadisplay.SADisplayMessage;
 import edu.mit.ll.nics.nicsdao.impl.IncidentDAOImpl;
 import edu.mit.ll.nics.nicsdao.impl.OrgDAOImpl;
-import edu.mit.ll.nics.nicsdao.impl.SystemRoleDAOImpl;
 import edu.mit.ll.nics.nicsdao.impl.UserDAOImpl;
 import edu.mit.ll.nics.nicsdao.impl.UserOrgDAOImpl;
 import edu.mit.ll.nics.nicsdao.impl.UserSessionDAOImpl;
@@ -306,267 +299,321 @@ public class UserServiceImpl implements UserService {
 				return Response.ok(validate).status(Status.PRECONDITION_FAILED).build();
 			}
 			
-			//if(!validate.equals(SUCCESS)){ // TODO: bypassing validation for now				
-			//	return Response.ok(validate).status(Status.PRECONDITION_FAILED).build();
-			//}else{
-				Collection<Org> orgs = new ArrayList<Org>();
-
-				Collection<SADisplayMessageEntity> contacts = 
-						createContacts(registerUser.getEmail(), 
-								registerUser.getOtherEmail(),
-								registerUser.getOfficePhone(),
-								registerUser.getCellPhone(), 
-								registerUser.getOtherPhone(),
-								registerUser.getRadioNumber(), user);
-
-				// TODO:SSO get named org with orgDao
-				//Org org = OrgDAO.getInstance().getOrganization(registerUser.getOrganization());
-				OrgDAOImpl orgDao = new OrgDAOImpl();
-				Org org = orgDao.getOrganization(registerUser.getOrganization());
-				if(org == null) {
-					// need to fail, can't get org
-					return Response.ok(FAILURE_ORG_INVALID + ": " + registerUser.getOrganization())
+			// Create the Identity for the user, only proceed if it succeeds
+			JSONObject createdIdentity = createIdentityUser(user, registerUser);
+						
+			if(!createdIdentity.optString("status", "").equals(SUCCESS)) {
+				return Response.ok("Failed to create identity. " + createdIdentity.optString("message", "unknown"))
 						.status(Status.PRECONDITION_FAILED).build();
-				}
-				UserOrg userOrg = createUserOrg(org.getOrgId(), user.getUserId(), registerUser);
-
-				if(userOrg == null) {
-					// fail since couldn't create userorg?
-					log.w("UserService", "!!! FAILED to create userOrg for user: " + registerUser.getEmail());
-					return Response.ok("Failed to create UserOrg with orgId '" + org.getOrgId() + 
-							"' and userId '" + user.getUserId() + "' for user: " + registerUser.getEmail()).
-							status(Status.PRECONDITION_FAILED).build();
-				}
-				
-				orgs.add(org);
-				
-				String[] teams = registerUser.getTeams();
-								
-				Collection<SADisplayMessageEntity> userTeams = new ArrayList<SADisplayMessageEntity>();
-				List<UserOrg> userOrgsTeams = new ArrayList<UserOrg>();
-				List<UserOrgWorkspace> userOrgWorkspacesTeams = new ArrayList<UserOrgWorkspace>();
-				if(teams != null && teams.length > 0){
-					try{
-						for(int i=0; i<teams.length; i++){
-							//Org teamOrg = OrgDAO.getInstance().getOrganization(teams[i]);
-							Org teamOrg = orgDao.getOrganization(teams[i]);
-							if(teamOrg == null) {
-								log.i("UserServiceImpl", "Org does not exist: " + teams[i]);
-								continue;
-							}
-							UserOrg team = createUserOrg(teamOrg.getOrgId(), user.getUserId(), registerUser);
-							if(team != null) {
-								userTeams.add(team);
-								userOrgsTeams.add(team);
-								
-								userTeams.addAll(createUserOrgWorkspace(team.getUserorgid(), false));
-								userOrgWorkspacesTeams.addAll(createUserOrgWorkspaceEntities(team, false));
-							}
-							orgs.add(teamOrg);
-						}
-					}catch(Exception e){
-						e.printStackTrace();
-						//return FAILURE_ORG_INVALID;
-						
-						log.e("UserServiceImpl", "Exception while creating Team UserOrg and UserOrgWorkspace on input: " + 
-								Arrays.toString(teams));
-						
-						return Response.ok("Exception while creating Team UserOrg and UserOrgWorkspace on input: " + 
-							Arrays.toString(teams)).status(Status.PRECONDITION_FAILED).build();
-					}
-				}
-
-				// TODO:SSO use the API's messaging code
-				//RabbitProducer producer = new RabbitProducer(rabbituser, rabbitpass, "localhost", 5672);
-
-				// TODO: implementing alternative DAO user creation instead of sending a registration message
-				
-				boolean useBus = false;
-				
-			if(useBus) {
-				
-				Map<String,Object> messageData = new HashMap<String,Object>();
-				messageData.put("password", registerUser.getPassword());
-
-				SADisplayMessage message = new SADisplayMessage();
-				message.addEntity(user);
-				message.addEntity(userOrg);
-				message.addEntities(contacts);
-				message.setMessageType("newuser");
-				message.setTopic(SADisplayConstants.NEW_USER_TOPIC);
-				message.setUser(registerUser.getEmail());
-				//message.setIp("0.0.0.0"); // TODO: any way to get IP of requestor?
-				message.setIp(NetUtil.getInstance().getExternalAddresses().iterator().next());
-				message.setTime(Calendar.getInstance().getTime().toString());
-				message.setVersion("1.2.3");
-				message.setSeqTime(System.currentTimeMillis());
-				//PhinicsDbFacade dbi = PhinicsDbFactory.getInstance().getPhinicsDbFacadeSingleton();
-				//message.setSeqNum(dbi.getNextMessageSequence());
-				message.setSeqNum(userSessDao.getNextMessageSeqNum());
-				message.setMessageData(messageData);
-				message.setReturnTopic(SADisplayConstants.NEW_USER_TOPIC + "_status");
-				
-				Collection<SADisplayMessageEntity> userOrgWorkspaces = 
-						createUserOrgWorkspace(userOrg.getUserorgid(),	false);
-				
-				if(userOrgWorkspaces != null && !userOrgWorkspaces.isEmpty()) {
-					message.addEntities(userOrgWorkspaces);
-				}
-				
-				if(userTeams.size() > 0){
-					message.addEntities(userTeams);
-				}
-
-				System.out.println("************" + message.toJSONString() + "**************");
-				
-				boolean msgStatus = MessageBusProducer.getInstance().
-						sendMessage(SADisplayConstants.NEW_USER_TOPIC, message.toJSONString());				
-				
-				if(msgStatus) {
-					APILogger.getInstance().i("UserServiceImpl", "Successfully SENT user creation message");
-				} else {
-					APILogger.getInstance().i("UserServiceImpl", "Failed to send creation message");
-				}
-				/* TODO:SSO implement 
-				producer.sendMessage("amq.topic", SADisplayConstants.NEW_USER_TOPIC, message.toJSONString());
-				producer.destroy();
-				this.sendEmail(user, orgs);
-				*/
-				
-				log.i("UserService", message.toJSONString());
-				
-			} else { // if(usebus)
-				// DBI createUser creates the contacts if they're set, TODO: it gets new ids, but these should already
-				// have them
-				List<Contact> contactSet = createContactsList(registerUser.getEmail(), 
-						registerUser.getOtherEmail(),
-						registerUser.getOfficePhone(),
-						registerUser.getCellPhone(), 
-						registerUser.getOtherPhone(),
-						registerUser.getRadioNumber(), user);
-								
-				
-				String createUserStatus = "";
-				try {
-										
-					List<UserOrg> userOrgs = new ArrayList<UserOrg>();
-					List<UserOrgWorkspace> userOrgWorkspaces = new ArrayList<UserOrgWorkspace>();
-					
-					userOrgs.add(userOrg);
-					if(userOrgsTeams != null && !userOrgsTeams.isEmpty()) {
-						userOrgs.addAll(userOrgsTeams);
-					}
-					
-					userOrgWorkspaces.addAll(createUserOrgWorkspaceEntities(userOrg, false));
-					if(userOrgWorkspacesTeams != null && !userOrgWorkspacesTeams.isEmpty()) {
-						userOrgWorkspaces.addAll(userOrgWorkspacesTeams);
-					}						
-					
-					//UserDAO.getInstance().registerUser(user, contactSet, userOrgs, userOrgWorkspaces);
-					boolean registerSuccess = userDao.registerUser(user, contactSet, userOrgs, userOrgWorkspaces);
-					
-					if(!registerSuccess) {
-						// TODO: return with failure message... to have a meaningful response here, need to
-						//			modify registerUser to return success/failure and reasons
-						// throw exception? return failure response and reason here?
-						throw(new Exception("UserDAO failed to persist User or related entities"));
-					}
-					
-					String propPath = APIConfig.getInstance().getConfiguration()
-							.getString("ssoToolsPropertyPath", null);
-					
-					log.i("SSOManagementService", "Initializing SSOUtils with property path: " + propPath);
-					
-					
-					SSOUtil ssoUtil = null;
-					boolean login = false;
-					boolean created = false;
-					String creationResponse = "";
-					String statusMessage = "";
-					if(propPath == null) {
-						// TODO:SSO throw exception or set flag to return error with sso config
-						// send email to admins about sso not configured
-						log.w("UserServiceImpl", "Got null SSO configuration, won't be able to make SSO calls!");
-					} else {
-						System.setProperty("ssoToolsPropertyPath", propPath);
-						System.setProperty("openamPropertiesPath", propPath);
-						
-						ssoUtil = new SSOUtil();
-						login = ssoUtil.loginAsAdmin();
-						
-						if(login) {
-							creationResponse = ssoUtil.createUser(user.getUsername(), registerUser.getPassword(),
-									user.getFirstname(), user.getLastname(), false);
-							
-							if(creationResponse != null) {
-								JSONObject response = null; 
-										
-								try {
-									response = new JSONObject(creationResponse);
-									
-									String status = response.optString("status", null);
-									statusMessage = response.optString("message", null);
-									
-									if(status.equals("success")) {
-										created = true;
-									}
-									
-								} catch(JSONException e) {
-									// can't read response, assume failure
-								}
-							}
-						}
-					}
-					
-					if(!login || !created) {
-						successMessage += " (but not identity: " + statusMessage + "): ";
-					}else if(login && created){
-						
-						try {
-							String fromEmail = APIConfig.getInstance().getConfiguration().getString(APIConfig.NEW_USER_ALERT_EMAIL);
-							String date = new SimpleDateFormat("EEE MMM d HH:mm:ss z yyyy").format(new Date());
-							String alertTopic = String.format("iweb.nics.email.alert");
-							String hostname = InetAddress.getLocalHost().getHostName();
-							List<String>  disList = orgDao.getOrgAdmins(org.getOrgId());
-							String toEmails = disList.toString().substring(1, disList.toString().length()-1);
-							
-							if(disList.size() > 0 && !fromEmail.isEmpty()){
-								JsonEmail email = new JsonEmail(fromEmail,toEmails,
-										"Alert from RegisterAccount@" + hostname);
-								email.setBody(date + "\n\n" + "A new user has registered: " + user.getUsername() + "\n" + 
-												"Name: " + user.getFirstname() + " " + user.getLastname() + "\n" + 
-												"Organization: " + org.getName() + "\n" +
-												"Email: " + user.getUsername() + "\n" + 
-												"Other Information: " + registerUser.getOtherInfo());
-								
-								notifyNewUserEmail(email.toJsonObject().toString(),alertTopic);
-							}
-							
-						} catch (Exception e) {
-							APILogger.getInstance().e(CNAME,"Failed to send new User email alerts");
-						}
-						
-					}
-					
-				} catch(DataAccessException e) { //catch(ICSDatastoreException e) {
-					System.out.println("Exception persisting user: " + e.getMessage());
-					log.e("UserServiceImpl", "Exception creating user: " + e.getMessage());
-					return Response.ok("Failed to register user: " + e.getMessage()).status(Status.INTERNAL_SERVER_ERROR).build();
-				} catch(Exception e) {
-					System.out.println("Exception persisting user: " + e.getMessage());
-					log.e("UserServiceImpl", "Exception creating user: " + e.getMessage());
-					return Response.ok("Failed to register user: " + e.getMessage()).status(Status.INTERNAL_SERVER_ERROR).build();
-				}
-				
 			}
-			//} // end if valid
+
+			Collection<Org> orgs = new ArrayList<Org>();
+
+			OrgDAOImpl orgDao = new OrgDAOImpl();
+			Org org = orgDao.getOrganization(registerUser.getOrganization());
+			if(org == null) {
+				// need to fail, can't get org
+				return Response.ok(FAILURE_ORG_INVALID + ": " + registerUser.getOrganization())
+						.status(Status.PRECONDITION_FAILED).build();
+			}
+			UserOrg userOrg = createUserOrg(org.getOrgId(), user.getUserId(), registerUser);
+
+			if(userOrg == null) {
+				log.w("UserService", "!!! FAILED to create userOrg for user: " + registerUser.getEmail());
+				return Response.ok("Failed to create UserOrg with orgId '" + org.getOrgId() + 
+						"' and userId '" + user.getUserId() + "' for user: " + registerUser.getEmail()).
+						status(Status.PRECONDITION_FAILED).build();
+			}
+
+			orgs.add(org);
+
+			String[] teams = registerUser.getTeams();
+
+			Collection<SADisplayMessageEntity> userTeams = new ArrayList<SADisplayMessageEntity>();
+			List<UserOrg> userOrgsTeams = new ArrayList<UserOrg>();
+			List<UserOrgWorkspace> userOrgWorkspacesTeams = new ArrayList<UserOrgWorkspace>();
+			if(teams != null && teams.length > 0){
+				try{
+					for(int i = 0; i < teams.length; i++) {						
+						Org teamOrg = orgDao.getOrganization(teams[i]);
+						if(teamOrg == null) {
+							log.i("UserServiceImpl", "Org does not exist: " + teams[i]);
+							continue;
+						}
+						
+						UserOrg team = createUserOrg(teamOrg.getOrgId(), user.getUserId(), registerUser);
+						if(team != null) {
+							userTeams.add(team);
+							userOrgsTeams.add(team);
+
+							userTeams.addAll(createUserOrgWorkspace(team.getUserorgid(), false));
+							userOrgWorkspacesTeams.addAll(createUserOrgWorkspaceEntities(team, false));
+						}
+						orgs.add(teamOrg);
+					}
+				}catch(Exception e){
+					e.printStackTrace();
+
+					log.e("UserServiceImpl", "Exception while creating Team UserOrg and UserOrgWorkspace on input: " + 
+							Arrays.toString(teams));
+
+					return Response.ok("Exception while creating Team UserOrg and UserOrgWorkspace on input: " + 
+							Arrays.toString(teams)).status(Status.PRECONDITION_FAILED).build();
+				}
+			}
+
+			// DBI createUser creates the contacts if they're set, TODO: it gets new ids, but these should already
+			// have them
+			List<Contact> contactSet = createContactsList(registerUser.getEmail(), 
+					registerUser.getOtherEmail(),
+					registerUser.getOfficePhone(),
+					registerUser.getCellPhone(), 
+					registerUser.getOtherPhone(),
+					registerUser.getRadioNumber(), user);
+
+
+			String createUserStatus = "";
+			try {
+
+				List<UserOrg> userOrgs = new ArrayList<UserOrg>();
+				List<UserOrgWorkspace> userOrgWorkspaces = new ArrayList<UserOrgWorkspace>();
+
+				userOrgs.add(userOrg);
+				if(userOrgsTeams != null && !userOrgsTeams.isEmpty()) {
+					userOrgs.addAll(userOrgsTeams);
+				}
+
+				userOrgWorkspaces.addAll(createUserOrgWorkspaceEntities(userOrg, false));
+				if(userOrgWorkspacesTeams != null && !userOrgWorkspacesTeams.isEmpty()) {
+					userOrgWorkspaces.addAll(userOrgWorkspacesTeams);
+				}						
+
+				boolean registerSuccess = userDao.registerUser(user, contactSet, userOrgs, userOrgWorkspaces);
+
+				if(!registerSuccess) {
+
+					// TODO: in addition to failing, need to delete identity user. The backend in openam-tools
+					// and sso-tools does noet yet expose a method for deleting an identity user
+					//JSONObject deleteResponse = deleteIdentityUser(registerUser.getEmail());
+					
+					// TODO: build helper method for sending email
+					// TODO: email admin if delete failed? Until the createidentity code takes into account
+					// an existing user, will have to require this call works. Or we can merge the identities
+					// including using the latest password, in case it differs from original
+					try {
+						String fromEmail = APIConfig.getInstance().getConfiguration().getString(APIConfig.NEW_USER_ALERT_EMAIL);
+						String date = new SimpleDateFormat("EEE MMM d HH:mm:ss z yyyy").format(new Date());
+						String alertTopic = APIConfig.getInstance().getConfiguration().getString(APIConfig.EMAIL_ALERT_TOPIC,
+								"iweb.nics.email.alert");
+						String sysAdmins = APIConfig.getInstance().getConfiguration()
+								.getString(APIConfig.SYSTEM_ADMIN_ALERT_EMAILS, "");
+						String hostname = InetAddress.getLocalHost().getHostName();
+						//List<String>  disList = orgDao.getOrgAdmins(org.getOrgId());
+						//String toEmails = disList.toString().substring(1, disList.toString().length() - 1) + ", " + sysAdmins;
+						String toEmails = sysAdmins;
+
+						//if(disList.size() > 0 && !fromEmail.isEmpty()){
+						if(!sysAdmins.isEmpty()) {
+							JsonEmail email = new JsonEmail(fromEmail, toEmails,
+									"Alert from RegisterAccount@" + hostname);
+							email.setBody(date + "\n\n" + "A new user has attempted to register" + 
+									". However, their system user failed to successfully persist, so before" +
+									" they can try to register again with the same email address, their" +
+									" Identity user will need deleted in OpenAM.\n\n" +
+									"Name: " + user.getFirstname() + " " + user.getLastname() + "\n" +
+									"Organization: " + org.getName() + "\n" +
+									"Email: " + user.getUsername() + "\n" + 
+									"Other Information: " + registerUser.getOtherInfo());
+
+							notifyNewUserEmail(email.toJsonObject().toString(),alertTopic);
+						}
+
+					} catch (Exception e) {
+						APILogger.getInstance().e(CNAME,"Failed to send registration failed email to Org Admins and System Admins");
+					}
+
+					return Response.ok("Failed to successfully register user with system, but registration with"
+							+ " the identity provider succeeded. Before attempting to register with this"
+							+ " email address again, a system administrator will need to delete your identity user."
+							+ " An email has been sent on your behalf.")
+							.status(Status.EXPECTATION_FAILED).build();
+				}
+
+				
+				try {
+					String fromEmail = APIConfig.getInstance().getConfiguration().getString(APIConfig.NEW_USER_ALERT_EMAIL);
+					String date = new SimpleDateFormat("EEE MMM d HH:mm:ss z yyyy").format(new Date());					
+					String alertTopic = APIConfig.getInstance().getConfiguration().getString(APIConfig.EMAIL_ALERT_TOPIC,
+							"iweb.nics.email.alert");
+					String newRegisteredUsers = APIConfig.getInstance().getConfiguration().getString(APIConfig.NEW_REGISTERED_USER_EMAIL);
+					String hostname = InetAddress.getLocalHost().getHostName();
+					List<String>  disList = orgDao.getOrgAdmins(org.getOrgId());
+					String toEmails = disList.toString().substring(1, disList.toString().length() - 1) + ", " + newRegisteredUsers;
+
+					if(disList.size() > 0 && !fromEmail.isEmpty()){
+						JsonEmail email = new JsonEmail(fromEmail,toEmails,
+								"Alert from RegisterAccount@" + hostname);
+						email.setBody(date + "\n\n" + "A new user has registered: " + user.getUsername() + "\n" + 
+								"Name: " + user.getFirstname() + " " + user.getLastname() + "\n" + 
+								"Organization: " + org.getName() + "\n" +
+								"Email: " + user.getUsername() + "\n" + 
+								"Other Information: " + registerUser.getOtherInfo());
+
+						notifyNewUserEmail(email.toJsonObject().toString(),alertTopic);
+					}
+
+				} catch (Exception e) {
+					APILogger.getInstance().e(CNAME,"Failed to send new User email alerts");
+				}
+
+
+			} catch(DataAccessException e) { //catch(ICSDatastoreException e) {
+				System.out.println("Exception persisting user: " + e.getMessage());
+				log.e("UserServiceImpl", "Exception creating user: " + e.getMessage());
+				return Response.ok("Failed to register user: " + e.getMessage()).status(Status.INTERNAL_SERVER_ERROR).build();
+			} catch(Exception e) {
+				System.out.println("Exception persisting user: " + e.getMessage());
+				log.e("UserServiceImpl", "Exception creating user: " + e.getMessage());
+				return Response.ok("Failed to register user: " + e.getMessage()).status(Status.INTERNAL_SERVER_ERROR).build();
+			}
+			
 		}catch(Exception e){
 			e.printStackTrace();
 			return Response.ok(FAILURE).status(Status.INTERNAL_SERVER_ERROR).build();
 		}
 		
-		//return makeUnsupportedOpRequestResponse();
 		return Response.ok(successMessage + registerUser.getEmail()).status(Status.OK).build();
+	}
+	
+	
+	/**
+	 * Uses SSOUtil to create an Identity user in OpenAM
+	 * 
+	 * @param user User to register
+	 * @param registerUser The RegisterUser object resulting from a registration request
+	 * @return A JSON response in the form: {"status":"success/fail", "message":"MESSAGE"}
+	 */
+	private JSONObject createIdentityUser(User user, RegisterUser registerUser) {
+		
+		String propPath = APIConfig.getInstance().getConfiguration()
+				.getString("ssoToolsPropertyPath", null);
+		
+		log.i("UserServiceImpl:createIdentityUser", "Initializing SSOUtils with property path: " + propPath);
+				
+		SSOUtil ssoUtil = null;
+		boolean login = false;
+		String creationResponse = "";
+		JSONObject response = null;
+		
+		if(propPath == null) {
+			// send email to admins about sso not configured
+			log.w("UserServiceImpl", "Got null SSO configuration, won't be able to make SSO calls!");
+			response = buildJSONResponse("fail", "'ssoToolsPropertyPath' not set, cannot make SSO related calls.");
+		} else {
+			System.setProperty("ssoToolsPropertyPath", propPath);
+			System.setProperty("openamPropertiesPath", propPath);
+			
+			ssoUtil = new SSOUtil();
+			login = ssoUtil.loginAsAdmin();
+			
+			if(login) {
+				creationResponse = ssoUtil.createUser(user.getUsername(), registerUser.getPassword(),
+						user.getFirstname(), user.getLastname(), false);
+							
+				try {
+					response = new JSONObject(creationResponse);
+					
+				} catch(JSONException e) {
+					// can't read response, assume failure
+					response = buildJSONResponse("fail", "JSON exception reading createUser response: " + 
+							e.getMessage());
+				}
+				
+			} else {
+				response = buildJSONResponse("fail", 
+						"Failed to log in as Administrator with SSOUtil. Cannot create Identity.");
+			}
+		}		
+		 
+		return response;
+	}
+	
+	
+	/**
+	 * Deletes an identity user from OpenAM
+	 * 
+	 * <p>NOT YET IMPLEMENTED</p>
+	 * 
+	 * @param email
+	 * @return
+	 */
+	private JSONObject deleteIdentityUser(String email) {
+				
+		String propPath = APIConfig.getInstance().getConfiguration()
+				.getString("ssoToolsPropertyPath", null);
+		
+		log.i("UserServiceImpl:deleteIdentityUser", "Initializing SSOUtils with property path: " + propPath);
+				
+		SSOUtil ssoUtil = null;
+		boolean login = false;
+		String creationResponse = "";
+		JSONObject response = null;
+		
+		if(propPath == null) {
+			// send email to admins about sso not configured
+			log.w("UserServiceImpl", "Got null SSO configuration, won't be able to make SSO calls!");
+			response = buildJSONResponse("fail", "'ssoToolsPropertyPath' not set, cannot make SSO related calls.");
+		} else {
+			System.setProperty("ssoToolsPropertyPath", propPath);
+			System.setProperty("openamPropertiesPath", propPath);
+			
+			ssoUtil = new SSOUtil();
+			login = ssoUtil.loginAsAdmin();
+			
+			if(login) {
+				creationResponse = null; // TODO: need to implement delete identity call
+							
+				try {
+					response = new JSONObject(creationResponse);
+					
+				} catch(JSONException e) {
+					// can't read response, assume failure
+					response = buildJSONResponse("fail", "JSON exception reading delete identity response: " + 
+							e.getMessage());
+				}
+				
+			} else {
+				response = buildJSONResponse("fail", 
+						"Failed to log in as Administrator with SSOUtil. Cannot delete Identity.");
+			}
+		}		
+		
+		//return response;
+		// TODO: Not implemented
+		return buildJSONResponse("fail", "Deleting identity not yet implemented");
+	}
+	
+	
+	/**
+	 * Builds a JSON response object
+	 * 
+	 * @param status Content of the status field
+	 * @param message A message explaining the status
+	 * @return A JSONObject with a 'status' and 'message' field populated if successful,
+	 * 			otherwise an empty JSONObject
+	 */
+	public JSONObject buildJSONResponse(String status, String message) {
+		JSONObject response = new JSONObject();
+		
+		try {
+			response.put("status", status);
+			response.put("message", message);
+		} catch(JSONException e) {
+			APILogger.getInstance().e("UserServiceImpl:buildJSONResponse", "JSONException building response: " + 
+					e.getMessage());
+		}
+		
+		return response;
 	}
 	
 	
@@ -825,6 +872,29 @@ public class UserServiceImpl implements UserService {
 		return response;	
 	}
 
+	public Response setUserActive(int userOrgWorkspaceId, int userId, boolean active, String requestingUser){
+		Response response = null;
+		UserResponse userResponse = new UserResponse();
+
+		int systemRoleId = userOrgDao.getSystemRoleId(requestingUser, userOrgWorkspaceId);
+
+		if ((systemRoleId == SADisplayConstants.ADMIN_ROLE_ID || systemRoleId == SADisplayConstants.SUPER_ROLE_ID) ||
+				userOrgDao.isUserRole(requestingUser, SADisplayConstants.SUPER_ROLE_ID)) {
+
+			userDao.setUserActive(userId, active);
+
+			User responseUser = userDao.getUserById(userId);
+			userResponse.setUsers(Arrays.asList(responseUser));
+
+			userResponse.setMessage(Status.OK.getReasonPhrase());
+			response = Response.ok(userResponse).status(Status.OK).build();
+		} else {
+			return Response.status(Status.BAD_REQUEST).entity(Status.FORBIDDEN.getReasonPhrase()).build();
+		}
+
+		return response;
+	}
+
 	
 	/**
 	 *  Delete a single User item.
@@ -933,39 +1003,53 @@ public class UserServiceImpl implements UserService {
 					userDao.setUserEnabled(userId, false);
 				}else if(enabled){
 					userDao.setUserEnabled(userId, true);
-				/*	
-					try {
-						
-						String date = new SimpleDateFormat("EEE MMM d HH:mm:ss z yyyy").format(new Date());
-						String alertTopic = String.format("iweb.nics.email.alert");
-						String hostname = InetAddress.getLocalHost().getHostName();
-						User newUser = userDao.getUserById(userId);
-						UserOrg userOrg = userOrgDao.getUserOrg(userOrgWorkspaceId);
-						Org org = orgDao.getOrganization(userOrg.getOrgid());
-						List<String>  disList = orgDao.getOrgAdmins(org.getOrgId());
 					
-						System.out.println("DUALERT");
-						System.out.println(disList.toString().substring(1, disList.toString().length()-1));
-						System.out.println(org.getName());
-						System.out.println(disList.size());
-						System.out.println(requestingUser);
-						System.out.println("DUALERT");
-						
-						if(disList.size() > 0){
-							email = new JsonEmail(requestingUser,disList.toString().substring(1, disList.toString().length()-1),
-									"Alert from RegisterAccount@" + hostname);
-							email.setBody(date + "\n\n" + "A new user has registered: " + newUser.getUsername() + "\n" + 
-											"Name: " + newUser.getFirstname() + " " + newUser.getLastname() + "\n" + 
-											"Organization: " + org.getName() + "\n" +
-											"Email: " + newUser.getUsername() + "\n" + 
-											"Other Information: ");
-							
-							notifyNewUserEmail(email.toJsonObject().toString(),alertTopic);
+					try {
+						String fromEmail = APIConfig.getInstance().getConfiguration().getString(APIConfig.NEW_USER_ENABLED_EMAIL);
+						String alertTopic = String.format("iweb.nics.email.alert");
+						User newUser = userDao.getUserById(userId);
+						String emailTemplate = APIConfig.getInstance().getConfiguration()
+								.getString(APIConfig.NEW_USER_BODY_TEMPLATE);
+						String emailBody;
+						String emailSubject = APIConfig.getInstance().getConfiguration()
+								.getString(APIConfig.NEW_USER_BODY_SUBJECT,"Welcome to Team NICS!");
+						if(emailTemplate != null){
+							emailBody = new String(Files.readAllBytes(Paths.get(emailTemplate)));
 						}
+						else{
+							emailBody = "<html><p>Please review the following documentation: " + 
+									"<a href=\"https://public.nics.ll.mit.edu/nicshelp/documents/2015-06-05%20-%20NICS%20Talking%20Points%20v3.pdf\">" +
+									"NICS Talking Points</a> & <a href=\"https://public.nics.ll.mit.edu/nicshelp/documents/NICS_GL_4_14.pdf\">" +
+									"NICS Guidelines</a></p><ul><li>Web browsers: NICS works well with IE 9 and later FireFox Safari Chrome and others." +
+									"  It does not work with IE 8 and earlier.</li><li>When you visit the <b><span style='color:#0056D6'>INCIDENT LOGIN</span>" + 
+									"</b> side of NICS. Please remember that there could be working incidents there so use care in navigating around.</li>" + 
+									"<li>Learning about NICS:</li><ul>"
+									+ "<li>The <b><span style='color:#0056D6'>TRAINING LOGIN</span></b> side of NICS is much more forgiving." + 
+									" As you can't break anything there and it has the same tools and format as the INCIDENT side so it is a great place to "
+									+ "experiment and practice.</li><li>The <b><span style='color:#0056D6'>UNDO</span></b>"
+									+ " button is helpful as you learn to navigate around NICS - " +
+									"you can change back up to your last 5 actions.</li>><li>A HELP site is available that includes some videos and tutorials at: " + 
+									"<a href=\"http://public.nics.ll.mit.edu/nicshelp/\">http://public.nics.ll.mit.edu/nicshelp/</a>. You can also access this site " + 
+									"from within NICS by selecting the <span style='color:#0056D6'>HELP</span>"
+									+ " button in the upper right corner of the Web browser.</li>" + 
+									"<li>References: </li><ul><li>Wildfire Today Article:" + 
+									" <a href=\"http://wildfiretoday.com/2014/02/10/new-communication-tool-enhances-incident-management/\">" + 
+									"http://wildfiretoday.com/2014/02/10/new-communication-tool-enhances-incident-management/</a></li><li>You Tube Video: " +
+									"<a href=\"http://youtu.be/mADTLY0t_eM\">http://youtu.be/mADTLY0t_eM</a></li></ul><li>NICS Mobile:</li>" + 
+									"<ul><li>The NICS Mobile Application instructions are available: <a href=\"https://public.nics.ll.mit.edu/nicshelp/\">" + 
+									"https://public.nics.ll.mit.edu/nicshelp/</a></li><li>Scroll down to the NICS Mobile section for details.</li></ul>" + 
+									"</ul></ul></body></html>";
+						}
+						
+						JsonEmail email = new JsonEmail(fromEmail,newUser.getUsername(),emailSubject);
+						
+						email.setBody(emailBody);
+						
+						notifyNewUserEmail(email.toJsonObject().toString(),alertTopic);
 						
 					} catch (Exception e) {
 						APILogger.getInstance().e(CNAME,"Failed to send new User email alerts");
-					}*/
+					}
 					
 				}
 				User responseUser = userDao.getUserById(userId);
@@ -1272,11 +1356,7 @@ public class UserServiceImpl implements UserService {
 	 */
 	private edu.mit.ll.nics.common.entity.User createUser(RegisterUser rUser) throws Exception{
 		edu.mit.ll.nics.common.entity.User user = new edu.mit.ll.nics.common.entity.User();
-		
-		//PhinicsDbFacade dbi =
-			//	PhinicsDbFactory.getInstance().getPhinicsDbFacadeSingleton();
-		
-		//int userid = dbi.getNextUserId();
+				
 		int userid = userDao.getNextUserId();
 		user.setFirstname(rUser.getFirstName());
 		user.setLastname(rUser.getLastName());
@@ -1328,6 +1408,13 @@ public class UserServiceImpl implements UserService {
 		} 
 	}
 	
+	
+	/**
+	 * Validates a RegisterUser object
+	 * 
+	 * @param user
+	 * @return Failure reason constant
+	 */
 	private String validateRegisterUser(RegisterUser user){
 			
 		
@@ -1344,20 +1431,16 @@ public class UserServiceImpl implements UserService {
 		if((user.getOtherEmail() != null && !StringUtils.isEmpty(user.getOtherEmail()) && 
 				!EntityEncoder.validateEmailAddress(user.getOtherEmail()))
 				){
-			return FAILURE_EMAIL;
+			return FAILURE_OTHER_EMAIL;
 		}
 
 		if(!UserInfoValidator.validateUsername(user.getEmail()) || 
 				!EntityEncoder.validateEmailAddress(user.getEmail())){
 			return FAILURE_USERNAME_INVALID;
 		}
-		
-		//PhinicsDbFacade dbi =
-			//	PhinicsDbFactory.getInstance().getPhinicsDbFacadeSingleton();
-		
+						
 		
 		try {
-			//if(UserDAO.getInstance().getNicsUserByUsername(user.getEmail()) != null) {
 			if(userDao.getUser(user.getEmail()) != null) {
 				return FAILURE_USERNAME;
 			}
@@ -1630,6 +1713,9 @@ public class UserServiceImpl implements UserService {
 			
 		Response response = null;
 		UserResponse  userResponse = new UserResponse();
+		User user = null;
+		Contact contact = null;
+		HashSet<Contact> hashSet = null;
 		
 		if(!userName.equalsIgnoreCase(requestingUser)){
 			return Response.status(Status.BAD_REQUEST).entity(
@@ -1638,9 +1724,17 @@ public class UserServiceImpl implements UserService {
 		
 		try{
 			
-			boolean updated = userDao.addContact(userName, contactId, value);
+			int dbContactId = userDao.addContact(userName, contactId, value);
 			
-			if(updated){
+			
+			if(dbContactId != -1){
+				user = new User();
+				contact = new Contact();
+				hashSet = new HashSet<Contact>();
+				contact.setContactid(dbContactId);
+				hashSet.add(contact);
+				user.setContacts(hashSet);
+				userResponse.getUsers().add(user);
 				userResponse.setMessage(Status.OK.getReasonPhrase());
 				userResponse.setCount(1);
 				response = Response.ok(userResponse).status(Status.OK).build();
@@ -1661,7 +1755,7 @@ public class UserServiceImpl implements UserService {
 		return response;
 	}
 	
-	public Response deleteContactInfo(int workspaceId, String userName, int contactTypeId, String value, String requestingUser){
+	public Response deleteContactInfo(int workspaceId, String userName, int contactId, String requestingUser){
 		
 		Response response = null;
 		UserResponse  userResponse = new UserResponse();
@@ -1673,7 +1767,7 @@ public class UserServiceImpl implements UserService {
 		
 		try{
 			
-			boolean deleted = userDao.deleteContact(userName,contactTypeId,value);
+			boolean deleted = userDao.deleteContact(contactId);
 			
 			if(deleted){
 				userResponse.setMessage(Status.OK.getReasonPhrase());

@@ -38,8 +38,10 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 import edu.mit.ll.em.api.util.APIConfig;
+import edu.mit.ll.em.api.util.SADisplayConstants;
 import edu.mit.ll.nics.common.rabbitmq.RabbitFactory;
 import edu.mit.ll.nics.common.rabbitmq.RabbitPubSubProducer;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -88,7 +90,10 @@ public class ChatMsgServiceImpl implements ChatMsgService {
 	 * @See ChatMsgServiceResponse
 	 */
 	public Response getChatMsgs(int collabroomId, ChatOptionalParams optionalParams, String requestingUser) {
-		if(!collabDao.hasPermissions(userDao.getUserId(requestingUser), collabroomId)){
+		String incidentMap = APIConfig.getInstance().getConfiguration().getString(
+				APIConfig.INCIDENT_MAP, SADisplayConstants.INCIDENT_MAP);
+		
+		if(!collabDao.hasPermissions(userDao.getUserId(requestingUser), collabroomId, incidentMap)){
 			return getInvalidResponse();
 		}
 		

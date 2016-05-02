@@ -37,8 +37,10 @@ import org.apache.commons.lang.StringUtils;
 
 public final class UserInfoValidator {
 	private static final String PASSWORD_IS_EMPTY = "Please enter a password.";
+	
+	private static final String DEFAULT_PASSWORD_PATTERN = "((?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%!_-]).{8,20})";
 
-	private static final String PASSWORD_REQUIREMENTS = "Your password must be a minimum 6 characters long and a maximum of 20 with at least one digit, " +
+	private static final String DEFAULT_PASSWORD_REQUIREMENTS = "Your password must be a minimum 8 characters long and a maximum of 20 with at least one digit, " +
 			"one upper case letter, one lower case letter and one special symbol (“@#$%-_!”)";
 
 	private static String EMPTY = "";
@@ -141,11 +143,20 @@ public final class UserInfoValidator {
 		if(StringUtils.isEmpty(newPassword)){
 			return PASSWORD_IS_EMPTY;
 		}
+				
+		String patternProp = APIConfig.getInstance().getConfiguration()
+				.getString(APIConfig.PASSWORD_PATTERN, DEFAULT_PASSWORD_PATTERN);
 		
-		Pattern pattern = Pattern.compile("((?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%!_-]).{6,20})");
+		String passwordRequirements = APIConfig.getInstance().getConfiguration()
+				.getString(APIConfig.PASSWORD_REQUIREMENTS, DEFAULT_PASSWORD_REQUIREMENTS);
+		
+		APILogger.getInstance().i("UserInfoValidator", "Using pattern from property: " + patternProp);
+		
+		Pattern pattern = Pattern.compile(patternProp);
 		Matcher matcher = pattern.matcher(newPassword);
+		
 		if(!matcher.matches()){
-			return PASSWORD_REQUIREMENTS;
+			return passwordRequirements;
 		}
 		
 	    return SUCCESS;

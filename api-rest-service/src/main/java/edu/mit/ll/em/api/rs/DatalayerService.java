@@ -30,12 +30,14 @@
 package edu.mit.ll.em.api.rs;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -53,6 +55,19 @@ public interface DatalayerService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getDatalayers(@PathParam("folderId") String folderId);
 	
+	@GET
+	@Path("/token/{datasourceId}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getToken(@PathParam("datasourceId") String datasourceId);
+	
+	@GET
+	@Path("/token")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getToken(
+			@QueryParam("internalurl") String internalUrl,
+			@QueryParam("username") String username,
+			@QueryParam("password") String password);
+	
 	@POST
 	@Path("/sources/{dataSourceId}/layer")
 	@Consumes(MediaType.APPLICATION_JSON)
@@ -60,6 +75,21 @@ public interface DatalayerService {
 	public Response postDataLayer(
 			@PathParam("workspaceId") int workspaceId,
 			@PathParam("dataSourceId") String dataSourceId,
+			Datalayer datalayer);
+	
+	@DELETE
+	@Path("/sources/{dataSourceId}/layer")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response deleteDataLayer(
+			@PathParam("workspaceId") int workspaceId,
+			@PathParam("dataSourceId") String dataSourceId);
+	
+	@POST
+	@Path("/sources/layer/update")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Response updateDataLayer(
+			@PathParam("workspaceId") int workspaceId,
 			Datalayer datalayer);
 	
 	@POST
@@ -70,6 +100,7 @@ public interface DatalayerService {
 			@PathParam("workspaceId") int workspaceId,
 			@PathParam("dataSourceId") String dataSourceId,
 			@PathParam("userOrgId") int userOrgId,
+			@Multipart(value = "refreshRate", required = false) int refreshRate,
 			MultipartBody body,
 			@HeaderParam("CUSTOM-uid") String username);
 	

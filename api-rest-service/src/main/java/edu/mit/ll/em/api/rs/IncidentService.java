@@ -34,6 +34,7 @@ import java.util.Collection;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -62,6 +63,33 @@ public interface IncidentService {
 	public Response getIncidentsTree(
 			@PathParam("workspaceId") Integer workspaceId,
 			@QueryParam("accessibleByUserId") Integer userId);
+	
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path(value = "/incidentorgs")
+	public Response getIncidentOrgs(
+			@PathParam("workspaceId") Integer workspaceId);
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path(value = "/archived/{orgId}")
+	public Response getArchivedIncidents(
+			@PathParam("workspaceId") Integer workspaceId,
+			@PathParam("orgId") Integer orgId);
+	
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path(value = "/active/{orgId}")
+	public Response getActiveIncidents(
+			@PathParam("workspaceId") Integer workspaceId,
+			@PathParam("orgId") Integer orgId);
+	
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path(value = "/find")
+	public Response findArchivedIncidents(
+			@PathParam("workspaceId") Integer workspaceId, 
+			@QueryParam("orgPrefix") String orgPrefix, 
+			@QueryParam("name") String name);
 
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
@@ -70,6 +98,24 @@ public interface IncidentService {
 	public Response updateIncident(
 			@PathParam("workspaceId") Integer workspaceId,
 			Incident incident);
+	
+	@POST
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path(value = "/archive/{incidentId}")
+	public Response archiveIncident(
+			@PathParam("workspaceId") int workspaceId,
+			@PathParam("incidentId") int incidentId,
+			@HeaderParam("CUSTOM-UID") String user);
+	
+	@POST
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path(value = "/activate/{incidentId}")
+	public Response activateIncident(
+			@PathParam("workspaceId") int workspaceId,
+			@PathParam("incidentId") int incidentId,
+			@HeaderParam("CUSTOM-UID") String user);
 	
 	/*@DELETE
 	@Produces(MediaType.APPLICATION_JSON)

@@ -42,6 +42,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -53,6 +54,7 @@ import javax.ws.rs.core.UriBuilder;
 
 import edu.mit.ll.nics.common.rabbitmq.RabbitFactory;
 import edu.mit.ll.nics.common.rabbitmq.RabbitPubSubProducer;
+
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -132,10 +134,13 @@ public class FeatureServiceImpl implements FeatureService {
 	public Response getCollabroomFeatures(int collabroomId, long userId, 
 			QueryConstraintParms optionalParams, int geoType, String requestingUser) {
 		
+		String incidentMap = APIConfig.getInstance().getConfiguration().getString(
+				APIConfig.INCIDENT_MAP, SADisplayConstants.INCIDENT_MAP);
+		
 		UTCRange dateRange = QueryConstraintHelper.makeDateRange(optionalParams);
 		
 		if(userDao.getUserId(requestingUser) == userId && 
-				collabRoomDao.hasPermissions(userId, collabroomId, false)){
+				collabRoomDao.hasPermissions(userId, collabroomId, incidentMap)){
 			List<Feature> features = featureDao.getFeatureState(collabroomId, dateRange, geoType);
 			buildDocumentUrls(features);
 			
@@ -447,7 +452,7 @@ public class FeatureServiceImpl implements FeatureService {
 	 */
 	public Response shareWorkspace(int userId, int collabRoomId, String username) {
 		if(userDao.getUserId(username) != userId){
-			return null;
+			return getAccessDeniedResponse();
 		}
 		
 		String topic = String.format("iweb.NICS.collabroom.%s.feature", collabRoomId);
@@ -476,7 +481,7 @@ public class FeatureServiceImpl implements FeatureService {
 	 */
 	public Response unshareWorkspace(int userId, int collabRoomId, String username) {
 		if(userDao.getUserId(username) != userId){
-			return null;
+			return getAccessDeniedResponse();
 		}
 		
 		String topic = String.format("iweb.NICS.collabroom.%s.deletefeature", collabRoomId);
@@ -490,6 +495,46 @@ public class FeatureServiceImpl implements FeatureService {
 			}
 		}
 		return null;
+	}
+	
+	/**
+	 * Copy all of the user's features to the specified collaboration room.
+	 * 
+	 * @param userId The id of the user whose features to copy
+	 * @param collabRoomId The id of the collaboration room to copy to
+	 */
+	@Override
+	public Response copyWorkspace(int userId, int collabRoomId, String username) {
+		if(userDao.getUserId(username) != userId){
+			return getAccessDeniedResponse();
+		}
+		
+		String topic = String.format("iweb.NICS.collabroom.%s.feature", collabRoomId);
+		
+		List<Feature> userFeatures = Collections.emptyList();
+		try {
+			List<Long> newFeatureIds = featureDao.copyFeatures(userId, collabRoomId);
+			if (newFeatureIds.size() > 0) {
+				userFeatures = featureDao.getFeatures(newFeatureIds);
+			}
+		} catch (Exception e) {
+			return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+		}
+		for (Feature userFeature : userFeatures) {
+			//we hijack topic to flag this feature not to be ignored
+			//otherwise a client ignores new features from the current user
+			userFeature.setTopic("share");
+			try {
+				notifyNewFeature(userFeature, topic);
+			} catch (Exception e) {
+				logger.error("Failed to publish new feature message", e);
+			}
+		}
+		
+		FeatureServiceResponse response = new FeatureServiceResponse();
+		response.setMessage(Status.OK.getReasonPhrase());
+		response.setCount(userFeatures.size());
+		return Response.ok(response).build();
 	}
 	
 	@Override

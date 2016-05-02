@@ -46,6 +46,14 @@ public class APIConfig {
 	public static final String CACHE_USER_REFRESHMINUTES = "em.api.cache.user.refreshminutes";
 	
 	public static final String NEW_USER_ALERT_EMAIL = "em.api.user.alert.email";
+	public static final String NEW_USER_ENABLED_EMAIL = "em.api.newuser.enabled.email";
+	public static final String NEW_USER_BODY_EMAIL = "em.api.newuser.enabled.body";
+	public static final String NEW_USER_BODY_TEMPLATE = "em.api.newuser.enabled.template";
+	public static final String NEW_USER_BODY_SUBJECT = "em.api.newuser.enabled.subject";
+	public static final String NEW_INCIDENT_USERS_EMAIL = "em.api.new.incident.emails";
+	public static final String NEW_REGISTERED_USER_EMAIL = "em.api.new.registered.users.emails";
+	public static final String EMAIL_ALERT_TOPIC = "em.api.alert.topic";
+	public static final String SYSTEM_ADMIN_ALERT_EMAILS = "em.api.sysadmin.alert.emails";
 	
 	public static final String RABBIT_HOSTNAME_KEY = "em.api.rabbitmq.hostname";
 	public static final String RABBIT_USERNAME_KEY = "em.api.rabbitmq.username";
@@ -104,6 +112,13 @@ public class APIConfig {
 	
 	public static final String IMPORT_SHAPEFILE_WORKSPACE = "em.api.service.import.shapefileWorkspace";
 	public static final String IMPORT_SHAPEFILE_STORE = "em.api.service.import.shapefileStore";
+
+
+	public static final String INCIDENT_MAP = "em.api.collabroom.incident.map";
+	
+	// Passwords
+	public static final String PASSWORD_PATTERN = "em.api.password.pattern";
+	public static final String PASSWORD_REQUIREMENTS = "em.api.password.requirements";
 	
 	private Configuration config;
 	

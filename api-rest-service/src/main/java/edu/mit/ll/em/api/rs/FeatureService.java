@@ -156,6 +156,15 @@ public interface FeatureService {
 			@QueryParam("collabRoomId") int collabRoomId,
 			@HeaderParam("CUSTOM-uid") String requestingUser);
 
+	
+	@POST
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path(value = "/user/{userId}/copy")
+	public Response copyWorkspace(
+			@PathParam("userId") int userId,
+			@QueryParam("collabRoomId") int collabRoomId,
+			@HeaderParam("CUSTOM-uid") String requestingUser);
+
 
 }
 

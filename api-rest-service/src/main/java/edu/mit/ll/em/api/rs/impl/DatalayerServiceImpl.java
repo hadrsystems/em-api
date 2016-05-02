@@ -46,11 +46,17 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import javax.ws.rs.PathParam;
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.client.Invocation.Builder;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -67,11 +73,14 @@ import org.geotools.data.simple.SimpleFeatureSource;
 import org.opengis.referencing.FactoryException;
 
 import edu.mit.ll.em.api.dataaccess.ShapefileDAO;
+import edu.mit.ll.em.api.dataaccess.UserOrgDAO;
 import edu.mit.ll.em.api.rs.DatalayerDocumentServiceResponse;
 import edu.mit.ll.em.api.rs.DatalayerService;
 import edu.mit.ll.em.api.rs.DatalayerServiceResponse;
+import edu.mit.ll.em.api.rs.FieldMapResponse;
 import edu.mit.ll.em.api.util.APIConfig;
 import edu.mit.ll.em.api.util.FileUtil;
+import edu.mit.ll.em.api.util.SADisplayConstants;
 import edu.mit.ll.nics.common.entity.User;
 import edu.mit.ll.nics.common.entity.UserOrg;
 import edu.mit.ll.nics.common.entity.datalayer.Datalayer;
@@ -91,6 +100,7 @@ import edu.mit.ll.nics.nicsdao.impl.DatalayerDAOImpl;
 import edu.mit.ll.nics.nicsdao.impl.DocumentDAOImpl;
 import edu.mit.ll.nics.nicsdao.impl.FolderDAOImpl;
 import edu.mit.ll.nics.nicsdao.impl.UserDAOImpl;
+import edu.mit.ll.nics.nicsdao.impl.UserOrgDAOImpl;
 import edu.mit.ll.nics.nicsdao.impl.UserSessionDAOImpl;
 
 /**
@@ -107,6 +117,7 @@ public class DatalayerServiceImpl implements DatalayerService {
 	private static final FolderDAO folderDao = new FolderDAOImpl();
 	private static final DocumentDAO documentDao = new DocumentDAOImpl();
 	private static final UserDAO userDao = new UserDAOImpl();
+	private static final UserOrgDAOImpl userOrgDao = new UserOrgDAOImpl();
 	private static final UserSessionDAOImpl usersessionDao = new UserSessionDAOImpl();
 	
 	private static String fileUploadPath;
@@ -116,6 +127,8 @@ public class DatalayerServiceImpl implements DatalayerService {
 	private static String webserverURL;
 	
 	private RabbitPubSubProducer rabbitProducer;
+	
+	private final Client jerseyClient;
 
 	public DatalayerServiceImpl() {
 		Configuration config = APIConfig.getInstance().getConfiguration();
@@ -124,6 +137,7 @@ public class DatalayerServiceImpl implements DatalayerService {
 		geoserverDatastore = config.getString(APIConfig.IMPORT_SHAPEFILE_STORE, "shapefiles");
 		mapserverURL = config.getString(APIConfig.EXPORT_MAPSERVER_URL);
 		webserverURL = config.getString(APIConfig.EXPORT_WEBSERVER_URL);
+		jerseyClient = ClientBuilder.newClient();
 	}
 	
 	@Override
@@ -209,7 +223,7 @@ public class DatalayerServiceImpl implements DatalayerService {
 		
 		if (Status.OK.getStatusCode() == response.getStatus()) {
 			try {
-				notifyChange(newDatalayerFolder, workspaceId);
+				notifyNewChange(newDatalayerFolder, workspaceId);
 			} catch (IOException e) {
 				logger.error("Failed to publish DatalayerService message event", e);
 			}
@@ -218,7 +232,90 @@ public class DatalayerServiceImpl implements DatalayerService {
 		return response;
 	}
 	
+	@Override
+	public Response deleteDataLayer(int workspaceId, String dataSourceId){
+		DatalayerServiceResponse datalayerResponse = new DatalayerServiceResponse();
+		Response response = null;
+		boolean deleteDatalayer = false;
+		
+		try{
+		
+			deleteDatalayer = datalayerDao.removeDataLayer(dataSourceId);
+		
+			if(deleteDatalayer){
+				datalayerResponse.setMessage("OK");
+				response = Response.ok(datalayerResponse).status(Status.OK).build();	
+			}
+			else{
+				datalayerResponse.setMessage("Failed to delete datalayer");
+				response = Response.ok(datalayerResponse).status(Status.INTERNAL_SERVER_ERROR).build();
+			}
+			
+		
+		}catch(Exception e){
+			logger.error("Failed to delete data layer", e);
+			datalayerResponse.setMessage("Failed to delete datalayer");
+			response = Response.ok(datalayerResponse).status(Status.INTERNAL_SERVER_ERROR).build();
+		}
+		
+		if (Status.OK.getStatusCode() == response.getStatus()) {
+			try {
+				notifyDeleteChange(dataSourceId);
+			} catch (IOException e) {
+				logger.error("Failed to publish DatalayerService message event", e);
+			}
+		}
+		
+		return response;
+	}
+	
+	public Response updateDataLayer(int workspaceId, Datalayer datalayer){
+		DatalayerServiceResponse datalayerResponse = new DatalayerServiceResponse();
+		Response response = null;
+		Datalayer dbDatalayer = null;
+		
+		try{
+		
+			dbDatalayer = datalayerDao.updateDataLayer(datalayer);
+		
+			if(dbDatalayer != null){
+				datalayerResponse.setCount(1);
+				datalayerResponse.setMessage("OK");
+				response = Response.ok(datalayerResponse).status(Status.OK).build();	
+			}
+			else{
+				datalayerResponse.setMessage("Failed to update datalayer");
+				response = Response.ok(datalayerResponse).status(Status.INTERNAL_SERVER_ERROR).build();
+			}
+			
+		
+		}catch(Exception e){
+			logger.error("Failed to delete data layer", e);
+			datalayerResponse.setMessage("Failed to delete datalayer");
+			response = Response.ok(datalayerResponse).status(Status.INTERNAL_SERVER_ERROR).build();
+		}
+		
+		if (Status.OK.getStatusCode() == response.getStatus()) {
+			try {
+				notifyUpdateChange(dbDatalayer);
+			} catch (IOException e) {
+				logger.error("Failed to publish DatalayerService message event", e);
+			}
+		}
+		
+		datalayerResponse.setMessage("OK");
+		response = Response.ok(datalayerResponse).status(Status.OK).build();	
+		
+		return response;
+	}
+	
 	public Response postShapeDataLayer(int workspaceId, String displayName, MultipartBody body, String username) {
+		if(!userOrgDao.isUserRole(username, SADisplayConstants.SUPER_ROLE_ID) &&
+				!userOrgDao.isUserRole(username, SADisplayConstants.ADMIN_ROLE_ID) &&
+				!userOrgDao.isUserRole(username, SADisplayConstants.GIS_ROLE_ID)){
+			return getInvalidResponse();
+		}
+			
 		ShapefileDAO geoserverDao = ShapefileDAO.getInstance();
 		GeoServer geoserver = getGeoServer(APIConfig.getInstance().getConfiguration());
 		String dataSourceId = getMapserverDatasourceId();
@@ -319,7 +416,7 @@ public class DatalayerServiceImpl implements DatalayerService {
 		Datalayerfolder newDatalayerFolder = datalayerDao.getDatalayerfolder(datalayerId, folder.getFolderid());
 		
 		try {
-			notifyChange(newDatalayerFolder, workspaceId);
+			notifyNewChange(newDatalayerFolder, workspaceId);
 		} catch (IOException e) {
 			logger.error("Failed to publish DatalayerService message event", e);
 		}
@@ -331,7 +428,7 @@ public class DatalayerServiceImpl implements DatalayerService {
 		return Response.ok(datalayerResponse).status(Status.OK).build();
 	}
 	
-	public Response postDataLayerDocument(int workspaceId, String fileExt, int userOrgId, MultipartBody body, String username){
+	public Response postDataLayerDocument(int workspaceId, String fileExt, int userOrgId, int refreshRate, MultipartBody body, String username){
 		
 		DatalayerDocumentServiceResponse datalayerResponse = new DatalayerDocumentServiceResponse();
 		Response response = null;
@@ -358,8 +455,10 @@ public class DatalayerServiceImpl implements DatalayerService {
 				
 				UserOrg userOrg = (UserOrg)iter.next();
 				
-				if(userOrg.getUserorgid() == userOrgId && (userOrg.getSystemroleid() == 0 || userOrg.getSystemroleid() == 1 ||
-						userOrg.getSystemroleid() == 4	)){
+				if(userOrg.getUserorgid() == userOrgId && 
+						(userOrg.getSystemroleid() == SADisplayConstants.SUPER_ROLE_ID || 
+						userOrg.getSystemroleid() == SADisplayConstants.GIS_ROLE_ID ||
+						userOrg.getSystemroleid() == SADisplayConstants.ADMIN_ROLE_ID	)){
 					valid = true;
 				}
 				
@@ -417,7 +516,7 @@ public class DatalayerServiceImpl implements DatalayerService {
 					datalayer.setCreated(new Date());
 					datalayer.getDatalayersource().setCreated(new Date());
 					datalayer.getDatalayersource().setDatasourceid(dataSourceId);
-				
+					datalayer.getDatalayersource().setRefreshrate(refreshRate);
 				}
 				
 				uploadedDataLayer = doc.getFilename().endsWith(".kmz");
@@ -480,6 +579,9 @@ public class DatalayerServiceImpl implements DatalayerService {
 				else if(uploadedDataLayer = doc.getFilename().endsWith(".json")){
 					fileName = doc.getFilename();
 				}
+				else if(uploadedDataLayer = doc.getFilename().endsWith(".geojson")){
+					fileName = doc.getFilename();
+				}
 				else if(uploadedDataLayer = doc.getFilename().endsWith(".kml")){
 					fileName = doc.getFilename();
 				}
@@ -518,7 +620,7 @@ public class DatalayerServiceImpl implements DatalayerService {
 		
 		if (Status.OK.getStatusCode() == response.getStatus()) {
 			try {
-				notifyChange(newDatalayerFolder, workspaceId);
+				notifyNewChange(newDatalayerFolder, workspaceId);
 			} catch (IOException e) {
 				logger.error("Failed to publish DatalayerService message event", e);
 			}
@@ -526,6 +628,55 @@ public class DatalayerServiceImpl implements DatalayerService {
 		
 		return response;
 	}
+	
+	public Response getToken(String url, String username, String password){
+		return Response.ok(this.requestToken(url, username, password)).status(Status.OK).build();
+	}
+	
+	public Response getToken(String datasourceId){
+		List<Map<String, Object>> data = datalayerDao.getAuthentication(datasourceId);
+		
+		//https://apps.intterragroup.com/arcgis2/tokens/generateToken?username={0}&password={1}&f=json
+		//https://apps.intterragroup.com/arcgis2/services/NICS/VCFDAVLResources/MapServer/WFSServer
+		//https://apps.intterragroup.com/arcgis2/rest/services/NICS/VCFDAVLResources/MapServer
+		
+		if(data.get(0) != null){
+			String internalUrl = (String) data.get(0).get(SADisplayConstants.INTERNAL_URL);
+			String token = this.requestToken(internalUrl, 
+					(String) data.get(0).get(SADisplayConstants.USER_NAME),
+					(String) data.get(0).get(SADisplayConstants.PASSWORD)
+			);
+			if(token != null){
+				return Response.ok(token).status(Status.OK).build();
+			}
+		}
+
+		return Response.ok().status(Status.INTERNAL_SERVER_ERROR).build();
+	}
+	
+	private String requestToken(String internalUrl, String username, String password){
+		int index = internalUrl.indexOf("rest/services");
+		if(index == -1){ 
+			index = internalUrl.indexOf("services"); 
+		}
+		
+		if(index > -1){
+			StringBuffer url = new StringBuffer(internalUrl.substring(0, index));
+			url.append("tokens/generateToken?");
+			url.append("username=");
+			url.append(username);
+			url.append("&password=");
+			url.append(password);
+			url.append("&f=json");
+			
+			WebTarget target = jerseyClient.target(url.toString());
+			Builder builder = target.request("json");
+			return builder.get().readEntity(String.class);
+		}
+		
+		return null;
+	}
+		
 	
 	private byte[] writeAttachmentWithDigest(Attachment attachment, Path path, String digestAlgorithm) throws IOException, NoSuchAlgorithmException {
 		try(
@@ -644,11 +795,29 @@ public class DatalayerServiceImpl implements DatalayerService {
 		return null;
 	}
 	
-	private void notifyChange(Datalayerfolder datalayerfolder, int workspaceId) throws IOException {
+	private void notifyNewChange(Datalayerfolder datalayerfolder, int workspaceId) throws IOException {
 		if (datalayerfolder != null) {
 			String topic = String.format("iweb.NICS.%s.datalayer.new", workspaceId);
 			ObjectMapper mapper = new ObjectMapper();
 			String message = mapper.writeValueAsString(datalayerfolder);
+			getRabbitProducer().produce(topic, message);
+		}
+	}
+	
+	private void notifyDeleteChange(String dataSourceId) throws IOException {
+		if (dataSourceId != null) {
+			String topic = String.format("iweb.NICS.datalayer.delete");
+			ObjectMapper mapper = new ObjectMapper();
+			String message = mapper.writeValueAsString(dataSourceId);
+			getRabbitProducer().produce(topic, message);
+		}
+	}
+	
+	private void notifyUpdateChange(Datalayer datalayer) throws IOException {
+		if (datalayer != null) {
+			String topic = String.format("iweb.NICS.datalayer.update");
+			ObjectMapper mapper = new ObjectMapper();
+			String message = mapper.writeValueAsString(datalayer);
 			getRabbitProducer().produce(topic, message);
 		}
 	}

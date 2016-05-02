@@ -27,15 +27,36 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+package edu.mit.ll.em.api.rs;
 
-public class EndpointTests {
+import java.util.ArrayList;
+import java.util.Collection;
+
+
+public class LogServiceResponse {
+
+	private String message;
 	
+	private Collection<?> results = new ArrayList();
 	
-	public static void main(String args[]) {
-		System.out.println("hey");
+	public String getMessage() {
+		return message;
 	}
 
+	public void setMessage(String message) {
+		this.message = message;
+	}
+
+	public Collection<?> getResults() {
+		return results;
+	}
+	
+	public void setResults(Collection<?> results) {
+		this.results = results;
+	}
+	
+	@Override
+	public String toString() {
+		return "LogServiceResponse [message=" + message + ", results=" + results + "]";
+	}	
 }
