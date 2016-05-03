@@ -190,7 +190,7 @@ public class FeatureServiceImpl implements FeatureService {
 		Long featureId = null;
 		FeatureServiceResponse featureResponse = new FeatureServiceResponse();
 		
-		if(!collabRoomDao.hasPermissions(userDao.getUserId(requestingUser), collabRoomId, false)){
+		if(!collabRoomDao.hasPermissions(userDao.getUserId(requestingUser), collabRoomId)){
 			return getAccessDeniedResponse();
 		}
 		
@@ -254,7 +254,7 @@ public class FeatureServiceImpl implements FeatureService {
 	 */
 	public Response postCollabRoomFeature(int collabRoomId, int geoType , String feature , String requestingUser) {
 		
-		if(!collabRoomDao.hasPermissions(userDao.getUserId(requestingUser), collabRoomId, false)){
+		if(!collabRoomDao.hasPermissions(userDao.getUserId(requestingUser), collabRoomId)){
 			return getAccessDeniedResponse();
 		}
 		
@@ -365,7 +365,7 @@ public class FeatureServiceImpl implements FeatureService {
 	 */
 	public Response deleteCollabRoomFeature(int collabRoomId, long featureId, String requestingUser){
 		
-		if(!collabRoomDao.hasPermissions(userDao.getUserId(requestingUser), collabRoomId, false)){
+		if(!collabRoomDao.hasPermissions(userDao.getUserId(requestingUser), collabRoomId)){
 			return getAccessDeniedResponse();
 		}
 		
