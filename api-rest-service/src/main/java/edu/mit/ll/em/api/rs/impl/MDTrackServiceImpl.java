@@ -173,7 +173,7 @@ public class MDTrackServiceImpl implements MDTrackService {
 					if(verifyJson.getString("status").equals("success")) {
 						APILogger.getInstance().i("MDTrackService", "Got status SUCCESS: " + verifyJson.getString("status"));
 						verified = true;
-						APILogger.getInstance().i("MDTrackService", "Token identity matched NICS identity!");
+						APILogger.getInstance().i("MDTrackService", "Token identity matched SCOUT identity!");
 					} else if(verifyJson.getString("status").equals("fail")){
 						APILogger.getInstance().i("MDTrackService", "Got status FAIL: " + verifyJson.getString("status"));
 						mdtrackResponse.setMessage(verifyJson.getString("message"));

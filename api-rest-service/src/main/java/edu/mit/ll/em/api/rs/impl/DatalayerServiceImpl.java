@@ -320,7 +320,7 @@ public class DatalayerServiceImpl implements DatalayerService {
 		GeoServer geoserver = getGeoServer(APIConfig.getInstance().getConfiguration());
 		String dataSourceId = getMapserverDatasourceId();
 		if (dataSourceId == null) {
-			throw new WebApplicationException("Failed to find configured NICS wms datasource");
+			throw new WebApplicationException("Failed to find configured SCOUT wms datasource");
 		}
 		
 		Attachment aShape = body.getAttachment("shpFile");
