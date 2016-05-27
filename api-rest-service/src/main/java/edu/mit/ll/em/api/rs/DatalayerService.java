@@ -56,6 +56,11 @@ public interface DatalayerService {
 	public Response getDatalayers(@PathParam("folderId") String folderId);
 	
 	@GET
+	@Path("/tracking")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getTrackingLayers(@PathParam("workspaceId") int workspaceId);
+	
+	@GET
 	@Path("/token/{datasourceId}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getToken(@PathParam("datasourceId") String datasourceId);
