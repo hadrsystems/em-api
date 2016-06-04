@@ -94,6 +94,7 @@ public class APIConfig {
 	public static final String FILE_UPLOAD_PATH = "em.api.service.file.upload.path";
 	public static final String KML_UPLOAD_PATH = "em.api.service.kml.upload.path";
 	public static final String KMZ_UPLOAD_PATH = "em.api.service.kmz.upload.path";
+	public static final String KMZ_TMP_UPLOAD_PATH = "em.api.service.kmz.tmp.upload.path";
 	public static final String GPX_UPLOAD_PATH = "em.api.service.gpx.upload.path";
 	public static final String JSON_UPLOAD_PATH = "em.api.service.geojson.upload.path";
 	

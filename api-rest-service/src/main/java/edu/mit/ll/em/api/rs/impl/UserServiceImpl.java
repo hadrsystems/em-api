@@ -1048,6 +1048,7 @@ public class UserServiceImpl implements UserService {
 						notifyNewUserEmail(email.toJsonObject().toString(),alertTopic);
 						
 					} catch (Exception e) {
+						e.printStackTrace();
 						APILogger.getInstance().e(CNAME,"Failed to send new User email alerts");
 					}
 					
