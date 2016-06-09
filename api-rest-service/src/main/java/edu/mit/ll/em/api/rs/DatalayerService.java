@@ -105,7 +105,7 @@ public interface DatalayerService {
 			@PathParam("workspaceId") int workspaceId,
 			@PathParam("dataSourceId") String dataSourceId,
 			@PathParam("userOrgId") int userOrgId,
-			@Multipart(value = "refreshRate", required = false) int refreshRate,
+			@Multipart(value = "refreshrate", required = false) int refreshRate,
 			MultipartBody body,
 			@HeaderParam("CUSTOM-uid") String username);
 	
