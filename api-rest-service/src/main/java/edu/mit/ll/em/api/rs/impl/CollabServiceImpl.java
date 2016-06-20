@@ -65,6 +65,7 @@ import edu.mit.ll.em.api.rs.FieldMapResponse;
 import edu.mit.ll.em.api.util.SADisplayConstants;
 import edu.mit.ll.nics.common.entity.CollabRoom;
 import edu.mit.ll.nics.nicsdao.impl.CollabRoomDAOImpl;
+import edu.mit.ll.nics.nicsdao.impl.IncidentDAOImpl;
 import edu.mit.ll.nics.nicsdao.impl.OrgDAOImpl;
 import edu.mit.ll.nics.nicsdao.impl.UserDAOImpl;
 import edu.mit.ll.nics.nicsdao.impl.UserOrgDAOImpl;
@@ -82,6 +83,7 @@ public class CollabServiceImpl implements CollabService {
 	private static final UserOrgDAOImpl userOrgDao = new UserOrgDAOImpl();
 	private static final UserDAOImpl userDao = new UserDAOImpl();
 	private static final OrgDAOImpl orgDao = new OrgDAOImpl();
+	private static final IncidentDAOImpl incidentDao = new IncidentDAOImpl();
 	
 	private static final Log logger = LogFactory.getLog(CollabServiceImpl.class);
 	
@@ -130,6 +132,7 @@ public class CollabServiceImpl implements CollabService {
 						room.setAdminUsers(Arrays.asList(userId));
 						adminRooms.add(room.getCollabRoomId());
 					}
+					room.setIncidentMapAdmins(incidentDao.getIncidentMapAdmins(incidentId, incidentMap));
 					collabRooms.add(0, room);
 				}else{
 					if(collabDao.getCollabRoomSystemRole(room.getCollabRoomId(), userId) ==

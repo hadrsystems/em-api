@@ -739,9 +739,6 @@ public class FeatureServiceImpl implements FeatureService {
 	private Response buildGetResponse(
 			List<Feature> features, 
 			List<Long> deletedFeatures){
-		if(deletedFeatures != null){
-			System.out.println("Deleted Features: " + deletedFeatures.size());
-		}
 		FeatureServiceResponse featureResponse = this.buildFeatureServiceResponse(features);
 		featureResponse.setDeletedFeature(deletedFeatures);
 		return Response.ok(featureResponse).status(Status.OK).build();
@@ -793,7 +790,7 @@ public class FeatureServiceImpl implements FeatureService {
 	
 	private Response getAccessDeniedResponse(){
 		return Response.status(Status.BAD_REQUEST).entity(
-				Status.FORBIDDEN.getReasonPhrase()).build();
+				"You do not have permissions to perform this function.").build();
 	}
 }
 

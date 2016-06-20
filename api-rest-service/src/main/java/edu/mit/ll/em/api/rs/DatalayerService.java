@@ -56,6 +56,11 @@ public interface DatalayerService {
 	public Response getDatalayers(@PathParam("folderId") String folderId);
 	
 	@GET
+	@Path("/tracking")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getTrackingLayers(@PathParam("workspaceId") int workspaceId);
+	
+	@GET
 	@Path("/token/{datasourceId}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getToken(@PathParam("datasourceId") String datasourceId);
@@ -100,7 +105,7 @@ public interface DatalayerService {
 			@PathParam("workspaceId") int workspaceId,
 			@PathParam("dataSourceId") String dataSourceId,
 			@PathParam("userOrgId") int userOrgId,
-			@Multipart(value = "refreshRate", required = false) int refreshRate,
+			@Multipart(value = "refreshrate", required = false) int refreshRate,
 			MultipartBody body,
 			@HeaderParam("CUSTOM-uid") String username);
 	

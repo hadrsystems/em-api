@@ -47,14 +47,14 @@ import java.util.Map;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import edu.mit.ll.nics.common.rabbitmq.RabbitFactory;
-import edu.mit.ll.nics.common.rabbitmq.RabbitPubSubProducer;
-
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.StringUtils;
+
 import org.codehaus.jackson.map.ObjectMapper;
+
 import org.json.JSONException;
 import org.json.JSONObject;
+
 import org.springframework.dao.DataAccessException;
 
 import edu.mit.ll.em.api.rs.FieldMapResponse;
@@ -69,23 +69,29 @@ import edu.mit.ll.em.api.util.APIConfig;
 import edu.mit.ll.em.api.util.APILogger;
 import edu.mit.ll.em.api.util.SADisplayConstants;
 import edu.mit.ll.em.api.util.UserInfoValidator;
-import edu.mit.ll.nics.common.entity.CurrentUserSession;
-import edu.mit.ll.nics.common.entity.User;
+
+import edu.mit.ll.nics.common.email.JsonEmail;
 import edu.mit.ll.nics.common.entity.Contact;
 import edu.mit.ll.nics.common.entity.ContactType;
+import edu.mit.ll.nics.common.entity.CurrentUserSession;
 import edu.mit.ll.nics.common.entity.EntityEncoder;
 import edu.mit.ll.nics.common.entity.Org;
 import edu.mit.ll.nics.common.entity.SADisplayMessageEntity;
+import edu.mit.ll.nics.common.entity.User;
 import edu.mit.ll.nics.common.entity.UserOrg;
 import edu.mit.ll.nics.common.entity.UserOrgWorkspace;
+import edu.mit.ll.nics.common.entity.Workspace;
+import edu.mit.ll.nics.common.rabbitmq.RabbitFactory;
+import edu.mit.ll.nics.common.rabbitmq.RabbitPubSubProducer;
+
 import edu.mit.ll.nics.nicsdao.impl.IncidentDAOImpl;
 import edu.mit.ll.nics.nicsdao.impl.OrgDAOImpl;
 import edu.mit.ll.nics.nicsdao.impl.UserDAOImpl;
 import edu.mit.ll.nics.nicsdao.impl.UserOrgDAOImpl;
 import edu.mit.ll.nics.nicsdao.impl.UserSessionDAOImpl;
 import edu.mit.ll.nics.nicsdao.impl.WorkspaceDAOImpl;
+
 import edu.mit.ll.nics.sso.util.SSOUtil;
-import edu.mit.ll.nics.common.email.JsonEmail;
 
 /**
  * 
@@ -103,7 +109,8 @@ public class UserServiceImpl implements UserService {
 	private static String FAILURE_PASSWORDS = "Passwords do not match";
 	private static String FAILURE_PHONE_NUMBERS = "Phone number is not a valid format.";
 	private static String FAILURE_USERNAME_INVALID = "Your username must be in a valid email format.";
-	private static String FAILURE_ORG_INVALID = "You must choose an organization.";
+	private static String FAILURE_ORG_INVALID = "Invalid organization.";
+	private static String FAILURE_ORG_BLANK = "You must choose an organization.";
 	private static String COULD_NOT_VALIDATE_REGISTRATION = "Please confirm your registration with your administrator.";
 	private static String FAILURE_EMAIL = "An email address is required.";
 	private static String FAILURE_OTHER_EMAIL = "The 'Other Email' is invalid";
@@ -289,7 +296,7 @@ public class UserServiceImpl implements UserService {
 	 * @see UserResponse
 	 */	
 	public Response postUser(int workspaceId, RegisterUser registerUser) {
-		String successMessage = "Successfully registered user";
+		String successMessage = "Successfully registered user ";
 		
 		try{
 			edu.mit.ll.nics.common.entity.User user = createUser(registerUser);
@@ -310,7 +317,16 @@ public class UserServiceImpl implements UserService {
 			Collection<Org> orgs = new ArrayList<Org>();
 
 			OrgDAOImpl orgDao = new OrgDAOImpl();
-			Org org = orgDao.getOrganization(registerUser.getOrganization());
+			int orgId = -1;
+			
+			if(validateStringAsInt(registerUser.getOrganization())) {
+				orgId = Integer.parseInt(registerUser.getOrganization(), 10);
+			} else {
+				return Response.ok("Received invalid Organization ID, could not parse integer value from string: " + 
+						registerUser.getOrganization()).status(Status.PRECONDITION_FAILED).build();
+			}
+			
+			Org org = orgDao.getOrganization(orgId);
 			if(org == null) {
 				// need to fail, can't get org
 				return Response.ok(FAILURE_ORG_INVALID + ": " + registerUser.getOrganization())
@@ -334,11 +350,20 @@ public class UserServiceImpl implements UserService {
 			List<UserOrgWorkspace> userOrgWorkspacesTeams = new ArrayList<UserOrgWorkspace>();
 			if(teams != null && teams.length > 0){
 				try{
-					for(int i = 0; i < teams.length; i++) {						
-						Org teamOrg = orgDao.getOrganization(teams[i]);
+					int teamOrgId = -1;
+					for(int i = 0; i < teams.length; i++) {
+						try {
+							teamOrgId = Integer.parseInt(teams[i], 10);
+						} catch (NumberFormatException e) {
+							log.e("UserServiceImpl", "Specified orgid failed to parse to an integer: " + teams[i]);
+							throw new Exception("Could not parse Org ID from input: " + teams[i]);
+						}
+						
+						//Org teamOrg = orgDao.getOrganization(teams[i]);
+						Org teamOrg = orgDao.getOrganization(teamOrgId);
 						if(teamOrg == null) {
 							log.i("UserServiceImpl", "Org does not exist: " + teams[i]);
-							continue;
+							throw new Exception("Specified Organization ID does not exist: " + teamOrgId);
 						}
 						
 						UserOrg team = createUserOrg(teamOrg.getOrgId(), user.getUserId(), registerUser);
@@ -354,10 +379,10 @@ public class UserServiceImpl implements UserService {
 				}catch(Exception e){
 					e.printStackTrace();
 
-					log.e("UserServiceImpl", "Exception while creating Team UserOrg and UserOrgWorkspace on input: " + 
+					log.e("UserServiceImpl", "Exception ("+e.getMessage()+") while creating Team UserOrg and UserOrgWorkspace on input: " + 
 							Arrays.toString(teams));
 
-					return Response.ok("Exception while creating Team UserOrg and UserOrgWorkspace on input: " + 
+					return Response.ok("Exception ("+e.getMessage()+") while creating Team UserOrg and UserOrgWorkspace on input: " + 
 							Arrays.toString(teams)).status(Status.PRECONDITION_FAILED).build();
 				}
 			}
@@ -1416,21 +1441,29 @@ public class UserServiceImpl implements UserService {
 	 * @return Failure reason constant
 	 */
 	private String validateRegisterUser(RegisterUser user){
-			
 		
-		if(user.getFirstName() == null || StringUtils.isEmpty(user.getFirstName()) ||
-				user.getLastName() == null || StringUtils.isEmpty(user.getLastName())){
+		if(StringUtils.isBlank(user.getOrganization())) {
+			return FAILURE_ORG_BLANK;
+		} else {
+			
+			if(!validateStringAsInt(user.getOrganization())) {
+				APILogger.getInstance().e("UserServiceImpl", "Couldn't parse integer from given orgid: " + 
+						user.getOrganization());
+				return FAILURE_ORG_INVALID + " - Received invalid Organization ID: " + user.getOrganization();
+			}
+		}
+		
+		if(StringUtils.isBlank(user.getFirstName()) || StringUtils.isBlank(user.getLastName())) {
 			return FAILURE_NAMES;
 		}
 
-		if(user.getEmail() == null || StringUtils.isEmpty(user.getEmail()) ||
+		if(StringUtils.isBlank(user.getEmail()) ||
 				!EntityEncoder.validateEmailAddress(user.getEmail())) {			
 			return FAILURE_EMAIL;
 		}
 
-		if((user.getOtherEmail() != null && !StringUtils.isEmpty(user.getOtherEmail()) && 
-				!EntityEncoder.validateEmailAddress(user.getOtherEmail()))
-				){
+		if((StringUtils.isNotBlank(user.getOtherEmail()) && 
+				!EntityEncoder.validateEmailAddress(user.getOtherEmail())) ) {
 			return FAILURE_OTHER_EMAIL;
 		}
 
@@ -1438,7 +1471,6 @@ public class UserServiceImpl implements UserService {
 				!EntityEncoder.validateEmailAddress(user.getEmail())){
 			return FAILURE_USERNAME_INVALID;
 		}
-						
 		
 		try {
 			if(userDao.getUser(user.getEmail()) != null) {
@@ -1449,17 +1481,18 @@ public class UserServiceImpl implements UserService {
 			return FAILURE_USERNAME;
 		}
 
-		boolean verified = (user.getConfirmPassword() != null && 
+		String valid = UserInfoValidator.validatePassword(user.getPassword());
+		if(!valid.equals(UserInfoValidator.SUCCESS)){
+			return valid;
+		}
+		
+		boolean verified = (StringUtils.isNotBlank(user.getConfirmPassword()) && 
 				user.getConfirmPassword().equals(user.getPassword()));
 
 		if (!verified) {
 			return FAILURE_PASSWORDS;
 		}
-
-		String valid = UserInfoValidator.validatePassword(user.getPassword());
-		if(!valid.equals(UserInfoValidator.SUCCESS)){
-			return valid;
-		}
+		
 
 		if(!UserInfoValidator.validatePhoneNumbers(
 				user.getCellPhone(), user.getOtherPhone(), user.getOfficePhone())){
@@ -1478,28 +1511,28 @@ public class UserServiceImpl implements UserService {
 		user.getTeams();
 		*/
 		
-				
-		if(user.getDescription() != null && !user.getDescription().isEmpty() 
+
+		if(StringUtils.isNotBlank(user.getDescription())
 				&& !EntityEncoder.validateInputValue(user.getDescription())) {
 			return "Invalid input in Job Description field. " + SAFECHARS;
 		}
 		
-		if(user.getJobTitle() != null && !user.getJobTitle().isEmpty() 
+		if(StringUtils.isNotBlank(user.getJobTitle())
 				&& !EntityEncoder.validateInputValue(user.getJobTitle())) {
 			return "Invalid input in Job Title field. " + SAFECHARS;
 		}
 		
-		if(user.getOtherInfo() != null && !user.getOtherInfo().isEmpty()
+		if(StringUtils.isNotBlank(user.getOtherInfo())
 				&& !EntityEncoder.validateInputValue(user.getOtherInfo())) {
 			return "Invalid input in Other Info field. " + SAFECHARS;
 		}
 		
-		if(user.getRadioNumber() != null && !user.getRadioNumber().isEmpty()
+		if(StringUtils.isNotBlank(user.getRadioNumber())
 				&& !EntityEncoder.validateInputValue(user.getRadioNumber())) {
 			return "Invalid input in Radio Number field. " + SAFECHARS;
 		}
 		
-		if(user.getRank() != null && !user.getRank().isEmpty() 
+		if(StringUtils.isNotBlank(user.getRank()) 
 				&& !EntityEncoder.validateInputValue(user.getRank())) {
 			return "Invalid input in Rank field. " + SAFECHARS;
 		}
@@ -1507,21 +1540,38 @@ public class UserServiceImpl implements UserService {
 		String[] teams = user.getTeams();
 		if(teams != null && teams.length > 0) {
 			for(String team : teams) {
-				if(team != null && !team.isEmpty()
+				if(validateStringAsInt(team)
 						&& !EntityEncoder.validateInputValue(team)) {
-					return "Invalid input in one of the IMT fields: " + team + ". " + SAFECHARS;
+					return "Invalid OrgID in one of the IMT fields: " + team + ". " + SAFECHARS;
 				}
 			}
 		}
+				
 		
-		
-		/* Moving to where we're working with the NICS user
-		try{
-			this.setOrg(orgDao.getOrganization(user.getOrganization()));
-		}catch(Exception e){
-			return FAILURE_ORG_INVALID;
-		}*/
 		return SUCCESS;
+	}
+	
+	
+	/**
+	 * Utility method for checking that a String successfully can be parsed
+	 * as an integer
+	 * 
+	 * @param input String expected to contain a value representing an integer
+	 * @return true if it can, false if it cannot
+	 */
+	private boolean validateStringAsInt(String input) {
+		boolean valid = false;
+		
+		if(StringUtils.isNotBlank(input)) {
+			try {
+				int value = Integer.parseInt(input, 10);
+				valid = true;
+			} catch(NumberFormatException e) {
+				
+			}
+		}
+		
+		return valid;
 	}
 	
 	/**

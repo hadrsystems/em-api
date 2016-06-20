@@ -34,20 +34,28 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.math.BigInteger;
 import java.nio.file.Files;
+import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
+import java.nio.file.attribute.PosixFilePermission;
 import java.security.DigestInputStream;
+import java.security.DigestOutputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -62,6 +70,8 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.cxf.jaxrs.ext.multipart.Attachment;
@@ -112,6 +122,16 @@ public class DatalayerServiceImpl implements DatalayerService {
 
 	private static final Log logger = LogFactory.getLog(DatalayerServiceImpl.class);
 	
+	/** A standard KML root element. */
+	private static final String KML_ROOT_START_TAG =
+			"<kml xmlns=\"http://www.opengis.net/kml/2.2\" " +
+			"xmlns:gx=\"http://www.google.com/kml/ext/2.2\" " +
+			"xmlns:kml=\"http://www.opengis.net/kml/2.2\" " +
+			"xmlns:atom=\"http://www.w3.org/2005/Atom\">";
+	
+	/** A pattern that matches KML documents without a root <kml> element. */
+	private static final Pattern MALFORMED_KML_PATTERN = Pattern.compile("^\\s*<\\?xml[^>]+>\\s*<Document>", Pattern.MULTILINE);
+	
 	/** Folder DAO */
 	private static final DatalayerDAO datalayerDao = new DatalayerDAOImpl();
 	private static final FolderDAO folderDao = new FolderDAOImpl();
@@ -138,6 +158,21 @@ public class DatalayerServiceImpl implements DatalayerService {
 		mapserverURL = config.getString(APIConfig.EXPORT_MAPSERVER_URL);
 		webserverURL = config.getString(APIConfig.EXPORT_WEBSERVER_URL);
 		jerseyClient = ClientBuilder.newClient();
+	}
+	
+	@Override
+	public Response getTrackingLayers(int workspaceId) {
+		FieldMapResponse response = new FieldMapResponse();
+		try{
+			List<Map<String,Object>> layers = datalayerDao.getTrackingLayers(workspaceId, true);
+			layers.addAll(datalayerDao.getTrackingLayers(workspaceId, false));
+			response.setData(layers);
+		}catch(Exception e){
+			logger.error("Failed to retrieve data layers", e);
+			response.setMessage("Failed to retrieve data layers");
+			return Response.ok(response).status(Status.INTERNAL_SERVER_ERROR).build();
+		}
+		return Response.ok(response).status(Status.OK).build();
 	}
 	
 	@Override
@@ -437,8 +472,6 @@ public class DatalayerServiceImpl implements DatalayerService {
 		datalayer.setDatalayersource(new Datalayersource());
 		String dataSourceId = null;
 		Document doc = null;
-		ZipInputStream zipStream;
-		ZipEntry entry;
 		Boolean uploadedDataLayer = false;
 		String fileName = null;
 		String filePath = null;
@@ -468,33 +501,30 @@ public class DatalayerServiceImpl implements DatalayerService {
 				return getInvalidResponse();
 			}
 			
-		
 			for(Attachment attachment : body.getAllAttachments()) {
 	
-				Object propValue = attachment.getObject(String.class).toString();
-				
 				if(MediaType.TEXT_PLAIN_TYPE.isCompatible(attachment.getContentType())){
+					String attachmentName = attachment.getContentDisposition().getParameter("name").toString();
 					
-					if(attachment.getContentDisposition().getParameter("name").toString().equals("usersessionid")){
-						datalayer.setUsersessionid(Integer.valueOf(propValue.toString()));
+					if (attachmentName.equals("usersessionid")){
+						datalayer.setUsersessionid(Integer.valueOf(attachment.getObject(String.class).toString()));
 					}
-					else if(attachment.getContentDisposition().getParameter("name").toString().equals("displayname")){
-						datalayer.setDisplayname(propValue.toString());
+					else if (attachmentName.equals("displayname")){
+						datalayer.setDisplayname(attachment.getObject(String.class).toString());
 					}	
-					else if(attachment.getContentDisposition().getParameter("name").toString().equals("baselayer")){
-						datalayer.setBaselayer(Boolean.parseBoolean(propValue.toString()));
+					else if (attachmentName.equals("baselayer")){
+						datalayer.setBaselayer(Boolean.parseBoolean(attachment.getObject(String.class).toString()));
 					}
 				}
 				else{
-					
-					if(attachment.getContentDisposition().getParameter("filename").endsWith(".kmz")){
+					String attachmentFilename = attachment.getContentDisposition().getParameter("filename").toLowerCase();
+					if (attachmentFilename.endsWith(".kmz")){
 						filePath = APIConfig.getInstance().getConfiguration().getString(APIConfig.KMZ_UPLOAD_PATH,"/opt/data/nics/upload/kmz");
-					}else if(attachment.getContentDisposition().getParameter("filename").endsWith(".gpx")){
+					} else if (attachmentFilename.endsWith(".gpx")){
 						filePath = APIConfig.getInstance().getConfiguration().getString(APIConfig.GPX_UPLOAD_PATH,"/opt/data/nics/upload/gpx");
-					}else if(attachment.getContentDisposition().getParameter("filename").endsWith(".json") || 
-							attachment.getContentDisposition().getParameter("filename").endsWith(".geojson")){
-						filePath = APIConfig.getInstance().getConfiguration().getString(APIConfig.JSON_UPLOAD_PATH,"/opt/data/nics/upload/geojson");
-					}else if(attachment.getContentDisposition().getParameter("filename").endsWith(".kml")){
+					} else if (attachmentFilename.endsWith(".json") || attachmentFilename.endsWith(".geojson")){
+					 	filePath = APIConfig.getInstance().getConfiguration().getString(APIConfig.JSON_UPLOAD_PATH,"/opt/data/nics/upload/geojson");
+					} else if (attachmentFilename.endsWith(".kml")){
 						filePath = APIConfig.getInstance().getConfiguration().getString(APIConfig.KML_UPLOAD_PATH,"/opt/data/nics/upload/kml");
 					}
 					
@@ -511,84 +541,79 @@ public class DatalayerServiceImpl implements DatalayerService {
 				
 				dataSourceId = getFileDatasourceId(fileExt);
 				
-				if(uploadedDataLayer = (dataSourceId != null)){
-				
+				if (dataSourceId != null) {
 					datalayer.setCreated(new Date());
 					datalayer.getDatalayersource().setCreated(new Date());
 					datalayer.getDatalayersource().setDatasourceid(dataSourceId);
 					datalayer.getDatalayersource().setRefreshrate(refreshRate);
 				}
 				
-				uploadedDataLayer = doc.getFilename().endsWith(".kmz");
+				String docFilename = doc.getFilename().toLowerCase();
 				
-				if(uploadedDataLayer){
+				if (uploadedDataLayer = docFilename.endsWith(".kmz")) {
+					String subdir = docFilename.substring(0, docFilename.length() - 4);
+					Path kmzDir = Paths.get(filePath, subdir);
+					if (! Files.exists(kmzDir))
+						Files.createDirectory(kmzDir);
 					
-					try
-					{
-						zipStream = new ZipInputStream(new FileInputStream(filePath + doc.getFilename()));
+					try (
+						FileInputStream fis = new FileInputStream(filePath + doc.getFilename());
+						ZipInputStream zipStream = new ZipInputStream(fis)
+					) {
+						ZipEntry entry;
 						
-						byte[] buf = new byte[2048];
-					
-						while((entry = zipStream.getNextEntry()) != null)
-				        {
-				            String outpath = filePath + "/" + entry.getName();
-				            FileOutputStream output = null;
-				            try
-				            {
-				            	if(entry.getName().endsWith(".kml")){
-				            		fileName = entry.getName();
-				            	}
-				            	
-				            	if(entry.getName().contains("/")){
-				            		
-				            		String folders = entry.getName().substring(0,entry.getName().lastIndexOf('/'));
-				            		File file = new File(filePath+folders);
-				            		
-				            		if(!file.exists()){
-				            			file.mkdirs();
-				            		}
-				            		
-				            	}
-				            	
-				                output = new FileOutputStream(outpath);
-				                int len = 0;
-				                while ((len = zipStream.read(buf)) > 0)
-				                {
-				                    output.write(buf, 0, len);
-				                }
+						// Stream all KMZ entries into new files under this temp dir.
+						while((entry = zipStream.getNextEntry()) != null) {
+							if (entry.getSize() == 0){ 				             
+								 continue; 				            
+							}
+							
+							String entryName = entry.getName();
+							Path outPath = kmzDir.resolve(entryName);
 				            
+				            if (entryName.toLowerCase().endsWith(".kml"))
+				            	fileName = entryName;
+				            	
+				            if (entryName.contains("/"))
+				            	Files.createDirectories(outPath.getParent());
+				            	
+				            try (
+				            	OutputStream output = Files.newOutputStream(outPath)
+				            ) {
+				            	// KML files may require some translation, to workaround broken input files.
+				            	if (fileName != null)
+				            		copyKmlStream(zipStream, output);
+				            	
+				            	// Just copy the content directly, without translation.
+				            	else
+				            		IOUtils.copy(zipStream, output);
 				            }
-				            finally
-				            {
-				                if(output!=null) output.close();
-				            }
-				        }
-						
-						
-						zipStream.close();
+				       }
 					}
 					catch(IOException ex) {
 						logger.error("Failed to unzip file", ex);
 						uploadedDataLayer = false;
+						FileUtils.deleteDirectory(kmzDir.toFile ());
 			        }
 				
+					// Set the final file name of the data layer.
+					fileName = subdir + "/" + fileName;
 				}
-				else if(uploadedDataLayer = doc.getFilename().endsWith(".gpx")){
+				else if(uploadedDataLayer = docFilename.endsWith(".gpx")){
 					fileName = doc.getFilename();
 				}
-				else if(uploadedDataLayer = doc.getFilename().endsWith(".json")){
+				else if(uploadedDataLayer = docFilename.endsWith(".json")){
+					fileName = doc.getFilename();
+				}else if(uploadedDataLayer = docFilename.endsWith(".geojson")){
 					fileName = doc.getFilename();
 				}
-				else if(uploadedDataLayer = doc.getFilename().endsWith(".geojson")){
-					fileName = doc.getFilename();
-				}
-				else if(uploadedDataLayer = doc.getFilename().endsWith(".kml")){
+				else if(uploadedDataLayer = docFilename.endsWith(".kml")){
 					fileName = doc.getFilename();
 				}
 				
 			}
 			
-			if(uploadedDataLayer){
+			if (uploadedDataLayer) {
 				datalayer.getDatalayersource().setLayername(fileName);
 				
 				String datalayerId = datalayerDao.insertDataLayer(dataSourceId, datalayer);
@@ -636,10 +661,6 @@ public class DatalayerServiceImpl implements DatalayerService {
 	public Response getToken(String datasourceId){
 		List<Map<String, Object>> data = datalayerDao.getAuthentication(datasourceId);
 		
-		//https://apps.intterragroup.com/arcgis2/tokens/generateToken?username={0}&password={1}&f=json
-		//https://apps.intterragroup.com/arcgis2/services/NICS/VCFDAVLResources/MapServer/WFSServer
-		//https://apps.intterragroup.com/arcgis2/rest/services/NICS/VCFDAVLResources/MapServer
-		
 		if(data.get(0) != null){
 			String internalUrl = (String) data.get(0).get(SADisplayConstants.INTERNAL_URL);
 			String token = this.requestToken(internalUrl, 
@@ -683,8 +704,25 @@ public class DatalayerServiceImpl implements DatalayerService {
 			InputStream is = attachment.getDataHandler().getInputStream();
 		) {
 			MessageDigest md = MessageDigest.getInstance(digestAlgorithm);
-			DigestInputStream dis = new DigestInputStream(is, md);
-			Files.copy(dis, path, StandardCopyOption.REPLACE_EXISTING);
+			
+			String ext = getFileExtension(attachment);
+			if ("kml".equalsIgnoreCase(ext)) {
+				try(
+					OutputStream os = Files.newOutputStream(path);
+					DigestOutputStream dos = new DigestOutputStream(os, md)
+				) {
+					copyKmlStream(is, dos);
+				}
+			}
+			
+			else {
+				try (
+					DigestInputStream dis = new DigestInputStream(is, md)
+				) {
+					Files.copy(dis, path, StandardCopyOption.REPLACE_EXISTING);
+				}
+			}
+			
 			return md.digest();	
 		}
 	}
@@ -705,6 +743,15 @@ public class DatalayerServiceImpl implements DatalayerService {
 			}
 			path = directory.resolve(filename);
 			path = Files.move(tempPath, path, StandardCopyOption.REPLACE_EXISTING);
+		
+			// Set proper file permissions on this file.
+			Files.setPosixFilePermissions(path, EnumSet.of(
+					PosixFilePermission.OWNER_READ,
+					PosixFilePermission.OWNER_WRITE,
+					PosixFilePermission.GROUP_READ,
+					PosixFilePermission.GROUP_WRITE,
+					PosixFilePermission.OTHERS_READ
+				));
 		} catch (IOException|NoSuchAlgorithmException e) {
 			logger.error("Failed to save file attachment", e);
 			return null;
@@ -725,7 +772,42 @@ public class DatalayerServiceImpl implements DatalayerService {
 		doc.setCreated(new Date());
 		return doc;
 	}
+
+	/** Utility method for copying (and possibly translating) a KML input stream to an output stream. */
+	public void copyKmlStream(InputStream input, OutputStream output)
+			throws IOException
+	{
+		byte[] buffer = new byte[4096];
+		int n;
+
+		// Convert the first (maximum of) 4096 bytes to a string.
+		if (-1 == (n = input.read(buffer)))
+			return;
+		String prologue = new String(buffer, 0, n, "UTF-8");
 	
+		// Attempt to repair the document prologue, if a root <kml> tag is missing.
+		Matcher matcher = MALFORMED_KML_PATTERN.matcher(prologue);
+		if (matcher.find ()) {
+			int insertionPoint = matcher.end() - 10; // Insertion point, before <Document> tag.
+	
+			IOUtils.write(prologue.substring(0, insertionPoint), output);
+			IOUtils.write(KML_ROOT_START_TAG, output);
+			IOUtils.write(prologue.substring(insertionPoint), output);
+		}
+	
+		// Otherwise, simply write out the byte buffer and signal that no epilogue is needed.
+		else {
+			output.write(buffer, 0, n);
+			prologue = null;
+		}
+	
+		// Write out the rest of the stream.
+		IOUtils.copy(input, output);
+	
+		// If an epilogue is needed, write it now.
+		if (prologue != null)
+			IOUtils.write("</kml>", output);
+	}
 	
 	private String getMapserverDatasourceId() {
 		if(mapserverURL == null) {
@@ -839,4 +921,3 @@ public class DatalayerServiceImpl implements DatalayerService {
 	}
 	
 }
-
