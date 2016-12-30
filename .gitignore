@@ -19,3 +19,5 @@ release.properties
 # intellij
 *.iml
 .idea/
+config
+tomcat-config
