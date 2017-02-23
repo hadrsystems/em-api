@@ -29,6 +29,8 @@
  */
 package edu.mit.ll.em.api.rs;
 
+import org.apache.commons.lang.builder.ToStringBuilder;
+
 public class RegisterUser extends APIBean {
 
 	private String password;
@@ -182,5 +184,7 @@ public class RegisterUser extends APIBean {
 		this.teams = teams;
 	}
 	
-	
+	public String toString() {
+        return ToStringBuilder.reflectionToString(this);
+    }
 }
