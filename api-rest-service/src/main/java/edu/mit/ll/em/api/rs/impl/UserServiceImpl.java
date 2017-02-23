@@ -376,6 +376,8 @@ public class UserServiceImpl implements UserService {
             boolean registerSuccess = userDao.registerUser(user, contactSet, userOrgs, userOrgWorkspaces);
             if (registerSuccess) {
                 notifySuccessfulRegistration(registerUser, user, primaryOrg);
+            } else {
+                return Response.ok("Failed to register user with system. Please try again later.").status(Status.INTERNAL_SERVER_ERROR).build();
             }
         } catch(Exception e) {
             System.out.println("Exception persisting user: " + e.getMessage());
