@@ -88,10 +88,10 @@ public class OpenAmGateway {
         String propPath = APIConfig.getInstance().getConfiguration()
                 .getString("ssoToolsPropertyPath", null);
 
-        log.i("OpenAmGateway:createIdentityUser", "Initializing SSOUtils with property path: " + propPath);
+        log.i("OpenAmGateway:setSSOUtilsProperties", "Initializing SSOUtils with property path: " + propPath);
         if(propPath == null) {
             // send email to admins about sso not configured
-            log.w("UserServiceImpl", "Got null SSO configuration, won't be able to make SSO calls!");
+            log.w("OpenAmGateway", "Got null SSO configuration, won't be able to make SSO calls!");
             response = buildJSONResponse("fail", "'ssoToolsPropertyPath' not set, cannot make SSO related calls.");
         } else {
             System.setProperty("ssoToolsPropertyPath", propPath);
@@ -103,16 +103,14 @@ public class OpenAmGateway {
     /**
      * Deletes an identity user from OpenAM
      *
-     * <p>NOT YET IMPLEMENTED</p>
-     *
-     * @param email
-     * @return
+     * @param uid
+     * @return A JSON response in the form: {"status":"success/fail", "message":"MESSAGE"}
      */
     public JSONObject deleteIdentityUser(String uid) {
 
         SSOUtil ssoUtil = null;
         boolean login = false;
-        String creationResponse = "";
+        String deletionResponse = "";
         JSONObject response = this.setSSOUtilsProperties();
 
         if(response == null) {
@@ -120,9 +118,9 @@ public class OpenAmGateway {
             login = ssoUtil.loginAsAdmin();
 
             if(login) {
-                creationResponse = ssoUtil.deleteUser(uid); // TODO: need to implement delete identity call
+                deletionResponse = ssoUtil.deleteUser(uid);
                 try {
-                    response = new JSONObject(creationResponse);
+                    response = new JSONObject(deletionResponse);
                 } catch(JSONException e) {
                     // can't read response, assume failure
                     response = buildJSONResponse("fail", "JSON exception reading delete identity response: " +
