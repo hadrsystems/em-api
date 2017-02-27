@@ -40,15 +40,10 @@ import org.json.JSONObject;
 public class OpenAmGateway {
 
     private static final APILogger log = APILogger.getInstance();
-    private static OpenAmGateway openAmGateway;
+    private SSOUtil ssoUtil;
 
-    public static OpenAmGateway getInstance() {
-        if(openAmGateway == null)
-            openAmGateway = new OpenAmGateway();
-        return openAmGateway;
-    }
-
-    private OpenAmGateway() {
+    public OpenAmGateway(SSOUtil ssoUtil) {
+        this.ssoUtil = ssoUtil;
     }
 
     /**
@@ -59,13 +54,11 @@ public class OpenAmGateway {
      * @return A JSON response in the form: {"status":"success/fail", "message":"MESSAGE"}
      */
     public JSONObject createIdentityUser(User user, RegisterUser registerUser) {
-        SSOUtil ssoUtil = null;
         boolean login = false;
         String creationResponse = "";
         JSONObject response = this.setSSOUtilsProperties();
 
         if (response == null) {
-            ssoUtil = new SSOUtil();
             login = ssoUtil.loginAsAdmin();
             if (login) {
                 creationResponse = ssoUtil.createUser(user.getUsername(), registerUser.getPassword(),
@@ -107,14 +100,11 @@ public class OpenAmGateway {
      * @return A JSON response in the form: {"status":"success/fail", "message":"MESSAGE"}
      */
     public JSONObject deleteIdentityUser(String uid) {
-
-        SSOUtil ssoUtil = null;
         boolean login = false;
         String deletionResponse = "";
         JSONObject response = this.setSSOUtilsProperties();
 
         if(response == null) {
-            ssoUtil = new SSOUtil();
             login = ssoUtil.loginAsAdmin();
 
             if(login) {

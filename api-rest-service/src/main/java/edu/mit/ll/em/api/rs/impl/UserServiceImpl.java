@@ -117,7 +117,6 @@ public class UserServiceImpl implements UserService {
 	private final UserOrgDAOImpl userOrgDao = new UserOrgDAOImpl();
 	private final UserSessionDAOImpl userSessDao = new UserSessionDAOImpl();
 	private final OrgDAOImpl orgDao = new OrgDAOImpl();
-    private final OpenAmGateway openAmGateway = OpenAmGateway.getInstance();
 	
 	private RabbitPubSubProducer rabbitProducer;
 
@@ -348,6 +347,7 @@ public class UserServiceImpl implements UserService {
      * @throws Exception
      */
     private Response registerUser(RegisterUser registerUser, User user, Org primaryOrg, List<UserOrg> userOrgs, List<UserOrgWorkspace> userOrgWorkspaces, List<Contact> contactSet) throws Exception {
+        OpenAmGateway openAmGateway = new OpenAmGateway(new SSOUtil());
         Response response = null;
         JSONObject createdIdentity = openAmGateway.createIdentityUser(user, registerUser);
         if(!createdIdentity.optString("status", "").equals(SUCCESS)) {
@@ -389,7 +389,8 @@ public class UserServiceImpl implements UserService {
     }
 
     private boolean deleteIdentityUser(RegisterUser registerUser, User user, Org primaryOrg) throws Exception {
-        JSONObject response = this.openAmGateway.deleteIdentityUser(registerUser.getEmail());
+        OpenAmGateway openAmGateway = new OpenAmGateway(new SSOUtil());
+        JSONObject response = openAmGateway.deleteIdentityUser(registerUser.getEmail());
         boolean deleteSuccessful = false;
         if(SUCCESS.equals(response.getString("status"))) {
             log.i("UserServiceImpl", "Successfully deleted identity user with uid " + registerUser.getEmail() + "from OpenAm");
