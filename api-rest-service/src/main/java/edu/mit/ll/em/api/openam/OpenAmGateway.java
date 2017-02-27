@@ -56,39 +56,19 @@ public class OpenAmGateway {
     public JSONObject createIdentityUser(User user, RegisterUser registerUser) {
         boolean login = false;
         String creationResponse = "";
-        JSONObject response = this.setSSOUtilsProperties();
-
-        if (response == null) {
-            login = ssoUtil.loginAsAdmin();
-            if (login) {
-                creationResponse = ssoUtil.createUser(user.getUsername(), registerUser.getPassword(),
-                        user.getFirstname(), user.getLastname(), false);
-                try {
-                    response = new JSONObject(creationResponse);
-                } catch (JSONException e) {
-                    // can't read response, assume failure
-                    response = buildJSONResponse("fail", "JSON exception reading createUser response: " + e.getMessage());
-                }
-            } else {
-                response = buildJSONResponse("fail", "Failed to log in as Administrator with SSOUtil. Cannot create Identity.");
-            }
-        }
-        return response;
-    }
-
-    private JSONObject setSSOUtilsProperties() {
         JSONObject response = null;
-        String propPath = APIConfig.getInstance().getConfiguration()
-                .getString("ssoToolsPropertyPath", null);
 
-        log.i("OpenAmGateway:setSSOUtilsProperties", "Initializing SSOUtils with property path: " + propPath);
-        if(propPath == null) {
-            // send email to admins about sso not configured
-            log.w("OpenAmGateway", "Got null SSO configuration, won't be able to make SSO calls!");
-            response = buildJSONResponse("fail", "'ssoToolsPropertyPath' not set, cannot make SSO related calls.");
+        if (ssoUtil.loginAsAdmin()) {
+            creationResponse = ssoUtil.createUser(user.getUsername(), registerUser.getPassword(),
+                    user.getFirstname(), user.getLastname(), false);
+            try {
+                response = new JSONObject(creationResponse);
+            } catch (JSONException e) {
+                // can't read response, assume failure
+                response = buildJSONResponse("fail", "JSON exception reading createUser response: " + e.getMessage());
+            }
         } else {
-            System.setProperty("ssoToolsPropertyPath", propPath);
-            System.setProperty("openamPropertiesPath", propPath);
+            response = buildJSONResponse("fail", "Failed to log in as Administrator with SSOUtil. Cannot create Identity.");
         }
         return response;
     }
@@ -102,24 +82,20 @@ public class OpenAmGateway {
     public JSONObject deleteIdentityUser(String uid) {
         boolean login = false;
         String deletionResponse = "";
-        JSONObject response = this.setSSOUtilsProperties();
+        JSONObject response = null;
 
-        if(response == null) {
-            login = ssoUtil.loginAsAdmin();
-
-            if(login) {
-                deletionResponse = ssoUtil.deleteUser(uid);
-                try {
-                    response = new JSONObject(deletionResponse);
-                } catch(JSONException e) {
-                    // can't read response, assume failure
-                    response = buildJSONResponse("fail", "JSON exception reading delete identity response: " +
-                            e.getMessage());
-                }
-            } else {
-                response = buildJSONResponse("fail",
-                        "Failed to log in as Administrator with SSOUtil. Cannot delete Identity with uid : " + uid);
+        if(ssoUtil.loginAsAdmin()) {
+            deletionResponse = ssoUtil.deleteUser(uid);
+            try {
+                response = new JSONObject(deletionResponse);
+            } catch(JSONException e) {
+                // can't read response, assume failure
+                response = buildJSONResponse("fail", "JSON exception reading delete identity response: " +
+                        e.getMessage());
             }
+        } else {
+            response = buildJSONResponse("fail",
+                    "Failed to log in as Administrator with SSOUtil. Cannot delete Identity with uid : " + uid);
         }
         return response;
     }

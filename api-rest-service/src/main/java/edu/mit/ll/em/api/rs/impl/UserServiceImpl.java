@@ -347,7 +347,7 @@ public class UserServiceImpl implements UserService {
      * @throws Exception
      */
     private Response registerUser(RegisterUser registerUser, User user, Org primaryOrg, List<UserOrg> userOrgs, List<UserOrgWorkspace> userOrgWorkspaces, List<Contact> contactSet) throws Exception {
-        OpenAmGateway openAmGateway = new OpenAmGateway(new SSOUtil());
+        OpenAmGateway openAmGateway = getOpenAmGatewayInstance();
         Response response = null;
         JSONObject createdIdentity = openAmGateway.createIdentityUser(user, registerUser);
         if(!createdIdentity.optString("status", "").equals(SUCCESS)) {
@@ -388,10 +388,32 @@ public class UserServiceImpl implements UserService {
         return Response.ok(successMessage + registerUser.getEmail()).status(Status.OK).build();
     }
 
+    /**
+     *
+     * @return OpenAmGateway instance
+     * @throws Exception if ssoTools property path is not set or construction of OpenAmGateway instance fails
+     */
+    private OpenAmGateway getOpenAmGatewayInstance() throws Exception {
+        OpenAmGateway openAmGateway = null;
+        String propPath = APIConfig.getInstance().getConfiguration()
+                .getString("ssoToolsPropertyPath", null);
+
+        log.i("UserServiceImpl:getOpenAmGatewayInstance", "Initializing SSOUtils with property path: " + propPath);
+        if(propPath == null) {
+            log.w("UserServiceImpl", "Got null SSO configuration, won't be able to make SSO calls!");
+            throw new Exception("Failed to create identity. 'ssoToolsPropertyPath' not set, cannot make SSO related calls.");
+        } else {
+            System.setProperty("ssoToolsPropertyPath", propPath);
+            System.setProperty("openamPropertiesPath", propPath);
+            openAmGateway = new OpenAmGateway(new SSOUtil());
+        }
+        return openAmGateway;
+    }
+
     private boolean deleteIdentityUser(RegisterUser registerUser, User user, Org primaryOrg) throws Exception {
-        OpenAmGateway openAmGateway = new OpenAmGateway(new SSOUtil());
-        JSONObject response = openAmGateway.deleteIdentityUser(registerUser.getEmail());
         boolean deleteSuccessful = false;
+        OpenAmGateway openAmGateway = getOpenAmGatewayInstance();
+        JSONObject response = openAmGateway.deleteIdentityUser(registerUser.getEmail());
         if(SUCCESS.equals(response.getString("status"))) {
             log.i("UserServiceImpl", "Successfully deleted identity user with uid " + registerUser.getEmail() + "from OpenAm");
             deleteSuccessful = true;
