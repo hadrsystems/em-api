@@ -37,6 +37,11 @@ import edu.mit.ll.nics.sso.util.SSOUtil;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+/**
+ * To instantiate OpenAmGateway, we need an instance of SSOUtil. Before instantiating SSOUtil please make sure
+ * to add ssoToolsPropertyPath as System property. Please see UserServicesImpl.getOpenAmGatewayInstance()
+ * for example.
+ */
 public class OpenAmGateway {
 
     private static final APILogger log = APILogger.getInstance();
