@@ -102,7 +102,7 @@ public class OpenAmGatewayTest {
                     .thenReturn("badness");
         JSONObject response = gateway.createIdentityUser(user, registerUser);
         assertEquals("fail", response.getString("status"));
-        assertTrue(response.getString("message").startsWith("JSON exception reading create identity response"));
+        assertTrue(response.getString("message").startsWith("JSON exception reading createUser response"));
     }
 
     @Test
@@ -134,7 +134,7 @@ public class OpenAmGatewayTest {
         when(ssoUtil.loginAsAdmin()).thenReturn(false);
         JSONObject response = gateway.deleteIdentityUser(uid);
         assertEquals("fail", response.getString("status"));
-        assertEquals("Failed to log in as Administrator with SSOUtil. Cannot create Identity.", response.getString("message"));
+        assertEquals("Failed to log in as Administrator with SSOUtil. Cannot delete Identity with uid : " + uid, response.getString("message"));
     }
 
     @Test
