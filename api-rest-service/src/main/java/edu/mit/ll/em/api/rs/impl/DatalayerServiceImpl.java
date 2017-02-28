@@ -463,8 +463,8 @@ public class DatalayerServiceImpl implements DatalayerService {
 		return Response.ok(datalayerResponse).status(Status.OK).build();
 	}
 	
-	public Response postDataLayerDocument(int workspaceId, String fileExt, int userOrgId, int refreshRate, MultipartBody body, String username){
-		
+	public Response postDataLayerDocument(int workspaceId, String fileExt, int userOrgId, String refreshRate, MultipartBody body, String username){
+		int numericRefreshRate = parseRefreshRate(refreshRate);
 		DatalayerDocumentServiceResponse datalayerResponse = new DatalayerDocumentServiceResponse();
 		Response response = null;
 		Datalayerfolder newDatalayerFolder = null;
@@ -545,7 +545,7 @@ public class DatalayerServiceImpl implements DatalayerService {
 					datalayer.setCreated(new Date());
 					datalayer.getDatalayersource().setCreated(new Date());
 					datalayer.getDatalayersource().setDatasourceid(dataSourceId);
-					datalayer.getDatalayersource().setRefreshrate(refreshRate);
+					datalayer.getDatalayersource().setRefreshrate(numericRefreshRate);
 				}
 				
 				String docFilename = doc.getFilename().toLowerCase();
@@ -675,7 +675,7 @@ public class DatalayerServiceImpl implements DatalayerService {
 		
 		return response;
 	}
-	
+
 	public Response getToken(String url, String username, String password){
 		return Response.ok(this.requestToken(url, username, password)).status(Status.OK).build();
 	}
@@ -946,5 +946,20 @@ public class DatalayerServiceImpl implements DatalayerService {
 		return Response.status(Status.BAD_REQUEST).entity(
 				Status.FORBIDDEN.getReasonPhrase()).build();
 	}
-	
+
+	/**
+	 * Parses refresh rate presented as a string into an integer. If the string cannot be parsed, logs a warning and
+	 * returns a default value.
+	 *
+	 * @param refreshRate The refresh rate as a string
+	 * @return The refresh rate as an integer
+	 */
+	private int parseRefreshRate(String refreshRate) {
+		try {
+			return Integer.parseInt(refreshRate);
+		} catch (NumberFormatException nfe) {
+			logger.warn(String.format("Unable to parse %s, defaulting to 300 seconds", refreshRate));
+			return 300;
+		}
+	}
 }
