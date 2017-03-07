@@ -69,6 +69,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import edu.mit.ll.em.api.formatter.KmlFormatter;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -801,39 +802,8 @@ public class DatalayerServiceImpl implements DatalayerService {
 	}
 
 	/** Utility method for copying (and possibly translating) a KML input stream to an output stream. */
-	public void copyKmlStream(InputStream input, OutputStream output)
-			throws IOException
-	{
-		byte[] buffer = new byte[4096];
-		int n;
-
-		// Convert the first (maximum of) 4096 bytes to a string.
-		if (-1 == (n = input.read(buffer)))
-			return;
-		String prologue = new String(buffer, 0, n, "UTF-8");
-	
-		// Attempt to repair the document prologue, if a root <kml> tag is missing.
-		Matcher matcher = MALFORMED_KML_PATTERN.matcher(prologue);
-		if (matcher.find ()) {
-			int insertionPoint = matcher.end() - 10; // Insertion point, before <Document> tag.
-	
-			IOUtils.write(prologue.substring(0, insertionPoint), output);
-			IOUtils.write(KML_ROOT_START_TAG, output);
-			IOUtils.write(prologue.substring(insertionPoint), output);
-		}
-	
-		// Otherwise, simply write out the byte buffer and signal that no epilogue is needed.
-		else {
-			output.write(buffer, 0, n);
-			prologue = null;
-		}
-	
-		// Write out the rest of the stream.
-		IOUtils.copy(input, output);
-	
-		// If an epilogue is needed, write it now.
-		if (prologue != null)
-			IOUtils.write("</kml>", output);
+	public void copyKmlStream(InputStream input, OutputStream output) throws IOException {
+	    new KmlFormatter().format(input,output);
 	}
 	
 	private String getMapserverDatasourceId() {
