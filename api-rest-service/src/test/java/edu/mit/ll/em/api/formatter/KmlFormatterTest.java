@@ -29,26 +29,26 @@
  */
 package edu.mit.ll.em.api.formatter;
 
-import edu.mit.ll.em.api.rs.impl.DatalayerServiceImpl;
-import edu.mit.ll.nics.common.entity.User;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.regex.Matcher;
 
 import static org.junit.Assert.*;
 
 public class KmlFormatterTest {
     KmlFormatter formatter;
+    ByteArrayOutputStream output;
+    InputStream input;
 
     @Before
     public void setup(){
         formatter = new KmlFormatter();
+        output = new ByteArrayOutputStream();
+
+        byte[] inputData = simpleKml().getBytes();
+        input = new ByteArrayInputStream(inputData);
     }
 
     @Test
@@ -103,6 +103,16 @@ public class KmlFormatterTest {
     }
 
     @Test
+    public void testFixingCoordinatSeperatorsWhenElevationIs0() throws IOException {
+        String fileData = "<xml xmlns:atom><kml><Document><coordinates>-121.3597349039386,36.22929852296618,0, -121.360070172991,36.2293065739447,0, -121.3697243244982,36.22952658532377,0 -121.3697243244982,36.22952658532377,0</coordinates></Document><kml>";
+//        String kmlContent = new String(Files.readAllBytes(Paths.get("abc.java")));
+        String fixedContent = formatter.fixCommonKmlIssues(fileData);
+
+        String expectedContent = "<xml xmlns:atom><kml><Document><coordinates>-121.3597349039386,36.22929852296618,0 -121.360070172991,36.2293065739447,0 -121.3697243244982,36.22952658532377,0 -121.3697243244982,36.22952658532377,0</coordinates></Document><kml>";
+        assertEquals("Expected content to have commas removed", expectedContent, fixedContent);
+    }
+
+    @Test
     public void testXsiNameSpaceIsAddedIfXsiIsUsedAndNotPresent() throws IOException {
         String fileData = "<xml xmlns:atom><kml><Document xsi:schemaLocation=\"http://www.opengis.net/kml/2.2 ></Document></kml>";
         byte[] inputData = fileData.getBytes();
@@ -130,6 +140,11 @@ public class KmlFormatterTest {
         String writtenString = new String(output.toByteArray());
         String endOfDoc = "\t</Folder>\n</Document>\n</kml>\n";
         assertTrue(writtenString.endsWith(endOfDoc));
+    }
+
+    private InputStream buildInputStream(String data){
+        byte[] inputData = data.getBytes();
+        return new ByteArrayInputStream(inputData);
     }
 
     private String fullKml(){
@@ -555,6 +570,50 @@ public class KmlFormatterTest {
         kml.append("\t</Folder>\n");
         kml.append("</Document>\n");
         kml.append("</kml>\n");
+        return kml.toString();
+    }
+
+    private String simpleKml(){
+        StringBuffer kml = new StringBuffer();
+        kml.append("<?xml version='1.0' encoding='UTF-8'?>");
+        kml.append("<kml xmlns='http://www.opengis.net/kml/2.2' xmlns:gx='http://www.google.com/kml/ext/2.2' xmlns:kml='http://www.opengis.net/kml/2.2' xmlns:atom='http://www.w3.org/2005/Atom'>");
+        kml.append("<Document>");
+        kml.append("	<name>Sacramento</name>");
+        kml.append("	<StyleMap id='m_ylw-pushpin'>");
+        kml.append("		<Pair>");
+        kml.append("			<key>normal</key>");
+        kml.append("			<styleUrl>#s_ylw-pushpin</styleUrl>");
+        kml.append("		</Pair>");
+        kml.append("	</StyleMap>");
+        kml.append("	<Style id='s_ylw-pushpin'>");
+        kml.append("		<IconStyle>");
+        kml.append("			<scale>1.1</scale>");
+        kml.append("			<Icon>");
+        kml.append("				<href>http://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png</href>");
+        kml.append("			</Icon>");
+        kml.append("			<hotSpot x='20' y='2' xunits='pixels' yunits='pixels'/>");
+        kml.append("		</IconStyle>");
+        kml.append("	</Style>");
+        kml.append("	<Placemark>");
+        kml.append("		<name>Sacramento</name>");
+        kml.append("		<LookAt>");
+        kml.append("			<longitude>-121.4914105341944</longitude>");
+        kml.append("			<latitude>38.5738714181146</latitude>");
+        kml.append("			<altitude>0</altitude>");
+        kml.append("			<heading>-0.009261707106189142</heading>");
+        kml.append("			<tilt>13.8736659212882</tilt>");
+        kml.append("			<range>3867.433520479885</range>");
+        kml.append("			<gx:altitudeMode>relativeToSeaFloor</gx:altitudeMode>");
+        kml.append("		</LookAt>");
+        kml.append("		<styleUrl>#m_ylw-pushpin</styleUrl>");
+        kml.append("		<Point>");
+        kml.append("			<gx:drawOrder>1</gx:drawOrder>");
+        kml.append("			<coordinates>-121.4942944539962,38.5818088252713,0</coordinates>");
+        kml.append("		</Point>");
+        kml.append("	</Placemark>");
+        kml.append("</Document>");
+        kml.append("</kml>");
+
         return kml.toString();
     }
 }
