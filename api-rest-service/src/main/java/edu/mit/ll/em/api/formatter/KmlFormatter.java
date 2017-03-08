@@ -58,10 +58,10 @@ public class KmlFormatter {
     private static final Pattern XSI_DEFINED_PATTERN = Pattern.compile("xmlns:xsi", Pattern.MULTILINE);
     private static final Pattern USING_XSI_PATTERN = Pattern.compile("\\s*xsi:", Pattern.MULTILINE);
     private static final Pattern KML_TAG_PATTERN = Pattern.compile("<kml|KML>", Pattern.MULTILINE);
-    private static final Pattern LINEAR_RING_PATTERN = Pattern.compile("(</LinearRing>)(\\s*)(<LinearRing>)");
+    private static final String LINEAR_RING_PATTERN = "(</LinearRing>)(\\s*)(<LinearRing>)";
+    private static final String INNER_BOUNDRY_INSERT_PATTERN = "$1</innerBoundaryIs>$2<innerBoundaryIs>$3";
     private static final String ZERO_ELEVATION_TAIL_COORDIATE_SEPERATOR = ",0 ";
     private static final String ZERO_ELEVATION_TAIL_COORDIATE_SEPERATOR_ERROR = ",0, ";
-
 
     public void format(InputStream input, OutputStream output) throws IOException {
         byte[] buffer = new byte[4096];
@@ -69,7 +69,6 @@ public class KmlFormatter {
 
         boolean missingKMLTag = false;
         while (-1 != (n = input.read(buffer))){
-
             String prologue = new String(buffer, 0, n, "UTF-8");
 
             // Attempt to repair the document prologue, if a root <kml> tag is missing.
@@ -91,7 +90,9 @@ public class KmlFormatter {
     }
 
     public String fixCommonKmlIssues(String fileData) throws IOException {
-        return fileData.replaceAll(ZERO_ELEVATION_TAIL_COORDIATE_SEPERATOR_ERROR, ZERO_ELEVATION_TAIL_COORDIATE_SEPERATOR);
+        String kml = fileData.replaceAll(ZERO_ELEVATION_TAIL_COORDIATE_SEPERATOR_ERROR, ZERO_ELEVATION_TAIL_COORDIATE_SEPERATOR);
+        kml = kml.replaceAll(LINEAR_RING_PATTERN, INNER_BOUNDRY_INSERT_PATTERN);
+        return kml;
     }
 
     private int addXsiNamespace(OutputStream output, String prologue, int insertionPoint) throws IOException {

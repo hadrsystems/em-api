@@ -802,8 +802,8 @@ public class DatalayerServiceImpl implements DatalayerService {
 	    formatter.format(input,output);
 	    Charset charset = StandardCharsets.UTF_8;
 	    String fileData = new String(Files.readAllBytes(filePath), charset);
-	    formatter.fixCommonKmlIssues(fileData);
-	    Files.write(filePath, fileData.getBytes(charset));
+	    String modifiedKml = formatter.fixCommonKmlIssues(fileData);
+	    Files.write(filePath, modifiedKml.getBytes(charset));
 	}
 	
 	private String getMapserverDatasourceId() {
