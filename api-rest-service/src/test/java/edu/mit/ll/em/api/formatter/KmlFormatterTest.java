@@ -34,6 +34,7 @@ import org.junit.Test;
 
 import java.io.*;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.junit.Assert.*;
 
@@ -105,7 +106,6 @@ public class KmlFormatterTest {
     @Test
     public void testFixingCoordinatSeperatorsWhenElevationIs0() throws IOException {
         String fileData = "<xml xmlns:atom><kml><Document><coordinates>-121.3597349039386,36.22929852296618,0, -121.360070172991,36.2293065739447,0, -121.3697243244982,36.22952658532377,0 -121.3697243244982,36.22952658532377,0</coordinates></Document><kml>";
-//        String kmlContent = new String(Files.readAllBytes(Paths.get("abc.java")));
         String fixedContent = formatter.fixCommonKmlIssues(fileData);
 
         String expectedContent = "<xml xmlns:atom><kml><Document><coordinates>-121.3597349039386,36.22929852296618,0 -121.360070172991,36.2293065739447,0 -121.3697243244982,36.22952658532377,0 -121.3697243244982,36.22952658532377,0</coordinates></Document><kml>";
@@ -140,6 +140,24 @@ public class KmlFormatterTest {
         String writtenString = new String(output.toByteArray());
         String endOfDoc = "\t</Folder>\n</Document>\n</kml>\n";
         assertTrue(writtenString.endsWith(endOfDoc));
+    }
+
+    @Test
+    public void testWrappingSiblingLinearRingTagsWithInnerBounderyTag() throws IOException {
+        String fixedKml = formatter.fixCommonKmlIssues(fullKml());
+
+        int numberOfInnerBoundryAndLinearRingTags = countInnerBoundryAndLinearRingTagPairs(fixedKml);
+        assertEquals("Expected each linearRing tag to be wrapped with a InnerBoundry", 10, numberOfInnerBoundryAndLinearRingTags);
+    }
+
+    private int countInnerBoundryAndLinearRingTagPairs(String kml){
+        Pattern innerBoundryAndLinearRingGroupingPattern = Pattern.compile("<innerBoundaryIs>\\s*<LinearRing>(?s).*?</LinearRing>\\s*</innerBoundaryIs>");
+        Matcher tagMatcher = innerBoundryAndLinearRingGroupingPattern.matcher(kml);
+        int count = 0;
+        while (tagMatcher.find()){
+            count++;
+        }
+        return count;
     }
 
     private InputStream buildInputStream(String data){
