@@ -31,17 +31,16 @@ package edu.mit.ll.em.api.rs.impl;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.PosixFilePermission;
 import java.security.DigestInputStream;
 import java.security.DigestOutputStream;
@@ -54,12 +53,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import javax.ws.rs.PathParam;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -84,7 +81,6 @@ import org.geotools.data.simple.SimpleFeatureSource;
 import org.opengis.referencing.FactoryException;
 
 import edu.mit.ll.em.api.dataaccess.ShapefileDAO;
-import edu.mit.ll.em.api.dataaccess.UserOrgDAO;
 import edu.mit.ll.em.api.rs.DatalayerDocumentServiceResponse;
 import edu.mit.ll.em.api.rs.DatalayerService;
 import edu.mit.ll.em.api.rs.DatalayerServiceResponse;
@@ -589,8 +585,7 @@ public class DatalayerServiceImpl implements DatalayerService {
 				            ) {
 				            	// KML files may require some translation, to workaround broken input files.
 				            	if (fileName != null)
-				            		copyKmlStream(zipStream, output);
-				            	
+				            		copyKmlStream(outPath, zipStream, output);
 				            	// Just copy the content directly, without translation.
 				            	else
 				            		IOUtils.copy(zipStream, output);
@@ -734,7 +729,7 @@ public class DatalayerServiceImpl implements DatalayerService {
 					OutputStream os = Files.newOutputStream(path);
 					DigestOutputStream dos = new DigestOutputStream(os, md)
 				) {
-					copyKmlStream(is, dos);
+					copyKmlStream(path, is, dos);
 				}
 			}
 			
@@ -802,8 +797,13 @@ public class DatalayerServiceImpl implements DatalayerService {
 	}
 
 	/** Utility method for copying (and possibly translating) a KML input stream to an output stream. */
-	public void copyKmlStream(InputStream input, OutputStream output) throws IOException {
-	    new KmlFormatter().format(input,output);
+	public void copyKmlStream(Path filePath, InputStream input, OutputStream output) throws IOException {
+	    KmlFormatter formatter = new KmlFormatter();
+	    formatter.format(input,output);
+	    Charset charset = StandardCharsets.UTF_8;
+	    String fileData = new String(Files.readAllBytes(filePath), charset);
+	    formatter.fixCommonKmlIssues(fileData);
+	    Files.write(filePath, fileData.getBytes(charset));
 	}
 	
 	private String getMapserverDatasourceId() {

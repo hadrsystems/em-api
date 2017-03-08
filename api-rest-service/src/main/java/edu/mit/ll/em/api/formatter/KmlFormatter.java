@@ -34,6 +34,11 @@ import org.apache.commons.io.IOUtils;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -53,32 +58,40 @@ public class KmlFormatter {
     private static final Pattern XSI_DEFINED_PATTERN = Pattern.compile("xmlns:xsi", Pattern.MULTILINE);
     private static final Pattern USING_XSI_PATTERN = Pattern.compile("\\s*xsi:", Pattern.MULTILINE);
     private static final Pattern KML_TAG_PATTERN = Pattern.compile("<kml|KML>", Pattern.MULTILINE);
+    private static final Pattern LINEAR_RING_PATTERN = Pattern.compile("(</LinearRing>)(\\s*)(<LinearRing>)");
+    private static final String ZERO_ELEVATION_TAIL_COORDIATE_SEPERATOR = ",0 ";
+    private static final String ZERO_ELEVATION_TAIL_COORDIATE_SEPERATOR_ERROR = ",0, ";
+
 
     public void format(InputStream input, OutputStream output) throws IOException {
         byte[] buffer = new byte[4096];
         int n;
 
-        // Convert the first (maximum of) 4096 bytes to a string.
-        if (-1 == (n = input.read(buffer)))
-            return;
-        String prologue = new String(buffer, 0, n, "UTF-8");
+        boolean missingKMLTag = false;
+        while (-1 != (n = input.read(buffer))){
 
-        // Attempt to repair the document prologue, if a root <kml> tag is missing.
-        Matcher missingKMLMatcher = MALFORMED_KML_PATTERN.matcher(prologue);
-        boolean missingKMLTag = missingKMLMatcher.find();
+            String prologue = new String(buffer, 0, n, "UTF-8");
 
-        int insertionPoint = 0;
-        if (missingKMLTag) {
-            insertionPoint = insertKmlTag(output, prologue, missingKMLMatcher);
-        } else {
-            insertionPoint = addXsiNamespace(output, prologue, insertionPoint);
+            // Attempt to repair the document prologue, if a root <kml> tag is missing.
+            Matcher missingKMLMatcher = MALFORMED_KML_PATTERN.matcher(prologue);
+            missingKMLTag = missingKMLMatcher.find();
+
+            int insertionPoint = 0;
+            if (missingKMLTag) {
+                insertionPoint = insertKmlTag(output, prologue, missingKMLMatcher);
+            } else {
+                insertionPoint = addXsiNamespace(output, prologue, insertionPoint);
+            }
+            writeRemainderOfProlouge(prologue, insertionPoint, output);
         }
-        writeRemainderOfProlouge(prologue, insertionPoint, output);
-        writeRemainderOfInput(input, output);
 
         if (missingKMLTag) {
             IOUtils.write("</kml>", output);
         }
+    }
+
+    public String fixCommonKmlIssues(String fileData) throws IOException {
+        return fileData.replaceAll(ZERO_ELEVATION_TAIL_COORDIATE_SEPERATOR_ERROR, ZERO_ELEVATION_TAIL_COORDIATE_SEPERATOR);
     }
 
     private int addXsiNamespace(OutputStream output, String prologue, int insertionPoint) throws IOException {
@@ -103,7 +116,6 @@ public class KmlFormatter {
         insertIntoFile(KML_ROOT_START_TAG, output);
         return insertionPoint;
     }
-
 
     private void insertIntoFile(String data, OutputStream  output) throws IOException {
         IOUtils.write(data, output);
