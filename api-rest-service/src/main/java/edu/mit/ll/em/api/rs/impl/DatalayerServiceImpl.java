@@ -518,13 +518,13 @@ public class DatalayerServiceImpl implements DatalayerService {
 				}
 				else{
 					String attachmentFilename = attachment.getContentDisposition().getParameter("filename").toLowerCase();
-					if (attachmentFilename.endsWith(".kmz")){
+					if (attachmentFilename.toLowerCase().endsWith(".kmz")){
 						filePath = APIConfig.getInstance().getConfiguration().getString(APIConfig.KMZ_TMP_UPLOAD_PATH,"/opt/data/nics/tmp/upload/kmz/");
 					} else if (attachmentFilename.endsWith(".gpx")){
 						filePath = APIConfig.getInstance().getConfiguration().getString(APIConfig.GPX_UPLOAD_PATH,"/opt/data/nics/upload/gpx");
 					} else if (attachmentFilename.endsWith(".json") || attachmentFilename.endsWith(".geojson")){
 					 	filePath = APIConfig.getInstance().getConfiguration().getString(APIConfig.JSON_UPLOAD_PATH,"/opt/data/nics/upload/geojson");
-					} else if (attachmentFilename.endsWith(".kml")){
+					} else if (attachmentFilename.toLowerCase().endsWith(".kml")){
 						filePath = APIConfig.getInstance().getConfiguration().getString(APIConfig.KML_UPLOAD_PATH,"/opt/data/nics/upload/kml");
 					}
 					
@@ -548,9 +548,9 @@ public class DatalayerServiceImpl implements DatalayerService {
 					datalayer.getDatalayersource().setRefreshrate(numericRefreshRate);
 				}
 				
-				String docFilename = doc.getFilename().toLowerCase();
+				String docFilename = doc.getFilename();
 				
-				if (uploadedDataLayer = docFilename.endsWith(".kmz")) {
+				if (uploadedDataLayer = docFilename.toLowerCase().endsWith(".kmz")) {
 					logger.debug("Filepath=" + filePath);
 					logger.debug("doc.getFilename=" + doc.getFilename());
 					String subdir = docFilename.substring(0, docFilename.length() - 4);
@@ -597,7 +597,7 @@ public class DatalayerServiceImpl implements DatalayerService {
 				       }
 						Path oldPath = Paths.get(filePath + docFilename);
 						logger.debug("oldPath=" + oldPath);
-						Path newPath = Paths.get(kmzUploadPath + "/" + docFilename);
+						Path newPath = Paths.get(kmzUploadPath + "/" + docFilename.toLowerCase());
 						logger.debug("newPath=" + newPath);
 						Files.move(oldPath, newPath, StandardCopyOption.REPLACE_EXISTING);
 						// Set proper file permissions on this file.
@@ -629,7 +629,7 @@ public class DatalayerServiceImpl implements DatalayerService {
 				}else if(uploadedDataLayer = docFilename.endsWith(".geojson")){
 					fileName = doc.getFilename();
 				}
-				else if(uploadedDataLayer = docFilename.endsWith(".kml")){
+				else if(uploadedDataLayer = docFilename.toLowerCase().endsWith(".kml")){
 					fileName = doc.getFilename();
 				}
 				
