@@ -42,6 +42,8 @@
 	<jee:jndi-lookup id="dataSource" jndi-name="jboss/sadisplayDatasource" resource-ref="true" />
 
 	<bean id="loggingFeature" class="org.apache.cxf.feature.LoggingFeature" />
+    <bean id="validationProvider" class="org.apache.cxf.validation.BeanValidationProvider"/>
+    <bean id="validationInInterceptor" class="org.apache.cxf.jaxrs.validation.JAXRSBeanValidationInInterceptor"/>
 
 	<jaxrs:server id="apiv1Resource" address="/">
 		<jaxrs:properties>
@@ -51,6 +53,10 @@
 
 			<entry key="attachment-max-size" value="51200000"/>
 		</jaxrs:properties>
+
+        <jaxrs:inInterceptors>
+            <ref bean="validationInInterceptor"/>
+        </jaxrs:inInterceptors>
 
 		<jaxrs:serviceBeans>
 			<bean class="edu.mit.ll.em.api.rs.impl.ChatMsgServiceImpl" />
@@ -79,6 +85,7 @@
 
 		<jaxrs:providers>
 			<bean class="org.codehaus.jackson.jaxrs.JacksonJsonProvider" />
+            <bean class="edu.mit.ll.em.api.rs.exceptionMapper.ValidationExceptionMapper"/>
 		</jaxrs:providers>
 	</jaxrs:server>
 </beans>
