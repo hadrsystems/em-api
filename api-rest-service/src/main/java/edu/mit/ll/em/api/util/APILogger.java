@@ -51,7 +51,11 @@ public class APILogger {
 	public void e(String comp, String msg) {
 		log.error("[" + comp + "] | " + msg);
 	}
-	
+
+    public void e(String comp, String msg, Throwable throwable) {
+        log.error("[" + comp + "] | " + msg, throwable);
+    }
+
 	public void i(String comp, String msg) {
 		log.info("[" + comp + "] | " + msg);
 	}

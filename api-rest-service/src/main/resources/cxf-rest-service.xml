@@ -34,14 +34,19 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:jaxrs="http://cxf.apache.org/jaxrs"
 	xmlns:cxf="http://cxf.apache.org/core"
 	xmlns:jee="http://www.springframework.org/schema/jee"
+    xmlns:context="http://www.springframework.org/schema/context"
 	xsi:schemaLocation="http://cxf.apache.org/core http://cxf.apache.org/schemas/core.xsd
 		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
 		http://cxf.apache.org/jaxrs http://cxf.apache.org/schemas/jaxrs.xsd
-		http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee.xsd">
+		http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd">
 
 	<jee:jndi-lookup id="dataSource" jndi-name="jboss/sadisplayDatasource" resource-ref="true" />
 
 	<bean id="loggingFeature" class="org.apache.cxf.feature.LoggingFeature" />
+    <context:annotation-config/>
+
+    <bean id="configuration1" class="edu.mit.ll.em.api.configuration.SpringConfiguration"/>
     <bean id="validationProvider" class="org.apache.cxf.validation.BeanValidationProvider"/>
     <bean id="validationInInterceptor" class="org.apache.cxf.jaxrs.validation.JAXRSBeanValidationInInterceptor"/>
 
@@ -75,7 +80,9 @@
 			<bean class="edu.mit.ll.em.api.rs.impl.ReportServiceImpl" />
 			<bean class="edu.mit.ll.em.api.rs.impl.SSOManagementServiceImpl" />
 			<!-- <bean class="edu.mit.ll.em.api.rs.impl.TaskingAssignmentServiceImpl" /> -->
-			<bean class="edu.mit.ll.em.api.rs.impl.UserServiceImpl" />
+			<bean class="edu.mit.ll.em.api.rs.impl.UserServiceImpl">
+                <constructor-arg ref="registrationService"/>
+            </bean>
 			<bean class="edu.mit.ll.em.api.rs.impl.WorkspaceServiceImpl" />
 		</jaxrs:serviceBeans>
 
