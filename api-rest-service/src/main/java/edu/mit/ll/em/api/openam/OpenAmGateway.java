@@ -95,10 +95,12 @@ public class OpenAmGateway {
                 response = new JSONObject(deletionResponse);
             } catch(JSONException e) {
                 // can't read response, assume failure
+                log.e("OpenAmGateway", "JSON exception reading delete identity response", e );
                 response = buildJSONResponse("fail", "JSON exception reading delete identity response: " +
                         e.getMessage());
             }
         } else {
+            log.e("OpenAmGateway", "Failed to log in as Administrator with SSOUtil. Cannot delete Identity with uid : " + uid);
             response = buildJSONResponse("fail",
                     "Failed to log in as Administrator with SSOUtil. Cannot delete Identity with uid : " + uid);
         }

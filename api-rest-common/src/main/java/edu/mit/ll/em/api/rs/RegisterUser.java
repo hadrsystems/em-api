@@ -30,161 +30,117 @@
 package edu.mit.ll.em.api.rs;
 
 import org.apache.commons.lang.builder.ToStringBuilder;
+import org.hibernate.validator.constraints.Email;
+import org.hibernate.validator.constraints.NotBlank;
+import org.hibernate.validator.constraints.NotEmpty;
+
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 public class RegisterUser extends APIBean {
+    @NotNull(message="Please provide Organization Type Id.")
+    private Integer organizationTypeId;
+    @NotNull(message="Please provide Organization Id.")
+    private Integer organizationId;
+    @NotBlank(message="Please provide First Name.")
+    private String firstName;
+    @NotBlank(message="Please provide Last Name.")
+    private String lastName;
+    @NotEmpty(message="Please provide valid Email Address.")
+    @Email(message="Please provide valid Email Address.")
+    private String email;
+    @Pattern(regexp="^(\\(\\d{3}\\) \\d{3}-\\d{4})?$", message="Please provide valid Phone number.")
+    private String phone;
+    @NotNull(message="Please provide Password of 8-20 characters with at least one digit, one upper case letter, one lower case letter and one special symbol @#$%-_!.")
+    @Pattern(regexp="^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@#$%_!-])[a-zA-Z0-9@#$%_!-]{8," +
+            "20}$",
+            message="Please provide Password of 8-20 characters with at least one digit, one upper case letter, one lower case letter and one special symbol @#$%-_!.")
+    private String password;
+    private Set<Integer> teams = new HashSet<Integer>();
 
-	private String password;
-	private String confirmPassword;
-	private String firstName;
-	private String lastName;
-	private String email;
-	private String organization;
-	private String rank;
-	private String radioNumber; 
-	private String officePhone;
-	private String cellPhone;
-	private String otherPhone;
-	private String jobTitle;
-	private String description;
-	private String otherInfo;
-	private String otherEmail;
-	private String[] teams;
-	
-	/**
-	 * Default constructor
-	 */
-	public RegisterUser() {		
-	}
+    public RegisterUser() {
+    }
 
-	public String getPassword() {
-		return password;
-	}
+    public RegisterUser(Integer organizationTypeId, Integer organizationId, String firstName, String lastName, String email, String phone, String password, Collection<Integer> teams) {
+        this.organizationTypeId = organizationTypeId;
+        this.organizationId = organizationId;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
+        this.phone = phone;
+        this.password = password;
+        this.teams.addAll(teams);
+    }
 
-	public void setPassword(String password) {
-		this.password = password;
-	}
+    public Integer getOrganizationTypeId() {
+        return organizationTypeId;
+    }
 
-	public String getConfirmPassword() {
-		return confirmPassword;
-	}
+    public void setOrganizationTypeId(Integer organizationTypeId) {
+        this.organizationTypeId = organizationTypeId;
+    }
 
-	public void setConfirmPassword(String confirmPassword) {
-		this.confirmPassword = confirmPassword;
-	}
+    public Integer getOrganizationId() {
+        return organizationId;
+    }
 
-	public String getFirstName() {
-		return firstName;
-	}
+    public void setOrganizationId(Integer organizationId) {
+        this.organizationId = organizationId;
+    }
 
-	public void setFirstName(String firstName) {
-		this.firstName = firstName;
-	}
+    public String getFirstName() {
+        return firstName;
+    }
 
-	public String getLastName() {
-		return lastName;
-	}
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
 
-	public void setLastName(String lastName) {
-		this.lastName = lastName;
-	}
+    public String getLastName() {
+        return lastName;
+    }
 
-	public String getEmail() {
-		return email;
-	}
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
 
-	public void setEmail(String email) {
-		this.email = email;
-	}
+    public String getEmail() {
+        return email;
+    }
 
-	public String getOrganization() {
-		return organization;
-	}
+    public void setEmail(String email) {
+        this.email = email;
+    }
 
-	public void setOrganization(String organization) {
-		this.organization = organization;
-	}
+    public String getPhone() {
+        return phone;
+    }
 
-	public String getRank() {
-		return rank;
-	}
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
 
-	public void setRank(String rank) {
-		this.rank = rank;
-	}
+    public String getPassword() {
+        return password;
+    }
 
-	public String getRadioNumber() {
-		return radioNumber;
-	}
+    public void setPassword(String password) {
+        this.password = password;
+    }
 
-	public void setRadioNumber(String radioNumber) {
-		this.radioNumber = radioNumber;
-	}
+    public Set<Integer> getTeams() {
+        return teams;
+    }
 
-	public String getOfficePhone() {
-		return officePhone;
-	}
+    public void setTeams(Set<Integer> teams) {
+        this.teams.clear();
+        this.teams.addAll(teams);
+    }
 
-	public void setOfficePhone(String officePhone) {
-		this.officePhone = officePhone;
-	}
-
-	public String getCellPhone() {
-		return cellPhone;
-	}
-
-	public void setCellPhone(String cellPhone) {
-		this.cellPhone = cellPhone;
-	}
-
-	public String getOtherPhone() {
-		return otherPhone;
-	}
-
-	public void setOtherPhone(String otherPhone) {
-		this.otherPhone = otherPhone;
-	}
-
-	public String getJobTitle() {
-		return jobTitle;
-	}
-
-	public void setJobTitle(String jobTitle) {
-		this.jobTitle = jobTitle;
-	}
-
-	public String getDescription() {
-		return description;
-	}
-
-	public void setDescription(String description) {
-		this.description = description;
-	}
-
-	public String getOtherInfo() {
-		return otherInfo;
-	}
-
-	public void setOtherInfo(String otherInfo) {
-		this.otherInfo = otherInfo;
-	}
-
-	public String getOtherEmail() {
-		return otherEmail;
-	}
-
-	public void setOtherEmail(String otherEmail) {
-		this.otherEmail = otherEmail;
-	}
-
-	public String[] getTeams() {
-		return teams;
-	}
-
-	public void setTeams(String[] teams) {
-		this.teams = teams;
-	}
-	
-	public String toString() {
+    public String toString() {
         return ToStringBuilder.reflectionToString(this);
     }
 }
