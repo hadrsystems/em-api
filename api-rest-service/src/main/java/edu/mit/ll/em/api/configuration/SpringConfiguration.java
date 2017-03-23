@@ -43,6 +43,9 @@ import edu.mit.ll.nics.nicsdao.impl.WorkspaceDAOImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import javax.validation.Validation;
+import javax.validation.Validator;
+import javax.validation.ValidatorFactory;
 import java.io.IOException;
 
 @Configuration
@@ -96,5 +99,10 @@ public class SpringConfiguration {
     @Bean
     public APILogger logger() {
         return APILogger.getInstance();
+    }
+
+    @Bean
+    public Validator validator() {
+        return Validation.buildDefaultValidatorFactory().getValidator();
     }
 }

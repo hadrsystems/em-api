@@ -34,7 +34,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 
-import javax.validation.Valid;
+import javax.validation.*;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -86,18 +86,20 @@ public class UserServiceImpl implements UserService {
 	private static String SUCCESS = "success";
 	private static String SAFECHARS = "Valid input includes letters, numbers, spaces, and these special "
 			+ "characters: , _ # ! . -";
-	
+
 	private static final APILogger log = APILogger.getInstance();
-	
-	private final UserDAOImpl userDao = new UserDAOImpl();
+
+	private UserDAOImpl userDao = new UserDAOImpl();
 	private final UserOrgDAOImpl userOrgDao = new UserOrgDAOImpl();
 	private final UserSessionDAOImpl userSessDao = new UserSessionDAOImpl();
 	private final OrgDAOImpl orgDao = new OrgDAOImpl();
 	private RabbitPubSubProducer rabbitProducer;
     private UserRegistrationService userRegistrationService;
+    private Validator validator;
 
-    public UserServiceImpl(UserRegistrationService userRegistrationService) {
+    public UserServiceImpl(UserRegistrationService userRegistrationService, Validator validator) {
         this.userRegistrationService = userRegistrationService;
+        this.validator = validator;
     }
     /**
 	 * Read and return all User items in workspace
@@ -1193,7 +1195,8 @@ public class UserServiceImpl implements UserService {
 	}
 
     public Response verifyEmailAddress(int workspaceId, String email) {
-        boolean validEmail = !(userDao.getUser(email) != null);
+        boolean validEmail = validator.validateValue(RegisterUser.class, "email", email).isEmpty();
+        validEmail = validEmail ? !(userDao.getUser(email) != null) : validEmail;
         VerifyEmailResponse responseEntity = new VerifyEmailResponse(Status.OK.getStatusCode(), "OK", validEmail);
         return Response.ok(responseEntity).status(Status.OK).build();
     }
