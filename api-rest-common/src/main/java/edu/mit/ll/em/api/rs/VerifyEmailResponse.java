@@ -29,28 +29,15 @@
  */
 package edu.mit.ll.em.api.rs;
 
-import org.apache.commons.lang.builder.ToStringBuilder;
+public class VerifyEmailResponse extends APIResponse {
+    private boolean valid;
 
-import java.util.Map;
-
-public class ValidationErrorResponse extends APIResponse {
-
-    private Map<String, String> validationErrors;
-
-    public ValidationErrorResponse(int status, String message, Map<String, String> validationErrors) {
+    public VerifyEmailResponse(int status, String message, boolean valid) {
         super(status, message);
-        this.validationErrors = validationErrors;
+        this.valid = valid;
     }
 
-    public Map<String, String> getValidationErrors() {
-        return validationErrors;
-    }
-
-    public void setValidationErrors(Map<String, String> validationErrors) {
-        this.validationErrors = validationErrors;
-    }
-
-    public String toString() {
-        return ToStringBuilder.reflectionToString(this);
+    public boolean isValid() {
+        return this.valid;
     }
 }
