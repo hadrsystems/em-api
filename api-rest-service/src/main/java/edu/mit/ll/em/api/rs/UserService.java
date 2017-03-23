@@ -241,5 +241,10 @@ public interface UserService {
 			@QueryParam("userName") String userName,
 			@QueryParam("contactId") int contactId,
 			@HeaderParam("CUSTOM-uid") String requestingUser);
+
+    @GET
+    @Path(value = "/verifyEmail/{email}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response verifyEmailAddress(@PathParam("workspaceId") int workspaceId, @PathParam("email") String email);
 	
 }
