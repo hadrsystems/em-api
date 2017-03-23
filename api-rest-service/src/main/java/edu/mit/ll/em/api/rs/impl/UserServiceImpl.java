@@ -1193,7 +1193,7 @@ public class UserServiceImpl implements UserService {
 	}
 
     public Response verifyEmailAddress(int workspaceId, String email) {
-        boolean validEmail = (userDao.getUser(email) != null);
+        boolean validEmail = !(userDao.getUser(email) != null);
         VerifyEmailResponse responseEntity = new VerifyEmailResponse(Status.OK.getStatusCode(), "OK", validEmail);
         return Response.ok(responseEntity).status(Status.OK).build();
     }
