@@ -104,8 +104,17 @@ public class KmlFormatterTest {
     }
 
     @Test
-    public void testFixingCoordinatSeperatorsWhenElevationIs0() throws IOException {
-        String fileData = "<xml xmlns:atom><kml><Document><coordinates>-121.3597349039386,36.22929852296618,0, -121.360070172991,36.2293065739447,0, -121.3697243244982,36.22952658532377,0 -121.3697243244982,36.22952658532377,0</coordinates></Document><kml>";
+    public void testFixingCoordinatSeperatorsWhenElevationIs0AndSpaceBetweenCoordinates() throws IOException {
+        String fileData = "<xml xmlns:atom><kml><Document><coordinates>-121.3597349039386,36.22929852296618,0, -121.360070172991,36.2293065739447,0, -121.3697243244982,36.22952658532377,0, -121.3697243244982,36.22952658532377,0</coordinates></Document><kml>";
+        String fixedContent = formatter.fixCommonKmlIssues(fileData);
+
+        String expectedContent = "<xml xmlns:atom><kml><Document><coordinates>-121.3597349039386,36.22929852296618,0  -121.360070172991,36.2293065739447,0  -121.3697243244982,36.22952658532377,0  -121.3697243244982,36.22952658532377,0</coordinates></Document><kml>";
+        assertEquals("Expected content to have commas removed", expectedContent, fixedContent);
+    }
+
+    @Test
+    public void testFixingCoordinatSeperatorsWhenElevationIs0AndNoSpaceBetweenCoordinates() throws IOException {
+        String fileData = "<xml xmlns:atom><kml><Document><coordinates>-121.3597349039386,36.22929852296618,0,-121.360070172991,36.2293065739447,0,-121.3697243244982,36.22952658532377,0,-121.3697243244982,36.22952658532377,0</coordinates></Document><kml>";
         String fixedContent = formatter.fixCommonKmlIssues(fileData);
 
         String expectedContent = "<xml xmlns:atom><kml><Document><coordinates>-121.3597349039386,36.22929852296618,0 -121.360070172991,36.2293065739447,0 -121.3697243244982,36.22952658532377,0 -121.3697243244982,36.22952658532377,0</coordinates></Document><kml>";

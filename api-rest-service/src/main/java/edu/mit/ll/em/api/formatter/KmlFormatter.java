@@ -61,7 +61,7 @@ public class KmlFormatter {
     private static final String LINEAR_RING_PATTERN = "(</LinearRing>)(\\s*)(<LinearRing>)";
     private static final String INNER_BOUNDRY_INSERT_PATTERN = "$1</innerBoundaryIs>$2<innerBoundaryIs>$3";
     private static final String ZERO_ELEVATION_TAIL_COORDIATE_SEPERATOR = ",0 ";
-    private static final String ZERO_ELEVATION_TAIL_COORDIATE_SEPERATOR_ERROR = ",0, ";
+    private static final String ZERO_ELEVATION_TAIL_COORDIATE_SEPERATOR_ERROR = ",0,";
 
     public void format(InputStream input, OutputStream output) throws IOException {
         byte[] buffer = new byte[4096];
