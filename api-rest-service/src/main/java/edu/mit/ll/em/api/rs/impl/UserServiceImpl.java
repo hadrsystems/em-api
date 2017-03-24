@@ -1197,7 +1197,8 @@ public class UserServiceImpl implements UserService {
     public Response verifyEmailAddress(int workspaceId, String email) {
         boolean validEmail = validator.validateValue(RegisterUser.class, "email", email).isEmpty();
         validEmail = validEmail ? !(userDao.getUser(email) != null) : validEmail;
-        VerifyEmailResponse responseEntity = new VerifyEmailResponse(Status.OK.getStatusCode(), "OK", validEmail);
-        return Response.ok(responseEntity).status(Status.OK).build();
+        int status = validEmail ? Response.Status.OK.getStatusCode(): Status.BAD_REQUEST.getStatusCode();
+        VerifyEmailResponse responseEntity = new VerifyEmailResponse(status, "OK", validEmail);
+        return Response.ok(responseEntity).status(status).build();
     }
 }
