@@ -83,7 +83,6 @@ public class UserRegistrationServiceTest {
     private NotifySuccessfulUserRegistration successfulUserRegistrationNotification = mock(NotifySuccessfulUserRegistration.class);
     private NotifyFailedUserRegistration failedUserRegistrationNotification = mock(NotifyFailedUserRegistration.class);
     private RegisterUser registerUser = new RegisterUser(1, 8, "first", "last", "first@last.com", "phone", "password", Arrays.asList(2, 6));
-    private int workspaceId = 1;
     private Org primaryOrg, teamOrg2, teamOrg6;
     private UserOrg primaryUserOrg;
     private int userId = 2;
@@ -121,7 +120,7 @@ public class UserRegistrationServiceTest {
 
         when(userDao.getUser(registerUser.getEmail())).thenReturn(mock(User.class));
         when(orgDao.getOrganization(registerUser.getOrganizationId())).thenReturn(mock(Org.class));
-        Response response = service.postUser(workspaceId, registerUser);
+        Response response = service.postUser(registerUser);
         verify(logger).e(eq(CNAME), eq(String.format("Invalid registration data : {} , errors: {}", registerUser, errors)));
         assertEquals(response.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
         ValidationErrorResponse errorResponseEntity = (ValidationErrorResponse) response.getEntity();
@@ -141,7 +140,7 @@ public class UserRegistrationServiceTest {
 
         when(userDao.getUser(registerUser.getEmail())).thenReturn(null);
         when(orgDao.getOrganization(registerUser.getOrganizationId())).thenReturn(null);
-        Response response = service.postUser(workspaceId, registerUser);
+        Response response = service.postUser(registerUser);
         verify(logger).e(eq(CNAME), eq(String.format("Invalid registration data : {} , errors: {}", registerUser, errors)));
         assertEquals(response.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
         ValidationErrorResponse errorResponseEntity = (ValidationErrorResponse) response.getEntity();
@@ -159,7 +158,7 @@ public class UserRegistrationServiceTest {
         when(userDao.getUser(registerUser.getEmail())).thenReturn(null);
         when(orgDao.getOrganization(registerUser.getOrganizationId())).thenReturn(primaryOrg);
         when(userDao.getNextUserId()).thenReturn(-1);
-        Response response = service.postUser(workspaceId, registerUser);
+        Response response = service.postUser(registerUser);
         assertEquals(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), response.getStatus());
         APIResponse apiResponse = (APIResponse) response.getEntity();
         assertEquals(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), apiResponse.getStatus());
@@ -176,7 +175,7 @@ public class UserRegistrationServiceTest {
         when(orgDao.getOrganization(registerUser.getOrganizationId())).thenReturn(primaryOrg);
         when(userDao.getNextUserId()).thenReturn(userId);
         when(userOrgDao.getNextUserOrgId()).thenReturn(-1);
-        Response response = service.postUser(workspaceId, registerUser);
+        Response response = service.postUser(registerUser);
         verify(logger).e(CNAME, "Unable to get valid userOrgId from DB");
         verify(logger).e(CNAME, "!!! FAILED to create userOrg for user: " + registerUser.getEmail());
         assertEquals(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), response.getStatus());
@@ -196,7 +195,7 @@ public class UserRegistrationServiceTest {
         when(userOrgDao.getNextUserOrgId()).thenReturn(primaryUserOrg.getUserorgid());
         when(userDao.getNextUserId()).thenReturn(userId);
         when(workspaceDao.getWorkspaceIds()).thenReturn(null);
-        Response response = service.postUser(workspaceId, registerUser);
+        Response response = service.postUser(registerUser);
         verify(logger).e(eq(CNAME), eq("Error registering user : " + registerUser + ", Exception: No workspaces found during user registration."), any(Throwable.class));
         assertEquals(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), response.getStatus());
         APIResponse apiResponse = (APIResponse) response.getEntity();
@@ -218,7 +217,7 @@ public class UserRegistrationServiceTest {
         when(userDao.getNextUserId()).thenReturn(userId);
         when(workspaceDao.getWorkspaceIds()).thenReturn(workspaceIds);
         when(userDao.getContactTypeId(SADisplayConstants.EMAIL_TYPE)).thenReturn(-1);
-        Response response = service.postUser(workspaceId, registerUser);
+        Response response = service.postUser(registerUser);
         verify(logger).e(eq(CNAME), eq(String.format("Error registering user : %s, Exception: %s", registerUser, String.format("Unable to get contact id for contact type : %s", SADisplayConstants.EMAIL_TYPE))), any(Throwable.class));
         assertEquals(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), response.getStatus());
         APIResponse apiResponse = (APIResponse) response.getEntity();
@@ -242,7 +241,7 @@ public class UserRegistrationServiceTest {
         when(userDao.getContactTypeId(SADisplayConstants.EMAIL_TYPE)).thenReturn(emailContactTypeId);
         when(userDao.getContactTypeId(SADisplayConstants.PHONE_OFFICE_TYPE)).thenReturn(officePhoneContactTypeId);
         when( openAmGateway.createIdentityUser(any(User.class), eq(registerUser)) ).thenReturn(failureJson);
-        Response response = service.postUser(workspaceId, registerUser);
+        Response response = service.postUser(registerUser);
 
         verify(logger).e(CNAME, String.format("Failed to create new user %s in OpenAm", registerUser.getEmail()));
         assertEquals(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), response.getStatus());
@@ -267,7 +266,7 @@ public class UserRegistrationServiceTest {
         when( openAmGateway.createIdentityUser(any(User.class), eq(registerUser)) ).thenReturn(successJson);
         when(openAmGateway.deleteIdentityUser(registerUser.getEmail())).thenReturn(successJson);
         when(userDao.registerUser(any(User.class), any(List.class), any(List.class), any(List.class))).thenReturn(false);
-        Response response = service.postUser(workspaceId, registerUser);
+        Response response = service.postUser(registerUser);
 
         verify(logger).i(CNAME, String.format("User registration failed for user with email address %s. Successfully rolled back changes from OpenAm", registerUser.getEmail()));
         //verify(successfulUserRegistrationNotification).notify(any(User.class), any(Org.class));
@@ -292,7 +291,7 @@ public class UserRegistrationServiceTest {
         when(openAmGateway.deleteIdentityUser(registerUser.getEmail())).thenReturn(failureJson);
         when(userDao.registerUser(any(User.class), any(List.class), any(List.class), any(List.class))).thenReturn(false);
 
-        Response response = service.postUser(workspaceId, registerUser);
+        Response response = service.postUser(registerUser);
 
         verify(failedUserRegistrationNotification).notify(any(User.class), any(Org.class));
         verify(logger).e(CNAME, String.format("User Registration failure for user %s, Unable to rollback changes from OpenAm", registerUser.getEmail()));
@@ -319,7 +318,7 @@ public class UserRegistrationServiceTest {
 
         when(userDao.registerUser(any(User.class), any(List.class), any(List.class), any(List.class))).thenReturn(true);
 
-        Response response = service.postUser(workspaceId, registerUser);
+        Response response = service.postUser(registerUser);
         verify(successfulUserRegistrationNotification).notify(any(User.class), any(Org.class));
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         assertEquals(String.format(SUCCESSFUL_REGISTRATION, registerUser.getEmail()), ((APIResponse) response.getEntity()).getMessage());
@@ -343,7 +342,7 @@ public class UserRegistrationServiceTest {
         doThrow(new RuntimeException("Test exception")).when(successfulUserRegistrationNotification).notify(any(User.class), any(Org.class));
 
         when(userDao.registerUser(any(User.class), any(List.class), any(List.class), any(List.class))).thenReturn(true);
-        Response response = service.postUser(workspaceId, registerUser);
+        Response response = service.postUser(registerUser);
         verify(logger).e(eq(CNAME), eq(String.format("Unable to notify Org admins of successful registration of user : %s", registerUser.getEmail())), any(Exception.class));
         assertEquals(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), response.getStatus());
         assertEquals(String.format("User registration completed for %s, but failed to notify Org admins to enable your account. Please contact system administrator to enable your account.", registerUser.getEmail()), ((APIResponse) response.getEntity()).getMessage());
