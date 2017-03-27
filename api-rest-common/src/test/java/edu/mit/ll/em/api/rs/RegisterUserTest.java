@@ -50,7 +50,7 @@ public class RegisterUserTest {
     private static final String PHONE_NUMBER_ERROR_MESSAGE = "Please provide valid Phone number.";
     private static final String ORGANIZATION_TYPE_ID_ERROR_MESSAGE = "Please provide Organization Type Id.";
     private static final String ORGANIZATION_ID_ERROR_MESSAGE = "Please provide Organization Id.";
-    private RegisterUserNew registerUser;
+    private RegisterUser registerUser;
 
     @BeforeClass
     public static void setupValidator() {
@@ -60,15 +60,15 @@ public class RegisterUserTest {
 
     @Before
     public void setup() {
-        registerUser = new RegisterUserNew(8, 1, "firstName", "lastName", "email@hehe.com", "(543) 211-9264", "Ia@hhrom7", Arrays.asList(1, 5));
+        registerUser = new RegisterUser(8, 1, "firstName", "lastName", "email@hehe.com", "(543) 211-9264", "Ia@hhrom7", Arrays.asList(1, 5));
     }
 
     @Test
-    public void testPassword() {
+    public void passwordIsRequired() {
         registerUser.setPassword(null);
-        Set<ConstraintViolation<RegisterUserNew>> violations = validator.validate(registerUser);
+        Set<ConstraintViolation<RegisterUser>> violations = validator.validate(registerUser);
         assertEquals(1, violations.size());
-        ConstraintViolation<RegisterUserNew> violation = violations.iterator().next();
+        ConstraintViolation<RegisterUser> violation = violations.iterator().next();
         assertEquals("password", violation.getPropertyPath().toString());
         assertEquals(PASSWORD_ERROR_MESSAGE, violation.getMessage());
 
@@ -78,53 +78,78 @@ public class RegisterUserTest {
         violation = violations.iterator().next();
         assertEquals("password", violation.getPropertyPath().toString());
         assertEquals(PASSWORD_ERROR_MESSAGE, violation.getMessage());
+    }
 
-        registerUser.setPassword("password");
-        violations = validator.validate(registerUser);
+    @Test
+    public void passwordMustHaveLowercaseLetter() {
+        registerUser.setPassword("PASSWORD#1");
+        Set<ConstraintViolation<RegisterUser>> violations = validator.validate(registerUser);
         assertEquals(1, violations.size());
-        violation = violations.iterator().next();
+        ConstraintViolation<RegisterUser> violation = violations.iterator().next();
         assertEquals("password", violation.getPropertyPath().toString());
         assertEquals(PASSWORD_ERROR_MESSAGE, violation.getMessage());
 
+        registerUser.setPassword("PaSSWORD#1");
+        violations = validator.validate(registerUser);
+        assertEquals(0, violations.size());
+    }
+
+    @Test
+    public void passwordMustHaveAtleastEightCharacters() {
         registerUser.setPassword("PaS@");
-        violations = validator.validate(registerUser);
+        Set<ConstraintViolation<RegisterUser>> violations = validator.validate(registerUser);
         assertEquals(1, violations.size());
-        violation = violations.iterator().next();
+        ConstraintViolation<RegisterUser> violation = violations.iterator().next();
         assertEquals("password", violation.getPropertyPath().toString());
         assertEquals(PASSWORD_ERROR_MESSAGE, violation.getMessage());
+    }
 
+    @Test
+    public void passwordMustHaveMaximumTenCharacters() {
         registerUser.setPassword("Password#1Password#11");
-        violations = validator.validate(registerUser);
+        Set<ConstraintViolation<RegisterUser>> violations = validator.validate(registerUser);
         assertEquals(1, violations.size());
-        violation = violations.iterator().next();
+        ConstraintViolation<RegisterUser> violation = violations.iterator().next();
         assertEquals("password", violation.getPropertyPath().toString());
         assertEquals(PASSWORD_ERROR_MESSAGE, violation.getMessage());
+    }
 
+    @Test
+    public void passwordMustHaveANumeric() {
         registerUser.setPassword("Password#");
-        violations = validator.validate(registerUser);
+        Set<ConstraintViolation<RegisterUser>> violations = validator.validate(registerUser);
         assertEquals(1, violations.size());
-        violation = violations.iterator().next();
+        ConstraintViolation<RegisterUser> violation = violations.iterator().next();
         assertEquals("password", violation.getPropertyPath().toString());
         assertEquals(PASSWORD_ERROR_MESSAGE, violation.getMessage());
+    }
 
+    @Test
+    public void passwordMustHaveUppercaseLetter() {
         registerUser.setPassword("password#1");
-        violations = validator.validate(registerUser);
+        Set<ConstraintViolation<RegisterUser>> violations = validator.validate(registerUser);
         assertEquals(1, violations.size());
-        violation = violations.iterator().next();
+        ConstraintViolation<RegisterUser> violation = violations.iterator().next();
         assertEquals("password", violation.getPropertyPath().toString());
         assertEquals(PASSWORD_ERROR_MESSAGE, violation.getMessage());
+    }
 
+    @Test
+    public void passwordMustHaveOneOfSpecialCharacters() {
         registerUser.setPassword("Password1");
-        violations = validator.validate(registerUser);
+        Set<ConstraintViolation<RegisterUser>> violations = validator.validate(registerUser);
         assertEquals(1, violations.size());
-        violation = violations.iterator().next();
+        ConstraintViolation<RegisterUser> violation = violations.iterator().next();
         assertEquals("password", violation.getPropertyPath().toString());
         assertEquals(PASSWORD_ERROR_MESSAGE, violation.getMessage());
+    }
 
+    @Test
+    public void passwordMustNotHaveAnyCharactersApartFromSpecified() { //apart from alphabet(upper,lower), numeric, special chars (@,#,$,%,_,!,-)
         registerUser.setPassword("Password1# ");
-        violations = validator.validate(registerUser);
+        Set<ConstraintViolation<RegisterUser>> violations = validator.validate(registerUser);
         assertEquals(1, violations.size());
-        violation = violations.iterator().next();
+        ConstraintViolation<RegisterUser> violation = violations.iterator().next();
         assertEquals("password", violation.getPropertyPath().toString());
         assertEquals(PASSWORD_ERROR_MESSAGE, violation.getMessage());
 
@@ -136,9 +161,9 @@ public class RegisterUserTest {
     @Test
     public void firstNameIsRequired() {
         registerUser.setFirstName(null);
-        Set<ConstraintViolation<RegisterUserNew>> violations = validator.validate(registerUser);
+        Set<ConstraintViolation<RegisterUser>> violations = validator.validate(registerUser);
         assertEquals(1, violations.size());
-        ConstraintViolation<RegisterUserNew> violation = violations.iterator().next();
+        ConstraintViolation<RegisterUser> violation = violations.iterator().next();
         assertEquals("firstName", violation.getPropertyPath().toString());
         assertEquals(FIRST_NAME_ERROR_MESSAGE, violation.getMessage());
 
@@ -160,9 +185,9 @@ public class RegisterUserTest {
     @Test
     public void lastNameIsRequired() {
         registerUser.setLastName(null);
-        Set<ConstraintViolation<RegisterUserNew>> violations = validator.validate(registerUser);
+        Set<ConstraintViolation<RegisterUser>> violations = validator.validate(registerUser);
         assertEquals(1, violations.size());
-        ConstraintViolation<RegisterUserNew> violation = violations.iterator().next();
+        ConstraintViolation<RegisterUser> violation = violations.iterator().next();
         assertEquals("lastName", violation.getPropertyPath().toString());
         assertEquals(LAST_NAME_ERROR_MESSAGE, violation.getMessage());
 
@@ -184,9 +209,9 @@ public class RegisterUserTest {
     @Test
     public void testEmailAddressValidation() {
         registerUser.setEmail(null);
-        Set<ConstraintViolation<RegisterUserNew>> violations = validator.validate(registerUser);
+        Set<ConstraintViolation<RegisterUser>> violations = validator.validate(registerUser);
         assertEquals(1, violations.size());
-        ConstraintViolation<RegisterUserNew> violation = violations.iterator().next();
+        ConstraintViolation<RegisterUser> violation = violations.iterator().next();
         assertEquals("email", violation.getPropertyPath().toString());
         assertEquals(EMAIL_ERROR_MESSAGE, violation.getMessage());
 
@@ -223,7 +248,7 @@ public class RegisterUserTest {
     @Test
     public void testPhoneValidation() {
         registerUser.setPhone(null);
-        Set<ConstraintViolation<RegisterUserNew>> violations = validator.validate(registerUser);
+        Set<ConstraintViolation<RegisterUser>> violations = validator.validate(registerUser);
         assertTrue(violations.isEmpty());
 
         registerUser.setPhone("");
@@ -233,7 +258,7 @@ public class RegisterUserTest {
         registerUser.setPhone("    ");
         violations = validator.validate(registerUser);
         assertEquals(1, violations.size());
-        ConstraintViolation<RegisterUserNew> violation = violations.iterator().next();
+        ConstraintViolation<RegisterUser> violation = violations.iterator().next();
         assertEquals("phone", violation.getPropertyPath().toString());
         assertEquals(PHONE_NUMBER_ERROR_MESSAGE, violation.getMessage());
 
@@ -252,9 +277,9 @@ public class RegisterUserTest {
     @Test
     public void organizationTypeIdIsRequired() {
         registerUser.setOrganizationTypeId(null);
-        Set<ConstraintViolation<RegisterUserNew>> violations = validator.validate(registerUser);
+        Set<ConstraintViolation<RegisterUser>> violations = validator.validate(registerUser);
         assertEquals(1, violations.size());
-        ConstraintViolation<RegisterUserNew> violation = violations.iterator().next();
+        ConstraintViolation<RegisterUser> violation = violations.iterator().next();
         assertEquals("organizationTypeId", violation.getPropertyPath().toString());
         assertEquals(ORGANIZATION_TYPE_ID_ERROR_MESSAGE, violation.getMessage());
 
@@ -266,9 +291,9 @@ public class RegisterUserTest {
     @Test
     public void organizationIdIsRequired() {
         registerUser.setOrganizationId(null);
-        Set<ConstraintViolation<RegisterUserNew>> violations = validator.validate(registerUser);
+        Set<ConstraintViolation<RegisterUser>> violations = validator.validate(registerUser);
         assertEquals(1, violations.size());
-        ConstraintViolation<RegisterUserNew> violation = violations.iterator().next();
+        ConstraintViolation<RegisterUser> violation = violations.iterator().next();
         assertEquals("organizationId", violation.getPropertyPath().toString());
         assertEquals(ORGANIZATION_ID_ERROR_MESSAGE, violation.getMessage());
 

@@ -72,20 +72,6 @@ public class UserServiceImpl implements UserService {
 	
 	/** CNAME - the name of this class for referencing in loggers */
 	private static final String CNAME = UserServiceImpl.class.getName();
-	
-	private static String FAILURE = "An error occurred while registering your account.";
-	private static String FAILURE_NAMES = "A first and last name is required.";
-	private static String FAILURE_USERNAME = "*** username already exists ***";
-	private static String FAILURE_PASSWORDS = "Passwords do not match";
-	private static String FAILURE_PHONE_NUMBERS = "Phone number is not a valid format.";
-	private static String FAILURE_USERNAME_INVALID = "Your username must be in a valid email format.";
-	private static String FAILURE_ORG_INVALID = "You must choose an organization.";
-	private static String COULD_NOT_VALIDATE_REGISTRATION = "Please confirm your registration with your administrator.";
-	private static String FAILURE_EMAIL = "An email address is required.";
-	private static String FAILURE_OTHER_EMAIL = "The 'Other Email' is invalid";
-	private static String SUCCESS = "success";
-	private static String SAFECHARS = "Valid input includes letters, numbers, spaces, and these special "
-			+ "characters: , _ # ! . -";
 
 	private static final APILogger log = APILogger.getInstance();
 
@@ -270,7 +256,7 @@ public class UserServiceImpl implements UserService {
 	 * @see UserResponse
 	 */	
 	public Response postUser(int workspaceId, RegisterUser registerUser) {
-        return this.userRegistrationService.postUser(workspaceId, registerUser);
+        return this.userRegistrationService.postUser(registerUser);
 	}
 	
 	/**

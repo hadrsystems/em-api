@@ -127,18 +127,7 @@ public class UserRegistrationService {
         this.failedUserRegistrationNotification = failedUserRegistrationNotification;
     }
 
-    private RabbitPubSubProducer getRabbitProducer() throws IOException {
-        if(rabbitProducer == null) {
-                rabbitProducer = RabbitFactory.makeRabbitPubSubProducer(
-                APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_HOSTNAME_KEY),
-                APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_EXCHANGENAME_KEY),
-                APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_USERNAME_KEY),
-                APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_USERPWD_KEY));
-        }
-        return rabbitProducer;
-    }
-
-    public Response postUser(int workspaceId, RegisterUser registerUser) {
+    public Response postUser(RegisterUser registerUser) {
         Org primaryOrg;
         User user;
         List<UserOrg> userOrgs = new ArrayList<UserOrg>();
@@ -255,13 +244,13 @@ public class UserRegistrationService {
         if(CollectionUtils.isEmpty(workspaceIds))
             throw new Exception("No workspaces found during user registration.");
         for(UserOrg userOrgTeam : userOrgTeams) {
-            userOrgWorkspacesTeams.addAll(createUserOrgWorkspaceEntities(userOrgTeam, false, workspaceIds));
+            userOrgWorkspacesTeams.addAll(createUserOrgWorkspaceEntities(userOrgTeam, workspaceIds));
         }
         return userOrgWorkspacesTeams;
     }
 
 
-    public UserOrg createUserOrg(int orgId, int userId) throws Exception {
+    private UserOrg createUserOrg(int orgId, int userId) throws Exception {
         UserOrg userorg = null;
         int userOrgId = userOrgDao.getNextUserOrgId();//UserOrgDAO.getInstance().getNextUserOrgId();
         if(userOrgId != -1) {
@@ -277,11 +266,11 @@ public class UserRegistrationService {
         return userorg;
     }
 
-    private Collection<UserOrgWorkspace> createUserOrgWorkspaceEntities(UserOrg userOrg, boolean enabled, List<Integer> workspaceIds) {
+    private Collection<UserOrgWorkspace> createUserOrgWorkspaceEntities(UserOrg userOrg, List<Integer> workspaceIds) {
         List<UserOrgWorkspace> workspaces = new ArrayList<UserOrgWorkspace>();
         for(Integer workspaceId : workspaceIds){
             UserOrgWorkspace workspace = new UserOrgWorkspace(userOrg.getUserorgid(), workspaceId);
-            workspace.setEnabled(enabled);
+            workspace.setEnabled(false);
             workspace.setDefaultorg(false);
             workspaces.add(workspace);
         }
@@ -305,7 +294,7 @@ public class UserRegistrationService {
             user.setCreated(currentTime);
             user.setPasswordchanged(currentTime);
         } else {
-            throw new RuntimeException("Failed User registraiton. Unable to fetch a new UserId from DB.");
+            throw new RuntimeException("Failed User registration. Unable to fetch a new UserId from DB.");
         }
 
         return user;

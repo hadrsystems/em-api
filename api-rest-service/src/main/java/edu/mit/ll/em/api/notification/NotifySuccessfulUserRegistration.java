@@ -68,7 +68,7 @@ public class NotifySuccessfulUserRegistration {
         this.rabbitProducer = rabbitProducer;
     }
 
-        public void notify(User user, Org org) {
+    public void notify(User user, Org org) {
         String newRegisteredUserEmailAddresses = emApiConfiguration.getString(APIConfig.NEW_REGISTERED_USER_EMAIL);
         try {
             String hostname = InetAddress.getLocalHost().getHostName();
@@ -95,15 +95,15 @@ public class NotifySuccessfulUserRegistration {
         return builder.toString();
     }
 
-    public String getFromEmail() {
+    private String getFromEmail() {
         return this.emApiConfiguration.getString(APIConfig.NEW_USER_ALERT_EMAIL);
     }
 
-    public String getAlertTopic() {
+    private String getAlertTopic() {
         return this.emApiConfiguration.getString(APIConfig.EMAIL_ALERT_TOPIC, "iweb.nics.email.alert");
     }
 
-    public RabbitPubSubProducer getRabbitProducer() throws IOException {
+    private RabbitPubSubProducer getRabbitProducer() throws IOException {
         if(this.rabbitProducer == null) {
             this.rabbitProducer = RabbitFactory.makeRabbitPubSubProducer(
                     emApiConfiguration.getString(APIConfig.RABBIT_HOSTNAME_KEY),
