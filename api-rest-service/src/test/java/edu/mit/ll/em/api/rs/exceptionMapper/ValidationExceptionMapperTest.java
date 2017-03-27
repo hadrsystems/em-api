@@ -29,10 +29,8 @@
  */
 package edu.mit.ll.em.api.rs.exceptionMapper;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import edu.mit.ll.em.api.rs.RegisterUserNew;
+import edu.mit.ll.em.api.rs.RegisterUser;
 import edu.mit.ll.em.api.rs.ValidationErrorResponse;
-import edu.mit.ll.em.api.rs.exceptionMapper.ValidationExceptionMapper;
 import org.junit.Before;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -41,7 +39,6 @@ import javax.validation.*;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Set;
 
 public class ValidationExceptionMapperTest {
@@ -57,8 +54,8 @@ public class ValidationExceptionMapperTest {
 
     @Test
     public void verifyValidationErrorsAreAddedInResponseBody() throws IOException {
-        RegisterUserNew user = new RegisterUserNew(1, 8, "first", "last", "hehe", "phone", "password", new ArrayList<Integer>());
-        Set<ConstraintViolation<RegisterUserNew>> violations = this.getConstraintViolations(user);
+        RegisterUser user = new RegisterUser(1, 8, "first", "last", "hehe", "phone", "password", new ArrayList<Integer>());
+        Set<ConstraintViolation<RegisterUser>> violations = this.getConstraintViolations(user);
         ConstraintViolationException exception = new ConstraintViolationException(violations);
 
         Response response = errorResponseMapper.toResponse(exception);
@@ -72,7 +69,7 @@ public class ValidationExceptionMapperTest {
         assertNotNull(errorResponseEntity.getValidationErrors().get("password"));
     }
 
-    private Set<ConstraintViolation<RegisterUserNew>> getConstraintViolations(RegisterUserNew user) {
+    private Set<ConstraintViolation<RegisterUser>> getConstraintViolations(RegisterUser user) {
         return validator.validate(user);
     }
 }

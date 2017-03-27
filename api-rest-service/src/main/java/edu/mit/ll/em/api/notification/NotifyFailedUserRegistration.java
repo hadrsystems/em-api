@@ -36,7 +36,6 @@ import edu.mit.ll.nics.common.entity.Org;
 import edu.mit.ll.nics.common.entity.User;
 import edu.mit.ll.nics.common.rabbitmq.RabbitFactory;
 import edu.mit.ll.nics.common.rabbitmq.RabbitPubSubProducer;
-import edu.mit.ll.nics.nicsdao.impl.OrgDAOImpl;
 import org.apache.commons.configuration.Configuration;
 import org.springframework.util.StringUtils;
 
@@ -45,7 +44,6 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.List;
 
 public class NotifyFailedUserRegistration {
     private static final String CNAME = NotifyFailedUserRegistration.class.getName();
@@ -63,7 +61,6 @@ public class NotifyFailedUserRegistration {
     }
 
     public void notify(User user, Org org) {
-        String newRegisteredUsers = emApiConfiguration.getString(APIConfig.NEW_REGISTERED_USER_EMAIL);
         try {
             String hostname = InetAddress.getLocalHost().getHostName();
             String toEmails = this.getSysAdminsEmail();
@@ -92,19 +89,19 @@ public class NotifyFailedUserRegistration {
         return builder.toString();
     }
 
-    public String getFromEmail() {
+    private String getFromEmail() {
         return this.emApiConfiguration.getString(APIConfig.NEW_USER_ALERT_EMAIL);
     }
 
-    public String getAlertTopic() {
+    private String getAlertTopic() {
         return this.emApiConfiguration.getString(APIConfig.EMAIL_ALERT_TOPIC, "iweb.nics.email.alert");
     }
 
-    public String getSysAdminsEmail() {
+    private String getSysAdminsEmail() {
         return this.emApiConfiguration.getString(APIConfig.SYSTEM_ADMIN_ALERT_EMAILS, "");
     }
 
-    public RabbitPubSubProducer getRabbitProducer() throws IOException {
+    private RabbitPubSubProducer getRabbitProducer() throws IOException {
         if(this.rabbitProducer == null) {
             this.rabbitProducer = RabbitFactory.makeRabbitPubSubProducer(
                     emApiConfiguration.getString(APIConfig.RABBIT_HOSTNAME_KEY),

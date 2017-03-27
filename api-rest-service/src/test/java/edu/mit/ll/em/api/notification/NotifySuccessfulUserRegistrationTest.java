@@ -78,7 +78,7 @@ public class NotifySuccessfulUserRegistrationTest {
     private NotifySuccessfulUserRegistration notifySuccessfulUserRegistration;
 
     @Before
-    public void setup() throws UnknownHostException, IOException {
+    public void setup() throws IOException {
         when(emApiConfiguration.getString(APIConfig.EMAIL_ALERT_TOPIC, "iweb.nics.email.alert")).thenReturn(alertTopic);
         when(emApiConfiguration.getString(APIConfig.NEW_USER_ALERT_EMAIL)).thenReturn(fromEmailAddress);
         when(emApiConfiguration.getString(APIConfig.NEW_REGISTERED_USER_EMAIL)).thenReturn(newRegisteredEmailAddress);

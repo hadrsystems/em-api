@@ -55,8 +55,7 @@ public class RegisterUser extends APIBean {
     @Pattern(regexp="^(\\(\\d{3}\\) \\d{3}-\\d{4})?$", message="Please provide valid Phone number.")
     private String phone;
     @NotNull(message="Please provide Password of 8-20 characters with at least one digit, one upper case letter, one lower case letter and one special symbol @#$%-_!.")
-    @Pattern(regexp="^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@#$%_!-])[a-zA-Z0-9@#$%_!-]{8," +
-            "20}$",
+    @Pattern(regexp="^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@#$%_!-])[a-zA-Z0-9@#$%_!-]{8,20}$",
             message="Please provide Password of 8-20 characters with at least one digit, one upper case letter, one lower case letter and one special symbol @#$%-_!.")
     private String password;
     private Set<Integer> teams = new HashSet<Integer>();

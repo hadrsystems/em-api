@@ -45,19 +45,16 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.never;
-import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 
 public class NotifyFailedUserRegistrationTest {
     private NotifyFailedUserRegistration notifyFailedUserRegistration;
-    //private OrgDAOImpl orgDao = mock(OrgDAOImpl.class);
     private Configuration emApiConfiguration = mock(Configuration.class);
     private RabbitPubSubProducer rabbitProducer = mock(RabbitPubSubProducer.class);
     private User user = mock(User.class);
@@ -65,7 +62,6 @@ public class NotifyFailedUserRegistrationTest {
     private static final int orgId = 1;
     private static final String fromEmailAddress = "from@happytest.com";
     private static final String adminEmailAddress = "testadmin@happy.com";
-    //private static List<String> orgAdminList = Arrays.asList(adminEmailAddress);
     private static final String alertTopic = "alertTopic";
     private static String hostname;
     private static final String userFirstName = "first";
@@ -75,7 +71,6 @@ public class NotifyFailedUserRegistrationTest {
 
     @Before
     public void setup() throws UnknownHostException, IOException {
-        //when(orgDao.getOrgAdmins(orgId)).thenReturn(orgAdminList);
         when(emApiConfiguration.getString(APIConfig.EMAIL_ALERT_TOPIC, "iweb.nics.email.alert")).thenReturn(alertTopic);
         when(emApiConfiguration.getString(APIConfig.NEW_USER_ALERT_EMAIL)).thenReturn(fromEmailAddress);
         when(emApiConfiguration.getString(APIConfig.RABBIT_HOSTNAME_KEY)).thenReturn("rabbitHost");
