@@ -112,20 +112,30 @@ public class NotifySuccessfulUserRegistrationTest {
 
     private JsonEmail getJsonEmail(List<String> orgAdminList) throws IOException {
         String toEmailAddresses = CollectionUtils.isEmpty(orgAdminList) ? newRegisteredEmailAddress : (StringUtils.collectionToCommaDelimitedString(orgAdminList) + ", " + newRegisteredEmailAddress);
-        JsonEmail email = new JsonEmail(fromEmailAddress, toEmailAddresses, "Alert from RegisterAccount@" + hostname);
+        JsonEmail email = new JsonEmail(fromEmailAddress, toEmailAddresses, "SCOUT User Registration Request from RegisterAccount@" + hostname);
         email.setBody(getEmailBody(user, org, hostname));
         return email;
     }
 
     private String getEmailBody(User user, Org org, String hostname) throws UnknownHostException {
         StringBuilder builder = new StringBuilder();
+        builder.append("<html><body>");
         String date = new SimpleDateFormat("EEE MMM d HH:mm:ss z yyyy").format(new Date());
         builder.append(date);
-        builder.append("\n\nA new user has registered: " + user.getUsername());
-        builder.append("\nName: " + user.getFirstname() + " " + user.getLastname());
-        builder.append("\nOrganization: " + org.getName());
-        builder.append("\nEmail: " + user.getUsername());
+        builder.append("<br><br>");
+        builder.append("A new user has registered: " + user.getUsername());
+        builder.append("<br>");
+        builder.append("Name: " + user.getFirstname() + " " + user.getLastname());
+        builder.append("<br>");
+        builder.append("Organization: " + org.getName());
+        builder.append("<br>");
+        builder.append("Email: " + user.getUsername());
+        builder.append("<br><br>");
+        builder.append("Please review their registration request and, if approved, enable their account in SCOUT.");
+        builder.append("<br><br>");
+        builder.append("The user will receive a Welcome email upon activation.");
+        builder.append("<body/><html/>");
+        System.out.println(builder.toString());
         return builder.toString();
     }
-
 }

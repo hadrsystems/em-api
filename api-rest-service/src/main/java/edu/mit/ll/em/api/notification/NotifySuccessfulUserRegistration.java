@@ -75,7 +75,7 @@ public class NotifySuccessfulUserRegistration {
             List<String> orgAdminList = orgDao.getOrgAdmins(org.getOrgId());
             String toEmails = CollectionUtils.isEmpty(orgAdminList) ? newRegisteredUserEmailAddresses : (StringUtils.collectionToCommaDelimitedString(orgAdminList) + ", " + newRegisteredUserEmailAddresses);
             JsonEmail email = new JsonEmail(this.getFromEmail(),toEmails,
-                    "Alert from RegisterAccount@" + hostname);
+                    "SCOUT User Registration Request from RegisterAccount@" + hostname);
             email.setBody(getEmailBody(user, org, hostname));
             this.getRabbitProducer().produce(this.getAlertTopic(), email.toJsonObject().toString());
         } catch (Exception e) {
@@ -86,12 +86,22 @@ public class NotifySuccessfulUserRegistration {
 
     private String getEmailBody(User user, Org org, String hostname) throws UnknownHostException {
         StringBuilder builder = new StringBuilder();
+        builder.append("<html><body>");
         String date = new SimpleDateFormat("EEE MMM d HH:mm:ss z yyyy").format(new Date());
         builder.append(date);
-        builder.append("\n\nA new user has registered: " + user.getUsername());
-        builder.append("\nName: " + user.getFirstname() + " " + user.getLastname());
-        builder.append("\nOrganization: " + org.getName());
-        builder.append("\nEmail: " + user.getUsername());
+        builder.append("<br><br>");
+        builder.append("A new user has registered: " + user.getUsername());
+        builder.append("<br>");
+        builder.append("Name: " + user.getFirstname() + " " + user.getLastname());
+        builder.append("<br>");
+        builder.append("Organization: " + org.getName());
+        builder.append("<br>");
+        builder.append("Email: " + user.getUsername());
+        builder.append("<br><br>");
+        builder.append("Please review their registration request and, if approved, enable their account in SCOUT.");
+        builder.append("<br><br>");
+        builder.append("The user will receive a Welcome email upon activation.");
+        builder.append("<body/><html/>");
         return builder.toString();
     }
 
