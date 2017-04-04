@@ -506,33 +506,59 @@ public class UserServiceImpl implements UserService {
 								.getString(APIConfig.NEW_USER_BODY_TEMPLATE);
 						String emailBody;
 						String emailSubject = APIConfig.getInstance().getConfiguration()
-								.getString(APIConfig.NEW_USER_BODY_SUBJECT,"Welcome to Team NICS!");
+								.getString(APIConfig.NEW_USER_BODY_SUBJECT,"Welcome to Team SCOUT!");
 						if(emailTemplate != null){
 							emailBody = new String(Files.readAllBytes(Paths.get(emailTemplate)));
 						}
 						else{
-							emailBody = "<html><p>Please review the following documentation: " + 
-									"<a href=\"https://public.nics.ll.mit.edu/nicshelp/documents/2015-06-05%20-%20NICS%20Talking%20Points%20v3.pdf\">" +
-									"NICS Talking Points</a> & <a href=\"https://public.nics.ll.mit.edu/nicshelp/documents/NICS_GL_4_14.pdf\">" +
-									"NICS Guidelines</a></p><ul><li>Web browsers: NICS works well with IE 9 and later FireFox Safari Chrome and others." +
-									"  It does not work with IE 8 and earlier.</li><li>When you visit the <b><span style='color:#0056D6'>INCIDENT LOGIN</span>" + 
-									"</b> side of NICS. Please remember that there could be working incidents there so use care in navigating around.</li>" + 
-									"<li>Learning about NICS:</li><ul>"
-									+ "<li>The <b><span style='color:#0056D6'>TRAINING LOGIN</span></b> side of NICS is much more forgiving." + 
-									" As you can't break anything there and it has the same tools and format as the INCIDENT side so it is a great place to "
-									+ "experiment and practice.</li><li>The <b><span style='color:#0056D6'>UNDO</span></b>"
-									+ " button is helpful as you learn to navigate around NICS - " +
-									"you can change back up to your last 5 actions.</li>><li>A HELP site is available that includes some videos and tutorials at: " + 
-									"<a href=\"http://public.nics.ll.mit.edu/nicshelp/\">http://public.nics.ll.mit.edu/nicshelp/</a>. You can also access this site " + 
-									"from within NICS by selecting the <span style='color:#0056D6'>HELP</span>"
-									+ " button in the upper right corner of the Web browser.</li>" + 
-									"<li>References: </li><ul><li>Wildfire Today Article:" + 
-									" <a href=\"http://wildfiretoday.com/2014/02/10/new-communication-tool-enhances-incident-management/\">" + 
-									"http://wildfiretoday.com/2014/02/10/new-communication-tool-enhances-incident-management/</a></li><li>You Tube Video: " +
-									"<a href=\"http://youtu.be/mADTLY0t_eM\">http://youtu.be/mADTLY0t_eM</a></li></ul><li>NICS Mobile:</li>" + 
-									"<ul><li>The NICS Mobile Application instructions are available: <a href=\"https://public.nics.ll.mit.edu/nicshelp/\">" + 
-									"https://public.nics.ll.mit.edu/nicshelp/</a></li><li>Scroll down to the NICS Mobile section for details.</li></ul>" + 
-									"</ul></ul></body></html>";
+                            emailBody = "<!doctype html>\n" +
+                                    "<html>\n" +
+                                    "<head>\n" +
+                                    "<meta charset=\"utf-8\">\n" +
+                                    "<title>Welcome to SCOUT!</title>\n" +
+                                    "<style>\n" +
+                                    "        body {font-family: calibri, Helvetica, Arial, sans-serif}\n" +
+                                    "        h1, h2 {\n" +
+                                    "                color: #1a4276;\n" +
+                                    "                margin-bottom: 0;\n" +
+                                    "        }\n" +
+                                    "        .light-blue {color: #5d7f90}\n" +
+                                    "        p {display:inline}\n" +
+                                    "        img {\n" +
+                                    "                display:block;\n" +
+                                    "                float:right;\n" +
+                                    "        }\n" +
+                                    "</style>\n" +
+                                    "</head>\n" +
+                                    "\n" +
+                                    "<body>\n" +
+                                    "\n" +
+                                    "<img src=\"https://www.scout.stg.tabordasolutions.net/nics/login/images/scout_logo.png\">\n" +
+                                    "\n" +
+                                    "<p style=\"display:block\">Welcome to the Situation Awareness &amp; Collaboration Tool (<strong>SCOUT</strong>) for California emergency responders. Your account is now active.</p>\n" +
+                                    "\n" +
+                                    "<p style=\"display:block\">Please review the <a href=\"http://www.caloes.ca.gov/RegionalOperationsSite/Documents/2016_04_25%20SCOUT%20Concept%20of%20Operations.pdf\" target=\"_blank\">SCOUT Concept of Operations</a>, <a href=\"http://www.caloes.ca.gov/RegionalOperationsSite/Documents/2016_08 SCOUT Support Plan.pdf\">Technical Support Plan</a>, and your agency's specific SCOUT standard operating procedures before using SCOUT.</p>\n" +
+                                    "\n" +
+                                    "<p style=\"display:block\">For additional training materials, visit <a href=\"www.scout.ca.gov/scouthelp\" target=\"_blank\">www.scout.ca.gov/scouthelp</a>. Please be aware some training materials still reference the NICS v.5 user interface. They are being  updated over the next year to reference the SCOUT user interface.</p>\n" +
+                                    "\n" +
+                                    "<h3>Important Information</h3>\n" +
+                                    "<ul>\n" +
+                                    "        <li>Recommended browser is Chrome.\n" +
+                                    "            <ul>\n" +
+                                    "                <li>The Census App tool does not function in Internet Explorer.</li>\n" +
+                                    "            </ul>\n" +
+                                    "        </li>\n" +
+                                    "        <li>SCOUT iOS mobile app is available via the App Store.</li>\n" +
+                                    "        <li>For technical support, contact your Agency's SCOUT Administrator.</li>\n" +
+                                    "        <li>For the most current information about SCOUT, visit <a href=\"www.caloes.ca.gov/scout\" target=\"_blank\">www.caloes.ca.gov/scout</a>.</li>\n" +
+                                    "</ul>\n" +
+                                    "\n" +
+                                    "<span>V/r</span><br>\n" +
+                                    "<span>The SCOUT Support Team</span>\n" +
+                                    "\n" +
+                                    "<image\n" +
+                                    "</body>\n" +
+                                    "</html>\n";
 						}
 						
 						JsonEmail email = new JsonEmail(fromEmail,newUser.getUsername(),emailSubject);

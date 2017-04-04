@@ -134,7 +134,7 @@ public class NotifySuccessfulUserRegistrationTest {
         builder.append("Please review their registration request and, if approved, enable their account in SCOUT.");
         builder.append("<br><br>");
         builder.append("The user will receive a Welcome email upon activation.");
-        builder.append("<body/><html/>");
+        builder.append("</body></html>");
         System.out.println(builder.toString());
         return builder.toString();
     }
