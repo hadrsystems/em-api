@@ -100,7 +100,7 @@ public class KmlFormatterTest {
 
         String writtenString = new String(output.toByteArray());
         String expectedOutputString = "<xml xmlns:atom>" + KmlFormatter.KML_ROOT_START_TAG + "<Document></Document></kml>";
-        assertNotEquals("Expected input to have kml tag added around document", expectedOutputString, writtenString);
+        assertNotSame("Expected input to have kml tag added around document", expectedOutputString, writtenString);
     }
 
     @Test
