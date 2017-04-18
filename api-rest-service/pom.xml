@@ -1,6 +1,6 @@
 <!--
 
-    Copyright (c) 2008-2016, Massachusetts Institute of Technology (MIT)
+    Copyright (c) 2016-2017, Taborda Solutions
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
@@ -34,9 +34,9 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
+		<groupId>com.tabordasolutions.em.api</groupId>
 		<artifactId>em-api</artifactId>
-		<groupId>edu.mit.ll.em.api</groupId>
-		<version>6.2</version>
+		<version>2017.1</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 	<packaging>war</packaging>
@@ -66,7 +66,7 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>edu.mit.ll.em.api</groupId>
+			<groupId>com.tabordasolutions.em.api</groupId>
 			<artifactId>api-rest-common</artifactId>
 		</dependency>
 		<dependency>
@@ -75,7 +75,7 @@
 			<version>2.6</version>
 		</dependency>
 		<dependency>
-			<groupId>edu.mit.ll.nics.common</groupId>
+			<groupId>com.tabordasolutions.nics.common</groupId>
 			<artifactId>entities</artifactId>
 			<exclusions>
 				<exclusion>
@@ -89,19 +89,19 @@
 			<artifactId>postgresql</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>edu.mit.ll.nics.common</groupId>
+			<groupId>com.tabordasolutions.nics.common</groupId>
 			<artifactId>nics-dao</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>edu.mit.ll.nics.common</groupId>
+			<groupId>com.tabordasolutions.nics.common</groupId>
 			<artifactId>rabbitmq-client</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>edu.mit.ll.nics.common</groupId>
+			<groupId>com.tabordasolutions.nics.common</groupId>
 			<artifactId>messages</artifactId>
 		</dependency>
 		<dependency>
-                	<groupId>edu.mit.ll.nics.common</groupId>
+                	<groupId>com.tabordasolutions.nics.common</groupId>
                 	<artifactId>xml-email</artifactId>
                 </dependency>
 		<dependency>
@@ -109,15 +109,15 @@
 			<artifactId>esapi</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>edu.mit.ll.nics.common</groupId>
+			<groupId>com.tabordasolutions.nics.common</groupId>
 			<artifactId>web-service-request-lib</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>edu.mit.ll.nics.common</groupId>
+			<groupId>com.tabordasolutions.nics.common</groupId>
 			<artifactId>geoserver-rest-api</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>edu.mit.ll.nics.tools</groupId>
+			<groupId>com.tabordasolutions.nics.tools</groupId>
 			<artifactId>sso-tools</artifactId>
 		</dependency>
 		<dependency>
@@ -130,7 +130,7 @@
 			<artifactId>jetty-util-ajax</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>edu.mit.ll.nics.tools</groupId>
+			<groupId>com.tabordasolutions.nics.tools</groupId>
 			<artifactId>openam-tools</artifactId>
 		</dependency>
 		<dependency>
