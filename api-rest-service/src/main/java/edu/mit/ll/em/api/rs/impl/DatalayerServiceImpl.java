@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2016, Massachusetts Institute of Technology (MIT)
+ * Copyright (c) 2008-2017, Massachusetts Institute of Technology (MIT)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -502,14 +502,11 @@ public class DatalayerServiceImpl implements DatalayerService {
 	
 				if(MediaType.TEXT_PLAIN_TYPE.isCompatible(attachment.getContentType())){
 					String attachmentName = attachment.getContentDisposition().getParameter("name").toString();
-					
 					if (attachmentName.equals("usersessionid")){
 						datalayer.setUsersessionid(Integer.valueOf(attachment.getObject(String.class).toString()));
-					}
-					else if (attachmentName.equals("displayname")){
+					} else if (attachmentName.equals("displayname")){
 						datalayer.setDisplayname(attachment.getObject(String.class).toString());
-					}	
-					else if (attachmentName.equals("baselayer")){
+					} else if (attachmentName.equals("baselayer")){
 						datalayer.setBaselayer(Boolean.parseBoolean(attachment.getObject(String.class).toString()));
 					}
 				}
@@ -548,6 +545,7 @@ public class DatalayerServiceImpl implements DatalayerService {
 				String docFilename = doc.getFilename();
 				
 				if (uploadedDataLayer = docFilename.toLowerCase().endsWith(".kmz")) {
+                    String kmlFileName = null;
 					logger.debug("Filepath=" + filePath);
 					logger.debug("doc.getFilename=" + doc.getFilename());
 					String subdir = docFilename.substring(0, docFilename.length() - 4);
@@ -574,8 +572,12 @@ public class DatalayerServiceImpl implements DatalayerService {
 							String entryName = entry.getName();
 							Path outPath = kmzDir.resolve(entryName);
 				            
-				            if (entryName.toLowerCase().endsWith(".kml"))
-				            	fileName = entryName;
+				            if (entryName.toLowerCase().endsWith(".kml")) {
+                                kmlFileName = entryName;
+                                fileName = entryName;
+                            } else {
+                                fileName = null;
+                            }
 				            	
 				            if (entryName.contains("/"))
 				            	Files.createDirectories(outPath.getParent());
@@ -615,7 +617,7 @@ public class DatalayerServiceImpl implements DatalayerService {
 			        }
 				
 					// Set the final file name of the data layer.
-					fileName = subdir + "/" + fileName;
+					fileName = subdir + "/" + kmlFileName;
 				}
 				else if(uploadedDataLayer = docFilename.endsWith(".gpx")){
 					fileName = doc.getFilename();
