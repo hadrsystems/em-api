@@ -29,12 +29,9 @@
  */
 package edu.mit.ll.em.api.rs.impl;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.math.BigInteger;
+import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -700,20 +697,26 @@ public class DatalayerServiceImpl implements DatalayerService {
 		if(index == -1){ 
 			index = internalUrl.indexOf("services"); 
 		}
-		
-		if(index > -1){
-			StringBuffer url = new StringBuffer(internalUrl.substring(0, index));
-			url.append("tokens/generateToken?");
-			url.append("username=");
-			url.append(username);
-			url.append("&password=");
-			url.append(password);
-			url.append("&f=json");
-			
-			WebTarget target = jerseyClient.target(url.toString());
-			Builder builder = target.request("json");
-			return builder.get().readEntity(String.class);
+
+		try {
+			if(index > -1){
+				StringBuffer url = new StringBuffer(internalUrl.substring(0, index));
+				url.append("tokens/generateToken?");
+				url.append("username=");
+				url.append(username);
+				url.append("&password=");
+				url.append(URLEncoder.encode(password,"UTF-8"));
+				url.append("&f=json");
+
+				WebTarget target = jerseyClient.target(url.toString());
+				Builder builder = target.request("json");
+				return builder.get().readEntity(String.class);
+			}
 		}
+		catch(UnsupportedEncodingException e) {
+			logger.error("Unable to encode password for token generation: ", e);
+		}
+
 		
 		return null;
 	}
