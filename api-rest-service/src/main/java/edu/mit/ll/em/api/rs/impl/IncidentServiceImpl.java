@@ -217,12 +217,12 @@ public class IncidentServiceImpl implements IncidentService {
 	 * @see IncidentResponse
 	 */
 	
-	public Response getIncidentsTree(Integer workspaceId, Integer accessibleByUserId) {
+	public Response getIncidentsTree(Integer workspaceId) {
 		Response response = null;
 		IncidentServiceResponse incidentResponse = new IncidentServiceResponse();
 		List<edu.mit.ll.nics.common.entity.Incident> incidents = null;
 		try {
-			incidents = incidentDao.getIncidentsTree(workspaceId); 
+			incidents = incidentDao.getIncidentsTree(workspaceId); //TJW - Not sure what the point of having the accessibleByUserId arg when they don't use it.
 
 			
 			incidentResponse.setIncidents(incidents);
@@ -231,15 +231,13 @@ public class IncidentServiceImpl implements IncidentService {
 			response = Response.ok(incidentResponse).status(Status.OK).build();			
 		} catch (DataAccessException e) { //(ICSDatastoreException e) {
 			APILogger.getInstance().e(CNAME, "Data access exception while getting Incidents Tree"
-					+ "in (workspaceid,accessibleByUserId): " + workspaceId + ", " 
-					+ accessibleByUserId + ": " + e.getMessage());
+					+ "in (workspaceid): " + workspaceId + ": " + e.getMessage());
 			incidentResponse.setMessage("Data access failure. Unable to read all incidents in tree: " + e.getMessage());
 			incidentResponse.setCount(incidentResponse.getIncidents().size());
 			response = Response.ok(incidentResponse).status(Status.INTERNAL_SERVER_ERROR).build();			
 		} catch (Exception e) {
 			APILogger.getInstance().e(CNAME, "Unhandled exception while getting Incidents Tree"
-					+ "in (workspaceid,accessibleByUserId): " + workspaceId + ", " 
-					+ accessibleByUserId + ": " + e.getMessage());
+					+ "in (workspaceid): " + workspaceId + ": " + e.getMessage());
 			
 			incidentResponse.setMessage("Unhandled exception. Unable to read all incidents in tree: " + e.getMessage());			
 			response = Response.ok(incidentResponse).status(Status.INTERNAL_SERVER_ERROR).build();
