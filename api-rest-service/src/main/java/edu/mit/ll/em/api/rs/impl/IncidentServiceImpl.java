@@ -222,7 +222,7 @@ public class IncidentServiceImpl implements IncidentService {
 		IncidentServiceResponse incidentResponse = new IncidentServiceResponse();
 		List<edu.mit.ll.nics.common.entity.Incident> incidents = null;
 		try {
-			incidents = incidentDao.getIncidentsTree(workspaceId); //TJW - Not sure what the point of having the accessibleByUserId arg when they don't use it.
+			incidents = incidentDao.getIncidentsTree(workspaceId);
 
 			
 			incidentResponse.setIncidents(incidents);
