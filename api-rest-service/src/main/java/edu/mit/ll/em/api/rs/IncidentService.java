@@ -61,8 +61,7 @@ public interface IncidentService {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path(value = "/getincidenttree")
 	public Response getIncidentsTree(
-			@PathParam("workspaceId") Integer workspaceId,
-			@QueryParam("accessibleByUserId") Integer userId);
+			@PathParam("workspaceId") Integer workspaceId);
 	
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
