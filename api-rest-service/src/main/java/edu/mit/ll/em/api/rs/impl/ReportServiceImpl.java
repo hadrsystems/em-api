@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2016, Massachusetts Institute of Technology (MIT)
+ * Copyright (c) 2008-2017, Massachusetts Institute of Technology (MIT)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,11 +31,9 @@ package edu.mit.ll.em.api.rs.impl;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -61,7 +59,6 @@ import com.vividsolutions.jts.geom.PrecisionModel;
 
 import edu.mit.ll.em.api.dataaccess.EntityCacheMgr;
 import edu.mit.ll.em.api.dataaccess.ICSDatastoreException;
-import edu.mit.ll.em.api.dataaccess.ReportDAO;
 import edu.mit.ll.em.api.exception.BadContentException;
 import edu.mit.ll.em.api.rs.QueryConstraintHelper;
 import edu.mit.ll.em.api.rs.Report;
@@ -70,7 +67,6 @@ import edu.mit.ll.em.api.rs.ReportService;
 import edu.mit.ll.em.api.rs.ReportServiceResponse;
 import edu.mit.ll.em.api.util.APIConfig;
 import edu.mit.ll.em.api.util.APILogger;
-import edu.mit.ll.nics.common.rabbitmq.client.RabbitProducer;
 
 /**
  * 
@@ -420,38 +416,41 @@ public class ReportServiceImpl implements ReportService {
 		
 		int formTypeId = -1;
 		FormType ft = null;
+        APILogger.getInstance().d(CNAME, "Beginning");
 		try {
 			ft = EntityCacheMgr.getInstance().getFormTypeByName(reportType);
 			formTypeId = ft.getFormTypeId();
 		} catch (ICSDatastoreException e) {
-			APILogger.getInstance().e(CNAME, e.getMessage());
+			APILogger.getInstance().e(CNAME, e.getMessage(), e);
 			reportResponse.setMessage("Failure. " + e.getMessage());
 			reportResponse.setCount(0);
 			response = Response.ok(reportResponse).status(Status.PRECONDITION_FAILED).build();
 			return response;
 		}
-		try {
+        APILogger.getInstance().d(CNAME, "Fetched formTypeId for postReports");
+        try {
 			if(ft.getFormTypeName().toUpperCase().equals("SR")) {
-				return handleSimpleReport(incidentId, formTypeId, body);
+                APILogger.getInstance().e(CNAME, "Processing Simple Report POST request");
+                return handleSimpleReport(incidentId, formTypeId, body);
 			} else if(ft.getFormTypeName().toUpperCase().equals("DMGRPT")) {
 				return handleDamageReport(incidentId, formTypeId, body);
 			}else if(ft.getFormTypeName().toUpperCase().equals("UXO")) {
 				return handleUXOReport(incidentId, formTypeId, body);
 			}
 		} catch (BadContentException e) {
-			APILogger.getInstance().e(CNAME, e.getMessage());
+			APILogger.getInstance().e(CNAME, e.getMessage(), e);
 			reportResponse.setMessage("Failure. " + e.getMessage());
 			reportResponse.setCount(0);
 			response = Response.ok(reportResponse).status(Status.BAD_REQUEST).build();
 			return response;
 		} catch (JSONException e) {
-			APILogger.getInstance().e(CNAME, e.getMessage());
+			APILogger.getInstance().e(CNAME, e.getMessage(), e);
 			reportResponse.setMessage("Failure. " + e.getMessage());
 			reportResponse.setCount(0);
 			response = Response.ok(reportResponse).status(Status.INTERNAL_SERVER_ERROR).build();
 			return response;
 		} catch (Exception e) {
-			APILogger.getInstance().e(CNAME, e.getMessage());
+			APILogger.getInstance().e(CNAME, e.getMessage(), e);
 			reportResponse.setMessage("Failure. " + e.getMessage());
 			reportResponse.setCount(0);
 			response = Response.ok(reportResponse).status(Status.PRECONDITION_FAILED).build();
@@ -679,7 +678,7 @@ public class ReportServiceImpl implements ReportService {
 			} else {
 				filename = Calendar.getInstance().getTimeInMillis() + "-0" + ext;
 				msg.put("image", filename);
-				
+
 				byte[] content = a.getObject(byte[].class);
 				if (content != null) {
 					// Write to file
@@ -689,12 +688,14 @@ public class ReportServiceImpl implements ReportService {
 						msg.put("image", url.concat(filename));
 						msg.put("fullpath", path.concat(filename));
 					} catch (IOException e) {
+                        APILogger.getInstance().e(CNAME, "Unable to write file" + e.getMessage(), e);
 						throw new BadContentException("Unable to write file: " + e.getMessage());
 					}
 				} else {
+                    APILogger.getInstance().e(CNAME, "No attachment");
 					throw new BadContentException("No attachment");
 				}
-			}	
+			}
 		}
 		
 		if(location.getTime() < 0) {
@@ -754,19 +755,22 @@ public class ReportServiceImpl implements ReportService {
 					String topic = String.format("iweb.NICS.incident.%d.report.SR.new", form.getIncidentid());
 					notifyNewReport(topic, form);
 				} catch (IOException e) {
-					APILogger.getInstance().e("ReportServiceImpl", "Exception publishing new form with type id: " + 
-							form.getFormtypeid());
+					APILogger.getInstance().e(CNAME, "Exception publishing new form with type id: " +
+							form.getFormtypeid(), e);
 					e.printStackTrace();
 				}
 			} else {
 				reportResponse.setCount(0);
 				reportResponse.setMessage("Unable to persist report!");
+                APILogger.getInstance().e(CNAME, "Unable to persist report");
 				response = Response.ok(reportResponse).status(Status.EXPECTATION_FAILED).build();
 			}
 		} catch (ICSDatastoreException e) {
-			reportResponse.setMessage(e.getMessage()) ;
+            APILogger.getInstance().e(CNAME, "ICSDatastoreException" + e.getMessage(), e);
+                    reportResponse.setMessage(e.getMessage());
 			response = Response.ok(reportResponse).status(Status.NOT_FOUND).build();	
 		} catch (Exception e) {
+            APILogger.getInstance().e(CNAME, "Exception" + e.getMessage(), e);
 			reportResponse.setMessage(e.getMessage()) ;
 			response = Response.ok(reportResponse).status(Status.EXPECTATION_FAILED).build();
 		}
