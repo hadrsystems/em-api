@@ -766,11 +766,11 @@ public class ReportServiceImpl implements ReportService {
 				response = Response.ok(reportResponse).status(Status.EXPECTATION_FAILED).build();
 			}
 		} catch (ICSDatastoreException e) {
-            APILogger.getInstance().e(CNAME, "ICSDatastoreException" + e.getMessage(), e);
+            APILogger.getInstance().e(CNAME, e.getMessage(), e);
                     reportResponse.setMessage(e.getMessage());
 			response = Response.ok(reportResponse).status(Status.NOT_FOUND).build();	
 		} catch (Exception e) {
-            APILogger.getInstance().e(CNAME, "Exception" + e.getMessage(), e);
+            APILogger.getInstance().e(CNAME, e.getMessage(), e);
 			reportResponse.setMessage(e.getMessage()) ;
 			response = Response.ok(reportResponse).status(Status.EXPECTATION_FAILED).build();
 		}
