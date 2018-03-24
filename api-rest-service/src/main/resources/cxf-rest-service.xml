@@ -73,7 +73,14 @@
 			<bean class="edu.mit.ll.em.api.rs.impl.FeatureServiceImpl" />
 			<bean class="edu.mit.ll.em.api.rs.impl.FolderServiceImpl" />
 			<bean class="edu.mit.ll.em.api.rs.impl.IncidentServiceImpl" />
-			<bean class="edu.mit.ll.em.api.rs.impl.LoginServiceImpl" />
+			<bean class="edu.mit.ll.em.api.rs.impl.LoginServiceImpl" >
+                <constructor-arg ref="userDao"/>
+                <constructor-arg ref="userSessionDao"/>
+                <constructor-arg ref="userOrgDao"/>
+                <constructor-arg ref="orgDao"/>
+                <constructor-arg ref="wsDao"/>
+                <constructor-arg ref="rabbitProducer"/>
+            </bean>
 			<bean class="edu.mit.ll.em.api.rs.impl.MDTrackServiceImpl" />
 			<!-- <bean class="edu.mit.ll.em.api.rs.impl.MsgBusServiceImpl" /> -->
 			<bean class="edu.mit.ll.em.api.rs.impl.OrganizationServiceImpl" />

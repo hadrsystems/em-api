@@ -29,6 +29,8 @@
  */
 package edu.mit.ll.em.api.rs;
 
+import org.apache.commons.lang.StringUtils;
+
 public class Login extends APIBean {
 
 	private String username;
@@ -42,6 +44,13 @@ public class Login extends APIBean {
 	public Login() {
 		super();
 	}
+
+    public Login(String username, int userId, int userSessionId, int workspaceId) {
+        this.username = username;
+        this.userId = userId;
+        this.userSessionId = userSessionId;
+        this.workspaceId = workspaceId;
+    }
 
 	public String getUsername() {
 		return username;
@@ -83,7 +92,7 @@ public class Login extends APIBean {
 		if (other.userSessionId != userSessionId) {
 			return false;
 		}
-		if(other.username != username) {
+		if(!StringUtils.equals(other.username, username)) {
 			return false;
 		}
 		
