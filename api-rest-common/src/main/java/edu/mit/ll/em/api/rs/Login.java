@@ -34,13 +34,9 @@ import org.apache.commons.lang.StringUtils;
 public class Login extends APIBean {
 
 	private String username;
-	
 	private int userId;
-	
 	private int userSessionId;
-	
 	private int workspaceId;
-	
 	public Login() {
 		super();
 	}

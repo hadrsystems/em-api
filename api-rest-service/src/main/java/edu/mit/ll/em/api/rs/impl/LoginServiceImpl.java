@@ -273,7 +273,6 @@ public class LoginServiceImpl implements LoginService {
             //logout existing sessions of this user
             if(this.userSessionDao.removeUserSession(currentUserSession.getCurrentusersessionid())) {
                 try {
-                    userSessionDao.updateLoggedOutToNow(currentUserSession.getUsersessionid());
                     this.notifyLogout(currentUserSession.getWorkspaceid(), currentUserSession.getCurrentusersessionid());
                 } catch (Exception e) {
                     APILogger.getInstance().e(CLASS_NAME, "Unable to logout active user session with currentusersessionid : " + currentUserSession.getCurrentusersessionid(), e);
