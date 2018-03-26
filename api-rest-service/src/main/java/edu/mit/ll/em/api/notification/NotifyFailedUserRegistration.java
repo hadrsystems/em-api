@@ -37,6 +37,7 @@ import edu.mit.ll.nics.common.entity.User;
 import edu.mit.ll.nics.common.rabbitmq.RabbitFactory;
 import edu.mit.ll.nics.common.rabbitmq.RabbitPubSubProducer;
 import org.apache.commons.configuration.Configuration;
+import org.joda.time.DateTimeUtils;
 import org.springframework.util.StringUtils;
 
 import java.io.IOException;
@@ -78,7 +79,7 @@ public class NotifyFailedUserRegistration {
 
     private String getEmailBody(User user, Org org, String hostname) throws UnknownHostException {
         StringBuilder builder = new StringBuilder();
-        String date = new SimpleDateFormat("EEE MMM d HH:mm:ss z yyyy").format(new Date());
+        String date = new SimpleDateFormat("EEE MMM d HH:mm:ss z yyyy").format(DateTimeUtils.currentTimeMillis());
         builder.append(date);
         builder.append("\n\nA new user has attempted to register. However, their system user failed to successfully persist,");
         builder.append(" so before they can try to register again with the same email address, their");

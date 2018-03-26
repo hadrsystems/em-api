@@ -78,7 +78,7 @@
                 <constructor-arg ref="userSessionDao"/>
                 <constructor-arg ref="userOrgDao"/>
                 <constructor-arg ref="orgDao"/>
-                <constructor-arg ref="wsDao"/>
+                <constructor-arg ref="workspaceDao"/>
                 <constructor-arg ref="rabbitProducer"/>
             </bean>
 			<bean class="edu.mit.ll.em.api.rs.impl.MDTrackServiceImpl" />

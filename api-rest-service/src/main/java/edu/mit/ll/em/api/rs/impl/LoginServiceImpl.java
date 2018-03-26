@@ -39,7 +39,6 @@ import javax.ws.rs.core.Cookie;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import edu.mit.ll.nics.common.rabbitmq.RabbitFactory;
 import edu.mit.ll.nics.common.rabbitmq.RabbitPubSubProducer;
 import edu.mit.ll.nics.nicsdao.*;
 import org.apache.commons.collections.CollectionUtils;
@@ -74,19 +73,19 @@ public class LoginServiceImpl implements LoginService {
 	/** Org DAO */
 	private OrgDAO orgDao;
 	/** Workspace DAO */
-	private WorkspaceDAO wsDao;
+	private WorkspaceDAO workspaceDao;
 	private SSOUtil ssoUtil = null;
     private RabbitPubSubProducer rabbitProducer;
 
     private static String CLASS_NAME = LoginServiceImpl.class.getSimpleName();
 
-    public LoginServiceImpl(UserDAO userDao, UserSessionDAOImpl userSessionDao, UserOrgDAO userOrgDao, OrgDAO orgDao, WorkspaceDAO wsDao, RabbitPubSubProducer rabbitProducer) {
+    public LoginServiceImpl(UserDAO userDao, UserSessionDAOImpl userSessionDao, UserOrgDAO userOrgDao, OrgDAO orgDao, WorkspaceDAO workspaceDao, RabbitPubSubProducer rabbitProducer) {
         this.userDao = userDao;
         this.userDao = userDao;
         this.userSessionDao = userSessionDao;
         this.userOrgDao = userOrgDao;
         this.orgDao = orgDao;
-        this.wsDao = wsDao;
+        this.workspaceDao = workspaceDao;
         this.rabbitProducer = rabbitProducer;
     }
 	/**
@@ -220,7 +219,7 @@ public class LoginServiceImpl implements LoginService {
             int userId = u.getUserId();
 
             int workspaceId = login.getWorkspaceId();
-            if(workspaceId < 0 || StringUtil.isBlank(wsDao.getWorkspaceName(workspaceId))) {
+            if(workspaceId < 0 || StringUtil.isBlank(workspaceDao.getWorkspaceName(workspaceId))) {
                 APILogger.getInstance().w(CLASS_NAME, "!!!Invalid workspaceId: " + workspaceId + ". Using a default of 1 instead.");
                 workspaceId = 1; // Defaulting to 1 if it's not set
             }
