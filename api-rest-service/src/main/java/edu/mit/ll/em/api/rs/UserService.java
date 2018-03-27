@@ -246,5 +246,9 @@ public interface UserService {
     @Path(value = "/verifyEmail/{email}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response verifyEmailAddress(@PathParam("workspaceId") int workspaceId, @PathParam("email") String email);
-	
+
+    @GET
+    @Path(value="/verifyActiveSession/{userSessionId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response verifyActiveSession(@PathParam("workspaceId") int workspaceId, @PathParam("userSessionId") int userSessionId, @HeaderParam("CUSTOM-uid") String requestingUser);
 }

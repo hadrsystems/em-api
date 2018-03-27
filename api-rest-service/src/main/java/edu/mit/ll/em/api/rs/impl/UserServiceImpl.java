@@ -35,7 +35,6 @@ import java.nio.file.Paths;
 import java.util.*;
 
 import javax.validation.*;
-import javax.validation.constraints.NotNull;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
@@ -45,6 +44,8 @@ import edu.mit.ll.em.api.util.*;
 import edu.mit.ll.nics.common.rabbitmq.RabbitFactory;
 import edu.mit.ll.nics.common.rabbitmq.RabbitPubSubProducer;
 
+import edu.mit.ll.nics.nicsdao.WorkspaceDAO;
+import org.apache.commons.lang.StringUtils;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.springframework.dao.DataAccessException;
 
@@ -74,16 +75,31 @@ public class UserServiceImpl implements UserService {
 	private static final String CNAME = UserServiceImpl.class.getName();
 
 	private static final APILogger log = APILogger.getInstance();
+    private static final int DEFAULT_WORKSPACE_ID = 1;
 
 	private UserDAOImpl userDao = new UserDAOImpl();
-	private final UserOrgDAOImpl userOrgDao = new UserOrgDAOImpl();
-	private final UserSessionDAOImpl userSessDao = new UserSessionDAOImpl();
-	private final OrgDAOImpl orgDao = new OrgDAOImpl();
+	private UserOrgDAOImpl userOrgDao = new UserOrgDAOImpl();
+	private UserSessionDAOImpl userSessDao = new UserSessionDAOImpl();
+	private OrgDAOImpl orgDao = new OrgDAOImpl();
+    private WorkspaceDAO workspaceDAO = null;
 	private RabbitPubSubProducer rabbitProducer;
     private UserRegistrationService userRegistrationService;
     private Validator validator;
 
-    public UserServiceImpl(UserRegistrationService userRegistrationService, Validator validator) {
+    public UserServiceImpl(UserRegistrationService userRegistrationService, Validator validator, WorkspaceDAO workspaceDAO) {
+        this.userRegistrationService = userRegistrationService;
+        this.validator = validator;
+        this.workspaceDAO = workspaceDAO;
+    }
+
+    public UserServiceImpl(UserDAOImpl userDao, UserOrgDAOImpl userOrgDao, UserSessionDAOImpl userSessionDao, OrgDAOImpl orgDao, WorkspaceDAO workspaceDAO,
+                           RabbitPubSubProducer rabbitProducer, UserRegistrationService userRegistrationService, Validator validator) {
+        this.userDao = userDao;
+        this.userOrgDao = userOrgDao;
+        this.userSessDao = userSessionDao;
+        this.orgDao = orgDao;
+        this.workspaceDAO = workspaceDAO;
+        this.rabbitProducer = rabbitProducer;
         this.userRegistrationService = userRegistrationService;
         this.validator = validator;
     }
@@ -1212,5 +1228,28 @@ public class UserServiceImpl implements UserService {
         int status = validEmail ? Response.Status.OK.getStatusCode(): Status.BAD_REQUEST.getStatusCode();
         VerifyEmailResponse responseEntity = new VerifyEmailResponse(status, "OK", validEmail);
         return Response.ok(responseEntity).status(status).build();
+    }
+
+    public Response verifyActiveSession(int workspaceId, int userSessionId, String requestingUser) {
+        User user = null;
+        if(userSessionId <= 0) {
+            APIResponse apiResponse =  new APIResponse(Status.BAD_REQUEST.getStatusCode(), "Please provide valid userSessionId");
+            APILogger.getInstance().e(CNAME, "Invalid userSessionId provided : " + userSessionId);
+            return Response.ok(apiResponse).status(Status.BAD_REQUEST).build();
+        }
+        if(StringUtils.isBlank(requestingUser) || (user = userDao.getUser(requestingUser)) == null) {
+            APILogger.getInstance().e(CNAME, "Invalid requestingUser : " + requestingUser + ", Forbidden request");
+            APIResponse apiResponse =  new APIResponse(Status.FORBIDDEN.getStatusCode(), "Not authorized for this request");
+            return Response.ok(apiResponse).status(Status.FORBIDDEN).build();
+        }
+        if(workspaceId <= 0 || this.workspaceDAO.getWorkspaceName(workspaceId) == null) {
+            APILogger.getInstance().e(CNAME, "Invalid workspaceId : " + userSessionId + ", defaulting to use workspaceId: " + DEFAULT_WORKSPACE_ID);
+            workspaceId = DEFAULT_WORKSPACE_ID;
+        }
+
+        CurrentUserSession currentUserSession = userSessDao.getCurrentUserSession(user.getUserId(), workspaceId);
+        boolean activeSession = currentUserSession.getUsersessionid() == userSessionId;
+        ActiveSessionResponse activeSessionResponse = new ActiveSessionResponse(Status.OK.getStatusCode(), "ok", activeSession);
+        return Response.ok(activeSessionResponse).build();
     }
 }
