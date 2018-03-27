@@ -227,7 +227,6 @@ public class LoginServiceImpl implements LoginService {
             // TODO: Generate/get a proper sessionid? Maybe have caller pass one in if they have
             //      an http session id they can pass
             String sessionId = "API-USER-" + userId + "-" + new Date().getTime();
-            int userOrgId = -1, systemRoleId = -1;
             String displayName = u.getFirstname() + " " + u.getLastname();
             List<Org> organizations = orgDao.getUserOrgs(userId, workspaceId);
             UserOrg userOrg = null;
