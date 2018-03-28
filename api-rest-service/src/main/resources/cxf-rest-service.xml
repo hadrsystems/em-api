@@ -81,6 +81,7 @@
 			<bean class="edu.mit.ll.em.api.rs.impl.SSOManagementServiceImpl" />
 			<!-- <bean class="edu.mit.ll.em.api.rs.impl.TaskingAssignmentServiceImpl" /> -->
 			<bean class="edu.mit.ll.em.api.rs.impl.UserServiceImpl">
+                <constructor-arg ref="workspaceDAO" />
                 <constructor-arg ref="registrationService"/>
                 <constructor-arg ref="validator"/>
             </bean>

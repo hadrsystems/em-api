@@ -86,10 +86,10 @@ public class UserServiceImpl implements UserService {
     private UserRegistrationService userRegistrationService;
     private Validator validator;
 
-    public UserServiceImpl(UserRegistrationService userRegistrationService, Validator validator, WorkspaceDAO workspaceDAO) {
+    public UserServiceImpl(WorkspaceDAO workspaceDAO, UserRegistrationService userRegistrationService, Validator validator) {
+        this.workspaceDAO = workspaceDAO;
         this.userRegistrationService = userRegistrationService;
         this.validator = validator;
-        this.workspaceDAO = workspaceDAO;
     }
 
     public UserServiceImpl(UserDAOImpl userDao, UserOrgDAOImpl userOrgDao, UserSessionDAOImpl userSessionDao, OrgDAOImpl orgDao, WorkspaceDAO workspaceDAO,
@@ -103,6 +103,7 @@ public class UserServiceImpl implements UserService {
         this.userRegistrationService = userRegistrationService;
         this.validator = validator;
     }
+
     /**
 	 * Read and return all User items in workspace
 	 * 
@@ -1234,22 +1235,27 @@ public class UserServiceImpl implements UserService {
         User user = null;
         if(userSessionId <= 0) {
             APIResponse apiResponse =  new APIResponse(Status.BAD_REQUEST.getStatusCode(), "Please provide valid userSessionId");
-            APILogger.getInstance().e(CNAME, "Invalid userSessionId provided : " + userSessionId);
+            APILogger.getInstance().e(CNAME, "Invalid userSessionId provided: " + userSessionId);
             return Response.ok(apiResponse).status(Status.BAD_REQUEST).build();
         }
-        if(StringUtils.isBlank(requestingUser) || (user = userDao.getUser(requestingUser)) == null) {
-            APILogger.getInstance().e(CNAME, "Invalid requestingUser : " + requestingUser + ", Forbidden request");
-            APIResponse apiResponse =  new APIResponse(Status.FORBIDDEN.getStatusCode(), "Not authorized for this request");
-            return Response.ok(apiResponse).status(Status.FORBIDDEN).build();
-        }
-        if(workspaceId <= 0 || this.workspaceDAO.getWorkspaceName(workspaceId) == null) {
-            APILogger.getInstance().e(CNAME, "Invalid workspaceId : " + userSessionId + ", defaulting to use workspaceId: " + DEFAULT_WORKSPACE_ID);
-            workspaceId = DEFAULT_WORKSPACE_ID;
-        }
+        try {
+            if(StringUtils.isBlank(requestingUser) || (user = userDao.getUser(requestingUser)) == null) {
+                APILogger.getInstance().e(CNAME, "Invalid requestingUser : " + requestingUser + ", Forbidden request");
+                APIResponse apiResponse =  new APIResponse(Status.FORBIDDEN.getStatusCode(), "Not authorized for this request");
+                return Response.ok(apiResponse).status(Status.FORBIDDEN).build();
+            }
+            if(workspaceId <= 0 || this.workspaceDAO.getWorkspaceName(workspaceId) == null) {
+                APILogger.getInstance().e(CNAME, "Invalid workspaceId : " + userSessionId + ", defaulting to use workspaceId: " + DEFAULT_WORKSPACE_ID);
+                workspaceId = DEFAULT_WORKSPACE_ID;
+            }
 
-        CurrentUserSession currentUserSession = userSessDao.getCurrentUserSession(user.getUserId(), workspaceId);
-        boolean activeSession = currentUserSession.getUsersessionid() == userSessionId;
-        ActiveSessionResponse activeSessionResponse = new ActiveSessionResponse(Status.OK.getStatusCode(), "ok", activeSession);
-        return Response.ok(activeSessionResponse).build();
+            CurrentUserSession currentUserSession = userSessDao.getCurrentUserSession(workspaceId, user.getUserId());
+            boolean activeSession = currentUserSession != null && currentUserSession.getUsersessionid() == userSessionId;
+            ActiveSessionResponse activeSessionResponse = new ActiveSessionResponse(Status.OK.getStatusCode(), "ok", activeSession);
+            return Response.ok(activeSessionResponse).build();
+        } catch(Exception e) {
+            APILogger.getInstance().e(CNAME, "Unable to process verifyActiveSession request (workspaceId : " + workspaceId + ", userSessionId: " + userSessionId + ", requestingUser: " + requestingUser + ")", e);
+            return Response.ok(new APIResponse(Status.INTERNAL_SERVER_ERROR.getStatusCode(), "Unable to process your request, please try again later.")).status(Status.INTERNAL_SERVER_ERROR).build();
+        }
     }
 }
