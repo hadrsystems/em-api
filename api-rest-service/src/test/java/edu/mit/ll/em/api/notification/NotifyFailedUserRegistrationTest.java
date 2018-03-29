@@ -108,7 +108,7 @@ public class NotifyFailedUserRegistrationTest {
 
     private String getEmailBody(User user, Org org, String hostname) throws UnknownHostException {
         StringBuilder builder = new StringBuilder();
-        String date = new SimpleDateFormat("EEE MMM d HH:mm:ss z yyyy").format(DateTime.now().toDate());
+        String date = new SimpleDateFormat("EEE MMM d HH:mm:ss z yyyy").format(DateTimeUtils.currentTimeMillis());
         builder.append(date);
         builder.append("\n\nA new user has attempted to register. However, their system user failed to successfully persist,");
         builder.append(" so before they can try to register again with the same email address, their");

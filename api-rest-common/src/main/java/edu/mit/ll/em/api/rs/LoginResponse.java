@@ -43,6 +43,20 @@ public class LoginResponse {
 	// the list of users just the count.
 	private long count;
 
+    public LoginResponse() {
+    }
+
+    public LoginResponse(String message) {
+        this.message = message;
+        this.count = 0;
+    }
+
+    public LoginResponse(String message, Collection<Login> logins) {
+        this.message = message;
+        this.logins.addAll(logins);
+        this.count = logins.size();
+    }
+
 	public String getMessage() {
 		return message;
 	}
