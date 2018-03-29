@@ -1244,7 +1244,7 @@ public class UserServiceImpl implements UserService {
                 APILogger.getInstance().e(CNAME, "Invalid userSessionId provided: " + userSessionId);
                 return Response.ok(apiResponse).status(Status.BAD_REQUEST).build();
             }
-            if(workspaceId <= 0 || this.workspaceDAO.getWorkspaceName(workspaceId) == null) {
+            if(workspaceId <= 0 || StringUtils.isBlank(this.workspaceDAO.getWorkspaceName(workspaceId))) {
                 APILogger.getInstance().e(CNAME, "Invalid workspaceId : " + userSessionId + ", defaulting to use workspaceId: " + DEFAULT_WORKSPACE_ID);
                 workspaceId = DEFAULT_WORKSPACE_ID;
             }

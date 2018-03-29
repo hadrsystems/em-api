@@ -109,9 +109,10 @@ public class UserServiceImplTest {
         Response response = userService.verifyActiveSession(workspaceId, userSessionId, requestingUser);
         verify(userSessionDAO).getCurrentUserSession(DEFAULT_WORKSPACE_ID, userId);
 
-        Mockito.reset(userSessionDAO);
+        Mockito.reset(userSessionDAO, workspaceDAO);
 
         workspaceId = -1;
+        when(workspaceDAO.getWorkspaceName(workspaceId)).thenReturn("");
         when(userSessionDAO.getCurrentUserSession(DEFAULT_WORKSPACE_ID, userId)).thenReturn(currentUserSession);
         response = userService.verifyActiveSession(workspaceId, userSessionId, requestingUser);
         verify(userSessionDAO).getCurrentUserSession(DEFAULT_WORKSPACE_ID, userId);
