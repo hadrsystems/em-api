@@ -30,6 +30,8 @@
 package edu.mit.ll.em.api.rs.impl;
 
 
+import java.io.IOException;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -37,25 +39,23 @@ import javax.ws.rs.core.Cookie;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import edu.mit.ll.nics.common.rabbitmq.RabbitPubSubProducer;
+import edu.mit.ll.nics.nicsdao.*;
+import org.apache.commons.collections.CollectionUtils;
+import org.eclipse.jetty.util.StringUtil;
 import org.springframework.dao.DataAccessException;
 
 import edu.mit.ll.em.api.rs.Login;
 import edu.mit.ll.em.api.rs.LoginResponse;
 import edu.mit.ll.em.api.rs.LoginService;
-import edu.mit.ll.em.api.rs.SSOUser;
 import edu.mit.ll.em.api.util.APIConfig;
 import edu.mit.ll.em.api.util.APILogger;
 import edu.mit.ll.nics.common.entity.CurrentUserSession;
 import edu.mit.ll.nics.common.entity.Org;
 import edu.mit.ll.nics.common.entity.User;
 import edu.mit.ll.nics.common.entity.UserOrg;
-import edu.mit.ll.nics.nicsdao.impl.OrgDAOImpl;
-import edu.mit.ll.nics.nicsdao.impl.UserDAOImpl;
-import edu.mit.ll.nics.nicsdao.impl.UserOrgDAOImpl;
 import edu.mit.ll.nics.nicsdao.impl.UserSessionDAOImpl;
-import edu.mit.ll.nics.nicsdao.impl.WorkspaceDAOImpl;
 import edu.mit.ll.nics.sso.util.SSOUtil;
-import edu.mit.ll.nics.common.ws.client.JSONRequest;
 import edu.mit.ll.soa.sso.exception.InitializationException;
 
 /**
@@ -64,24 +64,29 @@ import edu.mit.ll.soa.sso.exception.InitializationException;
  *
  */
 public class LoginServiceImpl implements LoginService {
-
 	/** User DAO */
-	private static final UserDAOImpl userDao = new UserDAOImpl();
-	
+	private UserDAO userDao;
 	/** UserSession DAO */
-	private static final UserSessionDAOImpl userSessDao = new UserSessionDAOImpl();
-	
+	private UserSessionDAOImpl userSessionDao;
 	/** UserOrg DAO */
-	private static final UserOrgDAOImpl userOrgDao = new UserOrgDAOImpl();
-	
+	private UserOrgDAO userOrgDao;
 	/** Org DAO */
-	private static final OrgDAOImpl orgDao = new OrgDAOImpl();
-	
+	private OrgDAO orgDao;
 	/** Workspace DAO */
-	private static final WorkspaceDAOImpl wsDao = new WorkspaceDAOImpl();
-	
+	private WorkspaceDAO workspaceDao;
 	private SSOUtil ssoUtil = null;
-	
+    private RabbitPubSubProducer rabbitProducer;
+
+    private static String CLASS_NAME = LoginServiceImpl.class.getSimpleName();
+
+    public LoginServiceImpl(UserDAO userDao, UserSessionDAOImpl userSessionDao, UserOrgDAO userOrgDao, OrgDAO orgDao, WorkspaceDAO workspaceDao, RabbitPubSubProducer rabbitProducer) {
+        this.userDao = userDao;
+        this.userSessionDao = userSessionDao;
+        this.userOrgDao = userOrgDao;
+        this.orgDao = orgDao;
+        this.workspaceDao = workspaceDao;
+        this.rabbitProducer = rabbitProducer;
+    }
 	/**
 	 * Read and return all Login items.
 	 * @return Response
@@ -103,7 +108,6 @@ public class LoginServiceImpl implements LoginService {
 
 	/**
 	 * Bulk creation of Login items.
-	 * @param A collection of Login items to be created.
 	 * @return Response
 	 * @see LoginResponse
 	 */
@@ -113,7 +117,6 @@ public class LoginServiceImpl implements LoginService {
 
 	/**
 	 *  Creation of a single Login item.
-	 * @param Login to be created.
 	 * @return Response
 	 * @see LoginResponse
 	 */	
@@ -124,7 +127,7 @@ public class LoginServiceImpl implements LoginService {
 
 	/**
 	 *  Read a single Login item.
-	 * @param ID of Login item to be read.
+	 * @param username of Login item to be read.
 	 * @return Response
 	 * @see LoginResponse
 	 */	
@@ -179,7 +182,7 @@ public class LoginServiceImpl implements LoginService {
 
 	/**
 	 *  Update a single Login item.
-	 * @param ID of Login item to be read.
+	 * @param username of Login item to be read.
 	 * @return Response
 	 * @see LoginResponse
 	 */	
@@ -188,121 +191,102 @@ public class LoginServiceImpl implements LoginService {
 	}
 	
 
-	/**
-	 *  Post a single Login item.   
-	 *  
-	 * @param login Login object expected to be populated with valid username, and workspaceId,
-	 * 			if workspaceId <= 0, then the default of 1 is assumed
-	 * 
-	 * @return Response
-	 * @see LoginResponse
-	 */	
-	public Response postLogin(Login login) {
-		Response response = null;
-		LoginResponse loginResponse = new LoginResponse();
-		
-		String username = login.getUsername().toLowerCase();
-		
-		int wsId = login.getWorkspaceId();
-		String wsName = wsDao.getWorkspaceName(wsId);
-		boolean isWsIdValid = (wsName != null && !wsName.isEmpty()) ? true : false;
-		if(!isWsIdValid) {
-			APILogger.getInstance().w("LoginServiceImpl", "!!!Invalid workspaceId: " + wsId + ". "
-					+ "Using a default of 1 instead.");
-			
-			wsId = 1; // Defaulting to 1 if it's not set
-		}
-		
-		Login newLogin = new Login();
-				
-		if (username != null && !username.isEmpty()) {			
-			try {
-				newLogin.setUsername(username);
-								
-				User u = userDao.getUser(username);
-				if(u == null) {
-					loginResponse.setMessage("Could not find username: " + username);
-					response = Response.ok(loginResponse).status(Status.NO_CONTENT).build();
-					return response;
-				}
-				
-				APILogger.getInstance().d("LoginServiceImpl", "Login found user: " + u.getUsername() + "(" +
-						u.getUserId() + ")");
-				
-				int userId = u.getUserId();
-				if(userId <= 0) {
-					loginResponse.setMessage("Invalid userId for username " + username + ": " + userId);
-					response = Response.ok(loginResponse).status(Status.NO_CONTENT).build();
-					return response;
-				}
-				
-				if(!userSessDao.hasCurrentUserSession(wsId, userId)) {
-					// TODO: Generate/get a proper sessionid? Maybe have caller pass one in if they have
-					//		an http session id they can pass
-					String sessionid = "API-USER-" + userId + "-" + new Date().getTime();
-					int userorgid = -1;
-					String displayname = u.getFirstname() + " " + u.getLastname();
-					int systemroleId = -1;
-					int orgid = -1;
-					List<Org> orgs = orgDao.getUserOrgs(userId, wsId);
-					if(orgs != null && !orgs.isEmpty()) {
-						// TODO: Needs updated to use the default org, but the rest of the system
-						//		 needs to adopt the default field usage first
-						orgid = orgs.get(0).getOrgId();
-					}
-					
-					UserOrg userOrg = null;
-					if(orgid != -1) {
-						userOrg = userOrgDao.getUserOrgById(orgid, userId, wsId);
-						// TODO: validate
-						userorgid = userOrg.getUserorgid();
-						systemroleId = userOrg.getSystemroleid();
-					}
-					
-					// create() creates both current and user sessions
-					int userSessionId = userSessDao.create(sessionid, userorgid, displayname, 
-							userId, systemroleId, wsId);					
-					
-					newLogin.setUserId(userId);
-					newLogin.setWorkspaceId(wsId);
-					newLogin.setUserSessionId(userSessionId);
-				} else { // has currentusersession
-					// Reuse it
-					CurrentUserSession curUserSession = userSessDao.getCurrentUserSession(wsId, userId);
-					if(curUserSession != null) {
-						newLogin.setUserId(userId);
-						newLogin.setWorkspaceId(curUserSession.getWorkspaceid());
-						newLogin.setUserSessionId(curUserSession.getUsersessionid());
-						// TODO: update any timestamps on the currentusersessions?
-						try {
-							userSessDao.updateLastSeen(userId);
-						} catch(Exception e) {
-							APILogger.getInstance().e("LoginService:postLogin", "Unhandled exception attempting to "
-									+ "update Last Seen on currentusersession for userId: " + userId);
-						}
-					}
-				}
-				
-				
-				if (newLogin.getUserSessionId() <= 0) {
-					loginResponse.setMessage("Login failed for user: " + username);
-					response = Response.ok(loginResponse).status(Status.NO_CONTENT).build();
-					return response;	
-				} else {
-					loginResponse.getLogins().add(newLogin);
-					loginResponse.setMessage("ok");
-					loginResponse.setCount(1);
-					response = Response.ok(loginResponse).status(Status.OK).build();
-				}
-			} catch (Exception e) {
-				loginResponse.setMessage("Unhandled exception logging in: " + e.getMessage());
-				response = Response.ok(loginResponse).status(Status.PRECONDITION_FAILED).build();
-			}
-		}
+    /**
+     *  Post a single Login item.
+     *
+     * @param login Login object expected to be populated with valid username, and workspaceId,
+     *          if workspaceId <= 0, then the default of 1 is assumed
+     *
+     * @return Response
+     * @see LoginResponse
+    */
+    public Response postLogin(Login login) {
+        Response response = null;
+        LoginResponse loginResponse = null;
 
-		return response;
-	}
-	
+        String username = (login.getUsername() == null) ? null : login.getUsername().trim().toLowerCase();
+        try {
+            User u = StringUtil.isBlank(username) ? null : userDao.getUser(username);
+            if( u == null ) {
+                APILogger.getInstance().w(CLASS_NAME, "Invalid Username: " + username);
+                loginResponse = new LoginResponse("Invalid username: " + username + ", Please provide valid username.");
+                response = Response.ok(loginResponse).status(Status.BAD_REQUEST).build();
+                return response;
+            }
+
+            APILogger.getInstance().d(CLASS_NAME, "Login found user: " + u.getUsername() + "(" + u.getUserId() + ")");
+            int userId = u.getUserId();
+
+            int workspaceId = login.getWorkspaceId();
+            if(workspaceId < 0 || StringUtil.isBlank(workspaceDao.getWorkspaceName(workspaceId))) {
+                APILogger.getInstance().w(CLASS_NAME, "!!!Invalid workspaceId: " + workspaceId + ". Using a default of 1 instead.");
+                workspaceId = 1; // Defaulting to 1 if it's not set
+            }
+
+            // TODO: Generate/get a proper sessionid? Maybe have caller pass one in if they have
+            //      an http session id they can pass
+            String sessionId = "API-USER-" + userId + "-" + new Date().getTime();
+            String displayName = u.getFirstname() + " " + u.getLastname();
+            List<Org> organizations = orgDao.getUserOrgs(userId, workspaceId);
+            UserOrg userOrg = null;
+            if(CollectionUtils.isNotEmpty(organizations)) {
+                //logout any existing sessions for currently logging in user
+                response = cleanupExistingSessionsIfExists(workspaceId, userId);
+                if(response != null) {
+                    return response;
+                }
+
+                // TODO: Needs updated to use the default org, but the rest of the system
+                //      needs to adopt the default field usage first
+                userOrg = userOrgDao.getUserOrgById(organizations.get(0).getOrgId(), userId, workspaceId);
+                // TODO: validate
+                int userSessionId = userSessionDao.create(sessionId, userOrg.getUserorgid(), displayName, userId, userOrg.getSystemroleid(), workspaceId);
+                if (userSessionId > 0) {
+                    Login newLogin = new Login(username, userId, userSessionId, workspaceId);
+                    loginResponse = new LoginResponse("ok", Collections.singletonList(newLogin));
+                    response = Response.ok(loginResponse).status(Status.OK).build();
+                } else {
+                    APILogger.getInstance().e(CLASS_NAME, "Unable to create new CurrentUserSession. Failed to login user with username: " + username);
+                    loginResponse = new LoginResponse("We are not able to process your request currently. Please try again later.");
+                    response = Response.ok(loginResponse).status(Status.INTERNAL_SERVER_ERROR).build();
+                }
+            } else {
+                loginResponse = new LoginResponse("No user organizations found for user, Failed to login user with username: " + username);
+                response = Response.ok(loginResponse).status(Status.PRECONDITION_FAILED).build();
+            }
+        } catch (Exception e) {
+            APILogger.getInstance().e(CLASS_NAME, "Exception logging in user with username : " + username, e);
+            loginResponse = new LoginResponse("Exception logging in user with username : " + username + " Exception: " + e.getMessage());
+            response = Response.ok(loginResponse).status(Status.INTERNAL_SERVER_ERROR).build();
+        }
+
+        return response;
+    }
+
+    private Response cleanupExistingSessionsIfExists(int workspaceId, int userId) {
+        CurrentUserSession currentUserSession = userSessionDao.getCurrentUserSession(workspaceId, userId);
+        //if current user session exists for currently logging in user
+        if(currentUserSession != null) {
+            //logout existing sessions of this user
+            if(this.userSessionDao.removeUserSession(currentUserSession.getCurrentusersessionid())) {
+                try {
+                    this.notifyLogout(currentUserSession.getWorkspaceid(), currentUserSession.getCurrentusersessionid());
+                } catch (Exception e) {
+                    APILogger.getInstance().e(CLASS_NAME, "Unable to logout active user session with currentusersessionid : " + currentUserSession.getCurrentusersessionid(), e);
+                }
+            } else {
+                APILogger.getInstance().e(CLASS_NAME, "Failed to delete currentUserSession with currentUserSessionId : " + currentUserSession.getCurrentusersessionid());
+                LoginResponse loginResponse = new LoginResponse("We are not able to process your request currently. Please try again later.");
+                return Response.ok(loginResponse).status(Status.INTERNAL_SERVER_ERROR).build();
+            }
+        }
+        return null;
+    }
+
+    private void notifyLogout(int workspaceId, long currentUserSessionId) throws IOException {
+        String topic = String.format("iweb.NICS.%d.logout", workspaceId);
+        this.rabbitProducer.produce(topic, Long.toString(currentUserSessionId));
+    }
 
 	/**
 	 *  Return the number of Login items stored. 
@@ -388,8 +372,7 @@ public class LoginServiceImpl implements LoginService {
 					"Unhandled exception attempting to destroy token: " + e.getMessage());
 			e.printStackTrace();
 		}
-		
-		
+
 		return status;
 	}
 

@@ -36,10 +36,9 @@ import edu.mit.ll.em.api.openam.OpenAmGatewayFactory;
 import edu.mit.ll.em.api.service.UserRegistrationService;
 import edu.mit.ll.em.api.util.APIConfig;
 import edu.mit.ll.em.api.util.APILogger;
-import edu.mit.ll.nics.nicsdao.impl.OrgDAOImpl;
-import edu.mit.ll.nics.nicsdao.impl.UserDAOImpl;
-import edu.mit.ll.nics.nicsdao.impl.UserOrgDAOImpl;
-import edu.mit.ll.nics.nicsdao.impl.WorkspaceDAOImpl;
+import edu.mit.ll.nics.common.rabbitmq.RabbitFactory;
+import edu.mit.ll.nics.common.rabbitmq.RabbitPubSubProducer;
+import edu.mit.ll.nics.nicsdao.impl.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -68,6 +67,11 @@ public class SpringConfiguration {
     @Bean
     public UserOrgDAOImpl userOrgDao() {
         return new UserOrgDAOImpl();
+    }
+
+    @Bean
+    public UserSessionDAOImpl userSessionDao() {
+        return new UserSessionDAOImpl();
     }
 
     @Bean
@@ -103,5 +107,14 @@ public class SpringConfiguration {
     @Bean
     public Validator validator() {
         return Validation.buildDefaultValidatorFactory().getValidator();
+    }
+
+    @Bean
+    RabbitPubSubProducer rabbitProducer() throws IOException {
+        return RabbitFactory.makeRabbitPubSubProducer(
+                    APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_HOSTNAME_KEY),
+                    APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_EXCHANGENAME_KEY),
+                    APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_USERNAME_KEY),
+                    APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_USERPWD_KEY));
     }
 }
