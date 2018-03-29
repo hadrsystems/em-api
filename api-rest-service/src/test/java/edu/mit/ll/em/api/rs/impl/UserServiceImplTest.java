@@ -51,8 +51,13 @@ public class UserServiceImplTest {
     @Test
     public void verifyActiveSessionSendsBadRequestResponseInCaseOfInvalidUserSessionId() {
         int userSessionId = -1;
+        int userId = 11;
+        String requestingUser = "test.user@test.com";
+        User user = mock(User.class);
+        when(user.getUserId()).thenReturn(userId);
+        when(userDAO.getUser(requestingUser)).thenReturn(user);
 
-        Response response = userService.verifyActiveSession(1, userSessionId, "test.user@hello.com");
+        Response response = userService.verifyActiveSession(1, userSessionId, requestingUser);
 
         assertEquals(response.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
         APIResponse apiResponse  = (APIResponse) response.getEntity();

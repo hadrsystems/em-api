@@ -1233,16 +1233,16 @@ public class UserServiceImpl implements UserService {
 
     public Response verifyActiveSession(int workspaceId, int userSessionId, String requestingUser) {
         User user = null;
-        if(userSessionId <= 0) {
-            APIResponse apiResponse =  new APIResponse(Status.BAD_REQUEST.getStatusCode(), "Please provide valid userSessionId");
-            APILogger.getInstance().e(CNAME, "Invalid userSessionId provided: " + userSessionId);
-            return Response.ok(apiResponse).status(Status.BAD_REQUEST).build();
-        }
         try {
             if(StringUtils.isBlank(requestingUser) || (user = userDao.getUser(requestingUser)) == null) {
                 APILogger.getInstance().e(CNAME, "Invalid requestingUser : " + requestingUser + ", Forbidden request");
                 APIResponse apiResponse =  new APIResponse(Status.FORBIDDEN.getStatusCode(), "Not authorized for this request");
                 return Response.ok(apiResponse).status(Status.FORBIDDEN).build();
+            }
+            if(userSessionId <= 0) {
+                APIResponse apiResponse =  new APIResponse(Status.BAD_REQUEST.getStatusCode(), "Please provide valid userSessionId");
+                APILogger.getInstance().e(CNAME, "Invalid userSessionId provided: " + userSessionId);
+                return Response.ok(apiResponse).status(Status.BAD_REQUEST).build();
             }
             if(workspaceId <= 0 || this.workspaceDAO.getWorkspaceName(workspaceId) == null) {
                 APILogger.getInstance().e(CNAME, "Invalid workspaceId : " + userSessionId + ", defaulting to use workspaceId: " + DEFAULT_WORKSPACE_ID);
