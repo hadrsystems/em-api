@@ -81,7 +81,6 @@ public class LoginServiceImpl implements LoginService {
 
     public LoginServiceImpl(UserDAO userDao, UserSessionDAOImpl userSessionDao, UserOrgDAO userOrgDao, OrgDAO orgDao, WorkspaceDAO workspaceDao, RabbitPubSubProducer rabbitProducer) {
         this.userDao = userDao;
-        this.userDao = userDao;
         this.userSessionDao = userSessionDao;
         this.userOrgDao = userOrgDao;
         this.orgDao = orgDao;
