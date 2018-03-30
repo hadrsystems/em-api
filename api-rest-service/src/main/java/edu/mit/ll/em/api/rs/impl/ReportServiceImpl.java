@@ -282,6 +282,7 @@ public class ReportServiceImpl implements ReportService {
 			response = Response.ok(reportServiceResponse).status(Status.EXPECTATION_FAILED).build();
 			
 		} else {
+
 			
 			Form affected = null;
 			
@@ -313,7 +314,7 @@ public class ReportServiceImpl implements ReportService {
 				reportServiceResponse.setMessage("failure: " + responseMessage);
 				response = Response.ok(reportServiceResponse).status(Status.EXPECTATION_FAILED).build();
 			}
-		}		
+		}
 		
 		return response;
 	}
@@ -413,7 +414,7 @@ public class ReportServiceImpl implements ReportService {
 	public Response postReports(int incidentId, String reportType, MultipartBody body) {
 		Response response = validateReportType(reportType, "POST");
 		ReportServiceResponse reportResponse = new ReportServiceResponse();
-		
+
 		int formTypeId = -1;
 		FormType ft = null;
         APILogger.getInstance().d(CNAME, "Beginning");
@@ -628,12 +629,10 @@ public class ReportServiceImpl implements ReportService {
 				value = a.getObject(String.class); 
 				
 				if (key.equalsIgnoreCase("incidentid")) {
-					report.setIncidentId(Integer.parseInt(value));					
-					//inc = db.readIncident(report.getIncidentId());
+					report.setIncidentId(Integer.parseInt(value));
 					inc = incidentDao.getIncident(report.getIncidentId());
 				} else if (key.equalsIgnoreCase("userid")) {
 					location.setUserid(Integer.parseInt(value));
-					//user = db.readUser(location.getUserid());
 					user = userDao.getUserById(location.getUserid());
 					if(form.getUsersessionid() < 0) {
 						form.setUsersessionid(userSessDao.getUserSessionid(Integer.parseInt(value)));
@@ -643,15 +642,20 @@ public class ReportServiceImpl implements ReportService {
 				} else if (key.equalsIgnoreCase("usersessionid")) {
 					int usersessid = Integer.parseInt(value);
 					user = userDao.getUserBySessionId(usersessid);
+                    if(user == null) {
+                        reportResponse.setCount(0);
+                        reportResponse.setMessage(String.format("userSessionId %s is not currently active", value));
+                        APILogger.getInstance().e(CNAME, String.format("userSessionId %s is not currently active", value));
+                        return Response.ok(reportResponse).status(Status.UNAUTHORIZED).build();
+                    }
 					location.setUserid(user.getUserId());
 					report.setUserSessionId(Integer.parseInt(value));
 					if(usersessid > 0 && form.getUsersessionid() < 0) {
 						// Set the usersessionid if it's valid and not already set
-						form.setUsersessionid(usersessid); 						
+						form.setUsersessionid(usersessid);
 					}
 					report.setSenderUserId(user.getUserId());
 					msg.put("user", user.getUsername());
-					
 				} else if (key.equalsIgnoreCase("deviceid")) {
 					location.setDeviceId(value);
 				} else if (key.equalsIgnoreCase("latitude")) {
