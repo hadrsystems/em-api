@@ -273,17 +273,19 @@ public class ReportServiceImpl implements ReportService {
 						
 		String valid = null;
 		String responseMessage = "";
-		
+
+        if(userDao.getUserBySessionId(form.getUsersessionid()) == null) {
+            reportServiceResponse.setMessage("Unauthorized, session with userSessionId " + form.getUsersessionid() + " is not active.");
+            return Response.ok(reportServiceResponse).status(Status.UNAUTHORIZED).build();
+        }
+
 		valid = validateForm(form);
 		if(!valid.isEmpty()) {
 			
 			responseMessage += valid;
 			reportServiceResponse.setMessage("failure: " + responseMessage);
 			response = Response.ok(reportServiceResponse).status(Status.EXPECTATION_FAILED).build();
-			
 		} else {
-
-			
 			Form affected = null;
 			
 			try {
@@ -354,12 +356,7 @@ public class ReportServiceImpl implements ReportService {
 				sb.append(" error validating formTypeId: " + e.getMessage());
 			}
 		}
-				
-		int userSessionId = form.getUsersessionid();
-		if(!userSessDao.userSessionIdExists(userSessionId)) {
-			sb.append(" UserSessionId(" + userSessionId + ") not found");
-		}
-				
+
 		return (sb.toString().isEmpty()) ? "" : "Form validation failed: " + sb.toString();
 	}
 	
