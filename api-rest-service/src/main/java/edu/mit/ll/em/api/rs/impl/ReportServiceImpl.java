@@ -274,7 +274,7 @@ public class ReportServiceImpl implements ReportService {
 		String valid = null;
 		String responseMessage = "";
 
-        if(userDao.getUserBySessionId(form.getUsersessionid()) == null) {
+        if(form.getUsersessionid() < 0 || userDao.getUserBySessionId(form.getUsersessionid()) == null) {
             reportServiceResponse.setMessage("Unauthorized, session with userSessionId " + form.getUsersessionid() + " is not active.");
             return Response.ok(reportServiceResponse).status(Status.UNAUTHORIZED).build();
         }
