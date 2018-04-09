@@ -34,7 +34,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.tabordasolutions.em.api</groupId>
 	<artifactId>em-api</artifactId>
-	<version>2017.1</version>
+	<version>2018.1</version>
 	<packaging>pom</packaging>
 
 	<modules>
@@ -356,7 +356,7 @@
                         <header>${basedir}/copyright.txt</header>
                         <strictCheck>true</strictCheck>
                         <properties>
-                            <year>2017</year>
+                            <year>2018</year>
                         </properties>
                         <useDefaultExcludes>false</useDefaultExcludes>
 
