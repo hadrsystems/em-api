@@ -315,7 +315,7 @@ public class DatalayerExportImpl implements DatalayerExport{
 	 * @return String - SQL
 	 */
 	private String getSql(int collabroomId, String type){
-		String sql = "SELECT f.* from Feature f, CollabroomFeature cf WHERE cf.featureid=f.featureid and cf.collabroomid=" + collabroomId;
+		String sql = "SELECT f.* from Feature f, CollabroomFeature cf WHERE cf.featureid=f.featureid and cf.deleted=false and cf.collabroomid=" + collabroomId;
 		if(type.toLowerCase().equals(POINT)){
 			sql += " and f.type='point'";
 		}else if(type.toLowerCase().equals(POLYGON)){
