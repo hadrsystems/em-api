@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2017, Massachusetts Institute of Technology (MIT)
+ * Copyright (c) 2008-2018, Massachusetts Institute of Technology (MIT)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -268,9 +268,12 @@ public class ReportServiceImpl implements ReportService {
 			reportServiceResponse.setMessage("failure: Invalid report type: " + reportType);
 			return Response.ok(reportServiceResponse).status(Status.BAD_REQUEST).build();
 		}
-		
+		if(form.getFormtypeid() <= 0) {
+			form.setFormtypeid(formType.getFormTypeId());
+		}
+
 		Response response = null;
-						
+
 		String valid = null;
 		String responseMessage = "";
 
