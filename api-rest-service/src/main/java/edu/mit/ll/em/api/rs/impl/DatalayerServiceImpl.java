@@ -138,7 +138,7 @@ public class DatalayerServiceImpl implements DatalayerService {
 
     public DatalayerServiceImpl(Configuration emApiConfiguration, DatalayerDAO datalayerDao, FolderDAO folderDao, DocumentDAO documentDao, UserDAO userDao, UserOrgDAOImpl userOrgDao, UserSessionDAOImpl userSessionDao, RabbitPubSubProducer rabbitProducer, Client jerseyClient) {
         this.emApiConfiguration = emApiConfiguration;
-        this.datalayerDao = this.datalayerDao;
+        this.datalayerDao = datalayerDao;
         this.folderDao = folderDao;
         this.documentDao = documentDao;
         this.userDao = userDao;
