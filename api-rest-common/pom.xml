@@ -36,7 +36,7 @@
 	<parent>
 		<groupId>com.tabordasolutions.em.api</groupId>
 		<artifactId>em-api</artifactId>
-		<version>2018.1.3</version>
+		<version>2018.1.4</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 	<artifactId>api-rest-common</artifactId>
