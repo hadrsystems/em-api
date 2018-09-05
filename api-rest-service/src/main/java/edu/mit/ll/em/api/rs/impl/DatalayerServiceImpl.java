@@ -711,14 +711,7 @@ public class DatalayerServiceImpl implements DatalayerService {
         }
 
 		if(!CollectionUtils.isEmpty(data) && data.get(0) != null){
-            String internalUrl = (String) data.get(0).get(SADisplayConstants.INTERNAL_URL);
-            String generateTokenUrl  = this.buildGenerateTokenUrl(internalUrl);
-            if(generateTokenUrl == null) {
-                logger.error("Unable to construct generateToken request Url from service with internalUrl " + internalUrl);
-                return Response.serverError().entity("Unable to construct generateToken request Url from service with internalUrl : " + internalUrl).status(Status.INTERNAL_SERVER_ERROR).build();
-            }
-
-			Response response = this.requestToken(generateTokenUrl, (String) data.get(0).get(SADisplayConstants.USER_NAME), (String) data.get(0).get(SADisplayConstants.PASSWORD));
+			Response response = this.requestToken((String) data.get(0).get(SADisplayConstants.INTERNAL_URL), (String) data.get(0).get(SADisplayConstants.USER_NAME), (String) data.get(0).get(SADisplayConstants.PASSWORD));
             return response;
 		} else {
             return Response.serverError().entity("Authentication details not found for dataSource with Id : " + datasourceId).build();
@@ -738,7 +731,13 @@ public class DatalayerServiceImpl implements DatalayerService {
         return generateTokenUrl.toString();
     }
 
-	private Response requestToken(String generateTokenUrl, String username, String password) {
+	private Response requestToken(String internalUrl, String username, String password) {
+        String generateTokenUrl  = this.buildGenerateTokenUrl(internalUrl);
+        if(generateTokenUrl == null) {
+            logger.error("Unable to construct generateToken request Url from service with internalUrl " + internalUrl);
+            return Response.serverError().entity("Unable to construct generateToken request Url from service with internalUrl : " + internalUrl).status(Status.INTERNAL_SERVER_ERROR).build();
+        }
+
         Map<String, String> requestParams = new HashMap<String, String>();
         Form form = new Form();
         form.param("username", username);

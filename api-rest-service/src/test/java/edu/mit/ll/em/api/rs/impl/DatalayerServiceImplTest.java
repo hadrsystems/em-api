@@ -27,11 +27,8 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package edu.mit.ll.em.api.service;
+package edu.mit.ll.em.api.rs.impl;
 
-import edu.mit.ll.em.api.openam.OpenAmGateway;
-import edu.mit.ll.em.api.openam.OpenAmGatewayFactory;
-import edu.mit.ll.em.api.rs.impl.DatalayerServiceImpl;
 import edu.mit.ll.nics.common.constants.SADisplayConstants;
 import edu.mit.ll.nics.common.rabbitmq.RabbitPubSubProducer;
 import edu.mit.ll.nics.nicsdao.DatalayerDAO;
@@ -41,6 +38,8 @@ import edu.mit.ll.nics.nicsdao.impl.*;
 import org.apache.commons.configuration.Configuration;
 import org.glassfish.jersey.client.JerseyClient;
 
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -184,6 +183,16 @@ public class DatalayerServiceImplTest {
         Response response = datalayerService.getToken(dataSourceId);
         assertEquals(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), response.getStatus());
         assertEquals("Unable to generate token from service url: " + generateTokenUrl + ", Error: " + exception.getMessage(), response.getEntity());
+    }
+
+    @Test
+    public void getTokenReturnsTokenSuccessfullyGivenValidAuthDetails() {
+        Response responseExpected = Response.ok("{\"token\":\"xyz\"}").build();
+        when(builder.post(any(Entity.class), eq(Response.class))).thenReturn(responseExpected);
+
+        Response response = datalayerService.getToken(internalUrl, username, password);
+        assertEquals(responseExpected.getStatus(), response.getStatus());
+        assertEquals(responseExpected.readEntity(String.class), response.readEntity(String.class));
     }
 
     @After
