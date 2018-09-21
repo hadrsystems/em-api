@@ -29,29 +29,53 @@
  */
 package edu.mit.ll.em.api.configuration;
 
-
 import edu.mit.ll.em.api.notification.NotifyFailedUserRegistration;
 import edu.mit.ll.em.api.notification.NotifySuccessfulUserRegistration;
 import edu.mit.ll.em.api.openam.OpenAmGatewayFactory;
 import edu.mit.ll.em.api.service.UserRegistrationService;
 import edu.mit.ll.em.api.util.APIConfig;
 import edu.mit.ll.em.api.util.APILogger;
+import edu.mit.ll.em.api.util.CRSTransformer;
 import edu.mit.ll.nics.common.rabbitmq.RabbitFactory;
 import edu.mit.ll.nics.common.rabbitmq.RabbitPubSubProducer;
+import edu.mit.ll.nics.nicsdao.WeatherDAO;
 import edu.mit.ll.nics.nicsdao.impl.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+import javax.sql.DataSource;
 import javax.validation.Validation;
 import javax.validation.Validator;
 import java.io.IOException;
 
+
 @Configuration
 public class SpringConfiguration {
+    private DataSource datafeedsDataSource = null;
+    private NamedParameterJdbcTemplate datafeedsJdbcTemplate = null;
 
     @Bean
     public org.apache.commons.configuration.Configuration emApiConfiguration() {
         return APIConfig.getInstance().getConfiguration();
+    }
+
+    private DataSource dataFeedsDataSource() throws NamingException {
+        if(this.datafeedsDataSource == null) {
+            InitialContext e = new InitialContext();
+            this.datafeedsDataSource = (DataSource) e.lookup("java:comp/env/jboss/datafeedsDatasource");
+
+        }
+        return this.datafeedsDataSource;
+    }
+
+    private NamedParameterJdbcTemplate dataFeedsJdbcTemplate() throws NamingException {
+        if(this.datafeedsJdbcTemplate == null) {
+            this.datafeedsJdbcTemplate = new NamedParameterJdbcTemplate(this.dataFeedsDataSource());
+        }
+        return this.datafeedsJdbcTemplate;
     }
 
     @Bean
@@ -116,5 +140,15 @@ public class SpringConfiguration {
                     APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_EXCHANGENAME_KEY),
                     APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_USERNAME_KEY),
                     APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_USERPWD_KEY));
+    }
+
+    @Bean
+    WeatherDAO weatherDAO() throws NamingException {
+        return new WeatherDAOImpl(this.dataFeedsJdbcTemplate());
+    }
+
+    @Bean
+    CRSTransformer crsTransformer() {
+        return new CRSTransformer();
     }
 }
