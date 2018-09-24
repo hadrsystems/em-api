@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2016, Massachusetts Institute of Technology (MIT)
+ * Copyright (c) 2008-2018, Massachusetts Institute of Technology (MIT)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -143,7 +143,7 @@ public class SpringConfiguration {
     }
 
     @Bean
-    WeatherDAO weatherDAO() throws NamingException {
+    WeatherDAO weatherDao() throws NamingException {
         return new WeatherDAOImpl(this.dataFeedsJdbcTemplate());
     }
 
