@@ -18,8 +18,8 @@ public class CRSTranformerTest {
     @Test
     public void returnsTranformedCoordinates() throws Exception {
         Coordinate locationIn3857CRS = new Coordinate(-13520296.2186244, 4660838.56865971);
-        Coordinate tranformedLocation = new Coordinate(-121.4548873901367, 38.57403816969187);
-        assertEquals(crsTransformer.transformCoordinatesToTargetCRS(locationIn3857CRS.x, locationIn3857CRS.y, "EPSG:3857", "EPSG:4326"), tranformedLocation);
+        Coordinate tranformedLocationIn4326CRS = new Coordinate(-121.4548873901367, 38.57403816969187);
+        assertEquals(crsTransformer.transformCoordinatesToTargetCRS(locationIn3857CRS.x, locationIn3857CRS.y, "EPSG:3857", "EPSG:4326"), tranformedLocationIn4326CRS);
     }
 
     @Test(expected = RuntimeException.class)
