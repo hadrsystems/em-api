@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2017, Massachusetts Institute of Technology (MIT)
+ * Copyright (c) 2008-2018, Massachusetts Institute of Technology (MIT)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,6 @@ package edu.mit.ll.em.api.rs.impl;
 
 import java.io.*;
 import java.math.BigInteger;
-import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -43,22 +42,17 @@ import java.security.DigestInputStream;
 import java.security.DigestOutputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.EnumSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.client.Invocation.Builder;
+import javax.ws.rs.core.Form;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -72,6 +66,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.cxf.jaxrs.ext.multipart.Attachment;
 import org.apache.cxf.jaxrs.ext.multipart.MultipartBody;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.forgerock.openam.utils.StringUtils;
 import org.geotools.data.FileDataStore;
 import org.geotools.data.FileDataStoreFinder;
 import org.geotools.data.simple.SimpleFeatureSource;
@@ -100,12 +95,9 @@ import edu.mit.ll.nics.nicsdao.DatalayerDAO;
 import edu.mit.ll.nics.nicsdao.DocumentDAO;
 import edu.mit.ll.nics.nicsdao.FolderDAO;
 import edu.mit.ll.nics.nicsdao.UserDAO;
-import edu.mit.ll.nics.nicsdao.impl.DatalayerDAOImpl;
-import edu.mit.ll.nics.nicsdao.impl.DocumentDAOImpl;
-import edu.mit.ll.nics.nicsdao.impl.FolderDAOImpl;
-import edu.mit.ll.nics.nicsdao.impl.UserDAOImpl;
 import edu.mit.ll.nics.nicsdao.impl.UserOrgDAOImpl;
 import edu.mit.ll.nics.nicsdao.impl.UserSessionDAOImpl;
+import org.springframework.util.CollectionUtils;
 
 /**
  * 
@@ -122,38 +114,69 @@ public class DatalayerServiceImpl implements DatalayerService {
 			"xmlns:gx=\"http://www.google.com/kml/ext/2.2\" " +
 			"xmlns:kml=\"http://www.opengis.net/kml/2.2\" " +
 			"xmlns:atom=\"http://www.w3.org/2005/Atom\">";
-	
+
 	/** A pattern that matches KML documents without a root <kml> element. */
 	private static final Pattern MALFORMED_KML_PATTERN = Pattern.compile("^\\s*<\\?xml[^>]+>\\s*<Document>", Pattern.MULTILINE);
-	
-	/** Folder DAO */
-	private static final DatalayerDAO datalayerDao = new DatalayerDAOImpl();
-	private static final FolderDAO folderDao = new FolderDAOImpl();
-	private static final DocumentDAO documentDao = new DocumentDAOImpl();
-	private static final UserDAO userDao = new UserDAOImpl();
-	private static final UserOrgDAOImpl userOrgDao = new UserOrgDAOImpl();
-	private static final UserSessionDAOImpl usersessionDao = new UserSessionDAOImpl();
-	
-	private static String fileUploadPath;
-	private static String mapserverURL;
-	private static String geoserverWorkspace;
-	private static String geoserverDatastore;
-	private static String webserverURL;
-	
-	private RabbitPubSubProducer rabbitProducer;
-	
-	private final Client jerseyClient;
 
-	public DatalayerServiceImpl() {
-		Configuration config = APIConfig.getInstance().getConfiguration();
-		fileUploadPath = config.getString(APIConfig.FILE_UPLOAD_PATH, "/opt/data/nics/upload");
-		geoserverWorkspace = config.getString(APIConfig.IMPORT_SHAPEFILE_WORKSPACE, "nics");
-		geoserverDatastore = config.getString(APIConfig.IMPORT_SHAPEFILE_STORE, "shapefiles");
-		mapserverURL = config.getString(APIConfig.EXPORT_MAPSERVER_URL);
-		webserverURL = config.getString(APIConfig.EXPORT_WEBSERVER_URL);
-		jerseyClient = ClientBuilder.newClient();
-	}
+    private Configuration emApiConfiguration;
+	private DatalayerDAO datalayerDao;
+	private FolderDAO folderDao;
+	private DocumentDAO documentDao;
+	private UserDAO userDao;
+	private UserOrgDAOImpl userOrgDao;
+	private UserSessionDAOImpl userSessionDao;
 	
+	private String fileUploadPath;
+	private String mapServerURL;
+	private String geoServerWorkspace;
+	private String geoServerDatastore;
+	private String webServerURL;
+
+	private RabbitPubSubProducer rabbitProducer;
+
+	private Client jerseyClient;
+
+    public DatalayerServiceImpl(Configuration emApiConfiguration, DatalayerDAO datalayerDao, FolderDAO folderDao, DocumentDAO documentDao, UserDAO userDao, UserOrgDAOImpl userOrgDao, UserSessionDAOImpl userSessionDao, RabbitPubSubProducer rabbitProducer, Client jerseyClient) {
+        this.emApiConfiguration = emApiConfiguration;
+        this.datalayerDao = datalayerDao;
+        this.folderDao = folderDao;
+        this.documentDao = documentDao;
+        this.userDao = userDao;
+        this.userOrgDao = userOrgDao;
+        this.userSessionDao = userSessionDao;
+        this.rabbitProducer = rabbitProducer;
+        this.jerseyClient = jerseyClient;
+        this.initializeConfigProperties();
+    }
+
+	private void initializeConfigProperties() {
+		fileUploadPath = emApiConfiguration.getString(APIConfig.FILE_UPLOAD_PATH, "/opt/data/nics/upload");
+		geoServerWorkspace = emApiConfiguration.getString(APIConfig.IMPORT_SHAPEFILE_WORKSPACE, "nics");
+		geoServerDatastore = emApiConfiguration.getString(APIConfig.IMPORT_SHAPEFILE_STORE, "shapefiles");
+		mapServerURL = emApiConfiguration.getString(APIConfig.EXPORT_MAPSERVER_URL);
+		webServerURL = emApiConfiguration.getString(APIConfig.EXPORT_WEBSERVER_URL);
+	}
+
+    public String getFileUploadPath() {
+        return this.fileUploadPath;
+    }
+
+    public String getGeoServerWorkspace() {
+        return this.geoServerWorkspace;
+    }
+
+    public String getGeoServerDatastore() {
+        return this.geoServerDatastore;
+    }
+
+    public String getMapServerURL() {
+        return this.mapServerURL;
+    }
+
+    public String getWebServerURL() {
+        return this.webServerURL;
+    }
+
 	@Override
 	public Response getTrackingLayers(int workspaceId) {
 		FieldMapResponse response = new FieldMapResponse();
@@ -168,7 +191,7 @@ public class DatalayerServiceImpl implements DatalayerService {
 		}
 		return Response.ok(response).status(Status.OK).build();
 	}
-	
+
 	@Override
 	public Response getDatalayers(String folderId) {
 		DatalayerServiceResponse datalayerResponse = new DatalayerServiceResponse();
@@ -196,7 +219,7 @@ public class DatalayerServiceImpl implements DatalayerService {
 		
 		return Response.ok(datalayerResponse).status(Status.OK).build();
 	}
-	
+
 	@Override
 	public Response postDatasource(String type, Datasource source) {
 		DatalayerServiceResponse datalayerResponse = new DatalayerServiceResponse();
@@ -361,7 +384,7 @@ public class DatalayerServiceImpl implements DatalayerService {
 		String layerName = batchName.concat(String.valueOf(System.currentTimeMillis()));
 		
 		//write all the uploaded files to the filesystem in a temp directory
-		Path shapesDirectory = Paths.get(fileUploadPath, "shapefiles");
+		Path shapesDirectory = Paths.get(this.getFileUploadPath(), "shapefiles");
 		Path batchDirectory = null;
 		try {
 			Files.createDirectories(shapesDirectory);
@@ -402,7 +425,7 @@ public class DatalayerServiceImpl implements DatalayerService {
 		}
 		
 		//add postgis layer to map server
-		if(!geoserver.addFeatureType(geoserverWorkspace, geoserverDatastore, layerName, "EPSG:3857")){
+		if(!geoserver.addFeatureType(this.getGeoServerWorkspace(), this.getGeoServerDatastore(), layerName, "EPSG:3857")){
 			try {
 				geoserverDao.removeFeaturesTable(layerName);
 			} catch (IOException e) { /* bury */}
@@ -422,7 +445,7 @@ public class DatalayerServiceImpl implements DatalayerService {
 		geoserver.updateLayerEnabled(layerName, true);
 
 		//create datalayer and datalayersource for our new layer 
-		int usersessionid = usersessionDao.getUserSessionid(username);
+		int usersessionid = userSessionDao.getUserSessionid(username);
 		
 		Datalayer datalayer = new Datalayer(); 
 		datalayer.setCreated(new Date());
@@ -672,56 +695,66 @@ public class DatalayerServiceImpl implements DatalayerService {
 	}
 
 	public Response getToken(String url, String username, String password){
-		return Response.ok(this.requestToken(url, username, password)).status(Status.OK).build();
+		return Response.ok(this.requestToken(url, username, password).readEntity(String.class)).build();
 	}
-	
+
 	public Response getToken(String datasourceId){
-		List<Map<String, Object>> data = datalayerDao.getAuthentication(datasourceId);
-		
-		if(data.get(0) != null){
-			String internalUrl = (String) data.get(0).get(SADisplayConstants.INTERNAL_URL);
-			String token = this.requestToken(internalUrl, 
-					(String) data.get(0).get(SADisplayConstants.USER_NAME),
-					(String) data.get(0).get(SADisplayConstants.PASSWORD)
-			);
-			if(token != null){
-				return Response.ok(token).status(Status.OK).build();
-			}
-		}
+        List<Map<String, Object>> data;
+        if(StringUtils.isBlank(datasourceId)) {
+            return Response.status(Status.BAD_REQUEST).entity("datasourceId is required to request token").build();
+        }
+        try {
+            data = datalayerDao.getAuthentication(datasourceId);
+        } catch(Exception e) {
+            logger.error("Failed to fetch authentication details from dataSource with Id : " + datasourceId);
+            return Response.serverError().entity("Failed to fetch dataSource authentication details with Id : " + datasourceId + e.getMessage()).build();
+        }
 
-		return Response.ok().status(Status.INTERNAL_SERVER_ERROR).build();
+		if(!CollectionUtils.isEmpty(data) && data.get(0) != null){
+			Response response = this.requestToken((String) data.get(0).get(SADisplayConstants.INTERNAL_URL), (String) data.get(0).get(SADisplayConstants.USER_NAME), (String) data.get(0).get(SADisplayConstants.PASSWORD));
+            return response;
+		} else {
+            return Response.serverError().entity("Authentication details not found for dataSource with Id : " + datasourceId).build();
+        }
 	}
-	
-	private String requestToken(String internalUrl, String username, String password){
-		int index = internalUrl.indexOf("rest/services");
-		if(index == -1){ 
-			index = internalUrl.indexOf("services"); 
-		}
 
-		try {
-			if(index > -1){
-				StringBuffer url = new StringBuffer(internalUrl.substring(0, index));
-				url.append("tokens/generateToken?");
-				url.append("username=");
-				url.append(username);
-				url.append("&password=");
-				url.append(URLEncoder.encode(password,"UTF-8"));
-				url.append("&f=json");
+	private String buildGenerateTokenUrl(String internalUrl) {
+        if(StringUtils.isBlank(internalUrl)) {
+            return null;
+        }
+        int index = (internalUrl.indexOf("rest/services") > -1) ? internalUrl.indexOf("rest/services") : internalUrl.indexOf("services");
+        if (index == -1) {
+            return null;
+        }
+        StringBuffer generateTokenUrl = new StringBuffer(internalUrl.substring(0, index));
+        generateTokenUrl.append("tokens/generateToken");
+        return generateTokenUrl.toString();
+    }
 
-				WebTarget target = jerseyClient.target(url.toString());
-				Builder builder = target.request("json");
-				return builder.get().readEntity(String.class);
-			}
-		}
-		catch(UnsupportedEncodingException e) {
-			logger.error("Unable to encode password for token generation: ", e);
-		}
+	private Response requestToken(String internalUrl, String username, String password) {
+        String generateTokenUrl  = this.buildGenerateTokenUrl(internalUrl);
+        if(generateTokenUrl == null) {
+            logger.error("Unable to construct generateToken request Url from service with internalUrl " + internalUrl);
+            return Response.serverError().entity("Unable to construct generateToken request Url from service with internalUrl : " + internalUrl).status(Status.INTERNAL_SERVER_ERROR).build();
+        }
 
-		
-		return null;
+        Map<String, String> requestParams = new HashMap<String, String>();
+        Form form = new Form();
+        form.param("username", username);
+        form.param("password", password);
+        form.param("f", "json");
+
+        try {
+            WebTarget target = jerseyClient.target(generateTokenUrl.toString());
+            Builder builder = target.request(MediaType.APPLICATION_JSON_TYPE);
+            Response response = builder.post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE), Response.class);
+            return response;
+        } catch(Exception e){
+            logger.error("Failed to generate token from service url : " + generateTokenUrl, e);
+            return Response.serverError().entity("Unable to generate token from service url: " + generateTokenUrl + ", Error: " + e.getMessage()).build();
+        }
 	}
-		
-	
+
 	private byte[] writeAttachmentWithDigest(Attachment attachment, Path path, String digestAlgorithm) throws IOException, NoSuchAlgorithmException {
 		try(
 			InputStream is = attachment.getDataHandler().getInputStream();
@@ -812,10 +845,10 @@ public class DatalayerServiceImpl implements DatalayerService {
 	}
 	
 	private String getMapserverDatasourceId() {
-		if(mapserverURL == null) {
+		if(this.getMapServerURL() == null) {
 			return null;
 		}
-		String wmsMapserverURL = mapserverURL.concat("/wms");
+		String wmsMapserverURL = this.getMapServerURL().concat("/wms");
 		
 		String datasourceId = datalayerDao.getDatasourceId(wmsMapserverURL);
 		if (datasourceId == null) {
@@ -832,10 +865,10 @@ public class DatalayerServiceImpl implements DatalayerService {
 	}
 	
 	private String getFileDatasourceId(String fileExt) {
-		if(webserverURL == null) {
+		if(this.getWebServerURL() == null) {
 			return null;
 		}
-		String webServerURL = webserverURL.concat("/" + fileExt + "/");
+		String webServerURL = this.getWebServerURL().concat("/" + fileExt + "/");
 		
 		String datasourceId = datalayerDao.getDatasourceId(webServerURL);
 		if (datasourceId == null) {
@@ -916,7 +949,7 @@ public class DatalayerServiceImpl implements DatalayerService {
 		}
 		return rabbitProducer;
 	}
-	
+
 	private Response getInvalidResponse(){
 		return Response.status(Status.BAD_REQUEST).entity(
 				Status.FORBIDDEN.getReasonPhrase()).build();

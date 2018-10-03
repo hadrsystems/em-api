@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2016, Massachusetts Institute of Technology (MIT)
+ * Copyright (c) 2008-2018, Massachusetts Institute of Technology (MIT)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -38,21 +38,48 @@ import edu.mit.ll.em.api.util.APIConfig;
 import edu.mit.ll.em.api.util.APILogger;
 import edu.mit.ll.nics.common.rabbitmq.RabbitFactory;
 import edu.mit.ll.nics.common.rabbitmq.RabbitPubSubProducer;
+import edu.mit.ll.nics.nicsdao.DatalayerDAO;
+import edu.mit.ll.nics.nicsdao.DocumentDAO;
+import edu.mit.ll.nics.nicsdao.FolderDAO;
 import edu.mit.ll.nics.nicsdao.impl.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import javax.validation.Validation;
 import javax.validation.Validator;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
 import java.io.IOException;
 
 @Configuration
 public class SpringConfiguration {
+    private org.apache.commons.configuration.Configuration emApiConfiguration = null;
+    private Client jerseyClient = null;
 
     @Bean
     public org.apache.commons.configuration.Configuration emApiConfiguration() {
-        return APIConfig.getInstance().getConfiguration();
+        if(this.emApiConfiguration == null) {
+            this.emApiConfiguration = APIConfig.getInstance().getConfiguration();
+        }
+        return this.emApiConfiguration;
     }
+
+    @Bean
+    public Client jerseyClient() {
+        if(jerseyClient == null) {
+            this.jerseyClient = ClientBuilder.newClient();
+        }
+        return this.jerseyClient;
+    }
+
+    @Bean
+    public DatalayerDAO datalayerDao() { return new DatalayerDAOImpl(); }
+
+    @Bean
+    public FolderDAO folderDao() { return new FolderDAOImpl(); }
+
+    @Bean
+    public DocumentDAO documentDao() { return new DocumentDAOImpl(); }
 
     @Bean
     public OrgDAOImpl orgDao() {
@@ -112,9 +139,16 @@ public class SpringConfiguration {
     @Bean
     RabbitPubSubProducer rabbitProducer() throws IOException {
         return RabbitFactory.makeRabbitPubSubProducer(
-                    APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_HOSTNAME_KEY),
-                    APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_EXCHANGENAME_KEY),
-                    APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_USERNAME_KEY),
-                    APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_USERPWD_KEY));
+                    this.emApiConfiguration().getString(APIConfig.RABBIT_HOSTNAME_KEY),
+                    this.emApiConfiguration().getString(APIConfig.RABBIT_EXCHANGENAME_KEY),
+                    this.emApiConfiguration().getString(APIConfig.RABBIT_USERNAME_KEY),
+                    this.emApiConfiguration().getString(APIConfig.RABBIT_USERPWD_KEY));
+    }
+
+    @Override
+    public void finalize() {
+        if(this.jerseyClient != null) {
+            this.jerseyClient.close();
+        }
     }
 }
