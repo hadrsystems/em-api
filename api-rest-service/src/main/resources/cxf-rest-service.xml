@@ -49,6 +49,10 @@
     <bean id="configuration1" class="edu.mit.ll.em.api.configuration.SpringConfiguration"/>
     <bean id="validationProvider" class="org.apache.cxf.validation.BeanValidationProvider"/>
     <bean id="validationInInterceptor" class="org.apache.cxf.jaxrs.validation.JAXRSBeanValidationInInterceptor"/>
+    <bean id="jurisdictionLocatorService" class="edu.mit.ll.em.api.service.JurisdictionLocatorService">
+        <constructor-arg ref="geoServer"/>
+    </bean>
+    <bean id="rocDataModelMapper" class="edu.mit.ll.em.api.rs.model.mapper.ROCDataModelMapper"/>
 
 	<jaxrs:server id="apiv1Resource" address="/">
 		<jaxrs:properties>
@@ -92,9 +96,17 @@
                 <constructor-arg ref="registrationService"/>
                 <constructor-arg ref="validator"/>
             </bean>
-            <bean class="edu.mit.ll.em.api.rs.impl.WeatherServiceImpl">
+            <bean class="edu.mit.ll.em.api.rs.impl.LocationBasedServiceImpl">
                 <constructor-arg ref="weatherDao" />
                 <constructor-arg ref="crsTransformer" />
+                <constructor-arg ref="logger"/>
+            </bean>
+            <bean class="edu.mit.ll.em.api.rs.impl.ROCReportServiceImpl">
+                <constructor-arg ref="jurisdictionLocatorService"/>
+                <constructor-arg ref="weatherDao"/>
+                <constructor-arg ref="geocodeAPIGateway"/>
+                <constructor-arg ref="crsTransformer"/>
+                <constructor-arg ref="rocDataModelMapper"/>
                 <constructor-arg ref="logger"/>
             </bean>
 			<bean class="edu.mit.ll.em.api.rs.impl.WorkspaceServiceImpl" />

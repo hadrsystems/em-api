@@ -29,13 +29,18 @@
  */
 package edu.mit.ll.em.api.configuration;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.mit.ll.em.api.notification.NotifyFailedUserRegistration;
 import edu.mit.ll.em.api.notification.NotifySuccessfulUserRegistration;
 import edu.mit.ll.em.api.openam.OpenAmGatewayFactory;
+import edu.mit.ll.em.api.rs.model.mapper.ROCDataModelMapper;
+import edu.mit.ll.em.api.gateway.geocode.GeocodeAPIGateway;
+import edu.mit.ll.em.api.service.JurisdictionLocatorService;
 import edu.mit.ll.em.api.service.UserRegistrationService;
 import edu.mit.ll.em.api.util.APIConfig;
 import edu.mit.ll.em.api.util.APILogger;
 import edu.mit.ll.em.api.util.CRSTransformer;
+import edu.mit.ll.nics.common.geoserver.api.GeoServer;
 import edu.mit.ll.nics.common.rabbitmq.RabbitFactory;
 import edu.mit.ll.nics.common.rabbitmq.RabbitPubSubProducer;
 import edu.mit.ll.nics.nicsdao.WeatherDAO;
@@ -49,6 +54,8 @@ import javax.naming.NamingException;
 import javax.sql.DataSource;
 import javax.validation.Validation;
 import javax.validation.Validator;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
 import java.io.IOException;
 
 
@@ -150,5 +157,31 @@ public class SpringConfiguration {
     @Bean
     CRSTransformer crsTransformer() {
         return new CRSTransformer();
+    }
+
+    @Bean
+    ROCDataModelMapper rocDataModelMapper() {
+        return new ROCDataModelMapper();
+    }
+
+    @Bean
+    Client jerseyClient() { return ClientBuilder.newClient(); }
+
+    @Bean
+    ObjectMapper objectMapper() { return new ObjectMapper(); }
+
+    @Bean
+    GeocodeAPIGateway geocodeAPIGateway() {
+        org.apache.commons.configuration.Configuration emApiConfiguration = emApiConfiguration();
+        return new GeocodeAPIGateway(jerseyClient(), objectMapper(), emApiConfiguration.getString("geocode.api.url"), emApiConfiguration.getString("geocode.api.key"));
+    }
+
+    @Bean
+    GeoServer geoServer() {
+        org.apache.commons.configuration.Configuration emApiConfiguration = emApiConfiguration();
+        String mapServerUrl = emApiConfiguration.getString(APIConfig.EXPORT_MAPSERVER_URL);
+        String mapServerUsername = emApiConfiguration.getString(APIConfig.EXPORT_MAPSERVER_USERNAME);
+        String mapServerPassword = emApiConfiguration.getString(APIConfig.EXPORT_MAPSERVER_PASSWORD);
+        return new GeoServer(mapServerUrl, mapServerUsername, mapServerPassword);
     }
 }

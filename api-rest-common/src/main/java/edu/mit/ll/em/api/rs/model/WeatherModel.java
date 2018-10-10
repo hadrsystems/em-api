@@ -31,7 +31,7 @@ public class WeatherModel {
         return this.weather.getDescriptiveWindDirection();
     }
 
-    public Float getHumidity() {
+    public Float getRelHumidity() {
         return this.weather.getHumidity();
     }
 

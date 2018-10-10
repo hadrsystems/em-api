@@ -37,7 +37,7 @@ public class WeatherModelTest {
 
     @Test
     public void returnsHumidityFromGivenWeatherInstance() {
-        assertEquals(weatherModel.getHumidity(), weather.getHumidity());
+        assertEquals(weatherModel.getRelHumidity(), weather.getHumidity());
     }
 
     @Test

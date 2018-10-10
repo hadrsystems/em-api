@@ -1,5 +1,9 @@
 package edu.mit.ll.em.api.rs.model;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import edu.mit.ll.em.api.json.deserializer.LocationDeserializer;
+
+@JsonDeserialize(using = LocationDeserializer.class)
 public class Location {
 
     private String county;
