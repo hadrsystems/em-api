@@ -3,17 +3,15 @@ package edu.mit.ll.em.api.json.deserializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.mit.ll.em.api.exception.GeocodeException;
 import edu.mit.ll.em.api.rs.model.Location;
-import org.junit.Test;
 
 import java.io.IOException;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 
 public class LocationDeserializerTest {
 
-    ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
     public void deserializerReturnsLocationSuccessfully() throws IOException {

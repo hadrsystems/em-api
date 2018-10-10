@@ -29,7 +29,7 @@ import edu.mit.ll.em.api.rs.model.ROCData;
 public class ROCReportServiceImpl implements ROCReportService {
 
     private static final String CNAME = ROCReportServiceImpl.class.getName();
-    private JurisdictionLocatorService jurisdictionLocatorService;
+    private JurisdictionLocatorService jurisdictionLocatorService = null;
     private WeatherDAO weatherDao = null;
     private GeocodeAPIGateway geocodeAPIGateway = null;
     private IncidentDAO incidentDao = null;
@@ -53,9 +53,9 @@ public class ROCReportServiceImpl implements ROCReportService {
         }
 
         Coordinate coordinate = new Coordinate(longitude, latitude);
-        APIResponse response = null;
+        APIResponse response;
         try {
-            Double searchRangeInKilometers = searchRange.doubleValue() * SADisplayConstants.KM_PER_MILE;
+            Double searchRangeInKilometers = searchRange * SADisplayConstants.KM_PER_MILE;
             Coordinate coordinatesIn4326 = crsTransformer.transformCoordinatesToTargetCRS(longitude, latitude, locationCRS, SADisplayConstants.CRS_4326);
             response = this.getROCData(coordinatesIn4326, searchRangeInKilometers, null, null, null, null);
         } catch(Exception e) {
@@ -67,11 +67,11 @@ public class ROCReportServiceImpl implements ROCReportService {
     }
 
     private APIResponse getROCData(Coordinate coordinatesIn4326, Double rangeInKilometers, Incident incident, String latestReportType, String incidentCause, String generalLocation) {
-        APIResponse response = null;
+        APIResponse response;
         try {
             Jurisdiction jurisdiction = jurisdictionLocatorService.getJurisdiction(coordinatesIn4326, SADisplayConstants.CRS_4326);
             Weather weather = weatherDao.getWeatherDataFromLocation(coordinatesIn4326, rangeInKilometers);
-            Location location = null; //fill these details later
+            Location location = geocodeAPIGateway.getLocationByGeocode(coordinatesIn4326);
             ROCData rocData = rocDataModelMapper.convertToROCData(incident, jurisdiction, location, weather, latestReportType, incidentCause, generalLocation);
             response = new ROCDataResponse(rocData);
         } catch(Exception e) {

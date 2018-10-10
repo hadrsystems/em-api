@@ -173,7 +173,7 @@ public class SpringConfiguration {
     @Bean
     GeocodeAPIGateway geocodeAPIGateway() {
         org.apache.commons.configuration.Configuration emApiConfiguration = emApiConfiguration();
-        return new GeocodeAPIGateway(jerseyClient(), objectMapper(), emApiConfiguration.getString("geocode.api.url"), emApiConfiguration.getString("geocode.api.key"));
+        return new GeocodeAPIGateway(jerseyClient(), objectMapper(), emApiConfiguration.getString(APIConfig.GEOCODE_API_URL), emApiConfiguration.getString(APIConfig.GEOCODE_API_KEY));
     }
 
     @Bean

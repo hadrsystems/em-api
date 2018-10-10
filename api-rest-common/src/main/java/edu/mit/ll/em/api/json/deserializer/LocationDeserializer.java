@@ -1,11 +1,9 @@
 package edu.mit.ll.em.api.json.deserializer;
 
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import edu.mit.ll.em.api.exception.GeocodeException;
 import edu.mit.ll.em.api.rs.model.Location;
 
@@ -22,20 +20,20 @@ public class LocationDeserializer extends StdDeserializer<Location> {
     }
 
     @Override
-    public Location deserialize(JsonParser jsonParser, DeserializationContext context) throws IOException, JsonProcessingException {
+    public Location deserialize(JsonParser jsonParser, DeserializationContext context) throws IOException {
         JsonNode jsonNode = jsonParser.getCodec().readTree(jsonParser);
         String status = jsonNode.get("status").asText();
         String errorMessage = jsonNode.get("error_message") == null ? null : jsonNode.get("error_message").asText();
         if(!"OK".equals(status)) {
             throw new GeocodeException(status, errorMessage);
         }
-        JsonNode firstResults = ((ArrayNode) jsonNode.get("results")).get(0);
+        JsonNode firstResults = jsonNode.get("results").get(0);
         String formattedAddress = firstResults.get("formatted_address").asText();
-        Iterator<JsonNode> addressComponentsIterator = (Iterator<JsonNode>) ((ArrayNode) firstResults.get("address_components")).iterator();
+        Iterator<JsonNode> addressComponentsIterator = firstResults.get("address_components").iterator();
         String county = null, state = null;
         while(addressComponentsIterator.hasNext() && (county == null || state == null)) {
             JsonNode addressComponentNode = addressComponentsIterator.next();
-            String types = ((ArrayNode) addressComponentNode.get("types")).toString();
+            String types = addressComponentNode.get("types").toString();
             if(types.contains("administrative_area_level_2")) {
                 county = addressComponentNode.get(("long_name")).asText().replace("County" , "").trim();
             }
