@@ -3,12 +3,10 @@ package edu.mit.ll.em.api.rs.model;
 public class Jurisdiction {
     String sra;
     DirectProtectionArea directProtectionArea;
-    String jurisdictionEntity;
 
-    public Jurisdiction(String sra, DirectProtectionArea directProtectionArea, String jurisdictionEntity) {
+    public Jurisdiction(String sra, DirectProtectionArea directProtectionArea) {
         this.sra = sra;
         this.directProtectionArea = directProtectionArea;
-        this.jurisdictionEntity = jurisdictionEntity;
     }
 
     public String getSRA() {
@@ -19,11 +17,7 @@ public class Jurisdiction {
         return this.directProtectionArea == null ? null : this.directProtectionArea.getDirectProtectionAreaGroup();
     }
 
-    public boolean isContractCounty() {
-        return this.directProtectionArea == null ? false : this.directProtectionArea.isContractCounty();
-    }
-
-    public String getJurisdictionEntity() {
-        return this.jurisdictionEntity;
+    public String getJurisdiction() {
+        return this.directProtectionArea == null ? null : this.directProtectionArea.getJurisdiction();
     }
 }

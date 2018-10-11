@@ -7,9 +7,8 @@ import static org.junit.Assert.*;
 public class JurisdictionTest {
 
     private String sra = "sra";
-    private DirectProtectionArea directProtectionArea = new DirectProtectionArea("dpa", "contract county");
-    private String jurisdictionEntity = "yyy county";
-    private Jurisdiction jurisdiction = new Jurisdiction(sra, directProtectionArea, jurisdictionEntity);
+    private DirectProtectionArea directProtectionArea = new DirectProtectionArea("dpa", "contract county", "unitid", "respondid");
+    private Jurisdiction jurisdiction = new Jurisdiction(sra, directProtectionArea);
 
     @Test
     public void getSRAReturnsResponsibilityArea() {
@@ -23,31 +22,18 @@ public class JurisdictionTest {
 
     @Test
     public void getDPAReturnsNullGivenDirectProtectionAreaInstanceIsNull() {
-        Jurisdiction jurisdiction = new Jurisdiction(sra, null, "yyy county");
+        Jurisdiction jurisdiction = new Jurisdiction(sra, null);
         assertNull(jurisdiction.getDPA());
     }
 
     @Test
-    public void isContractCountyReturnsTrue() {
-        assertTrue(jurisdiction.isContractCounty());
+    public void getJurisdictionReturnsDirectProtectionAreaJurisdiction() {
+        assertEquals("Contract County", jurisdiction.getJurisdiction());
     }
 
     @Test
-    public void isContractCountyReturnsFalseGivenDirectProtectionAreaWhichIsNotAContractCounty() {
-        DirectProtectionArea directProtectionArea = new DirectProtectionArea("dpa", "Not A C county");
-        Jurisdiction jurisdiction = new Jurisdiction(sra, directProtectionArea, "yyy county");
-        assertFalse(jurisdiction.isContractCounty());
+    public void getJurisdictionAreaReturnsNullWhenDirectProtectionAreaIsNotAvailable() {
+        Jurisdiction jurisdiction = new Jurisdiction(sra, null);
+        assertNull(jurisdiction.getJurisdiction());
     }
-
-    @Test
-    public void isContractCountyReturnsFalseGivenDirectProtectionAreaInstanceIsNull() {
-        Jurisdiction jurisdiction = new Jurisdiction(sra, null, "yyy county");
-        assertFalse(jurisdiction.isContractCounty());
-    }
-
-    @Test
-    public void getJurisdictionAreaReturnsJurisdictionEntity() {
-        assertEquals(jurisdiction.getJurisdictionEntity(), jurisdictionEntity);
-    }
-
 }
