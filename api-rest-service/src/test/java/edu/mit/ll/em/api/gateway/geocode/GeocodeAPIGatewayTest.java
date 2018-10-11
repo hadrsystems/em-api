@@ -102,7 +102,7 @@ public class GeocodeAPIGatewayTest {
     @Before
     public void setup() {
         when(jerseyClient.target(geocodeAPIUrl)).thenReturn(urlWebTarget);
-        when(urlWebTarget.queryParam("latlng", String.format("%.10f,%.10f", coordiantesIn4326.y, coordiantesIn4326.x))).thenReturn(urlWebTargetWithProperty);
+        when(urlWebTarget.queryParam("latlng", String.format("%.20f,%.20f", coordiantesIn4326.y, coordiantesIn4326.x))).thenReturn(urlWebTargetWithProperty);
         when(urlWebTargetWithProperty.queryParam("key", geocodeApiKey)).thenReturn(urlWebTargetWithProperty);
         when(urlWebTargetWithProperty.request("json")).thenReturn(invocationBuilder);
         when(invocationBuilder.get()).thenReturn(response);

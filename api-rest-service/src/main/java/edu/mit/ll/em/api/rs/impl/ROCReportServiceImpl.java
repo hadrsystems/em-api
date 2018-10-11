@@ -60,7 +60,7 @@ public class ROCReportServiceImpl implements ROCReportService {
             Coordinate coordinatesIn4326 = crsTransformer.transformCoordinatesToTargetCRS(longitude, latitude, locationCRS, SADisplayConstants.CRS_4326);
             response = this.getROCData(coordinatesIn4326, searchRangeInKilometers, null, null, null, null);
         } catch(Exception e) {
-            String errorMessage = String.format("Error getting location based data for given location %.10f, %.10f ", longitude, latitude);
+            String errorMessage = String.format("Error getting location based data for given location %.20f, %.20f ", longitude, latitude);
             logger.e(CNAME, errorMessage, e);
             response = new APIResponse(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), errorMessage + e.getMessage());
         }
@@ -76,7 +76,7 @@ public class ROCReportServiceImpl implements ROCReportService {
             ROCData rocData = rocDataModelMapper.convertToROCData(incident, jurisdiction, location, weather, latestReportType, incidentCause, generalLocation);
             response = new ROCDataResponse(rocData);
         } catch(Exception e) {
-            String errorMessage = String.format("Error getting location based data for given location %.10f, %.10f ", coordinatesIn4326.x, coordinatesIn4326.y);
+            String errorMessage = String.format("Error getting location based data for given location %.20f, %.20f ", coordinatesIn4326.x, coordinatesIn4326.y);
             logger.e(CNAME, errorMessage, e);
             response = new APIResponse(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), errorMessage + e.getMessage());
         }

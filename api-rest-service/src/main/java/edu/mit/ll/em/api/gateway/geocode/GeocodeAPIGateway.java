@@ -25,7 +25,7 @@ public class GeocodeAPIGateway {
 
     public Location getLocationByGeocode(Coordinate coordiantesIn4326) throws GeocodeException, IOException {
         WebTarget target = this.jerseyClient.target(geocodeApiUrl)
-                .queryParam("latlng", String.format("%.10f,%.10f", coordiantesIn4326.y, coordiantesIn4326.x))
+                .queryParam("latlng", String.format("%.20f,%.20f", coordiantesIn4326.y, coordiantesIn4326.x))
                 .queryParam("key", geocodeApiKey);
         Invocation.Builder builder = target.request("json");
         String response = builder.get().readEntity(String.class);
