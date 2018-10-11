@@ -43,7 +43,7 @@ public class JurisdictionLocatorService {
     }
 
     public DirectProtectionArea getDirectProtectionArea(Coordinate coordinate, String crs) throws Exception {
-        List<String> propertiesList = Arrays.asList("dpa_agency", "agreements");
+        List<String> propertiesList = Arrays.asList("dpa_group", "agreements");
         String responseJson = geoServer.getFeatureDetails(GEOSERVER_DPA_LAYER, coordinate, crs, propertiesList, "geometry");
         JsonNode node = getPropertiesNode(responseJson);
         DirectProtectionArea directProtectionArea = null;
