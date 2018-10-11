@@ -1,14 +1,15 @@
 package edu.mit.ll.em.api.rs.impl;
 
 import com.vividsolutions.jts.geom.Coordinate;
+import edu.mit.ll.em.api.exception.GeocodeException;
 import edu.mit.ll.em.api.rs.APIResponse;
 import edu.mit.ll.em.api.rs.ROCDataResponse;
 import edu.mit.ll.em.api.rs.ROCReportService;
 import edu.mit.ll.em.api.rs.ValidationErrorResponse;
 import edu.mit.ll.em.api.rs.model.DirectProtectionArea;
 import edu.mit.ll.em.api.rs.model.Jurisdiction;
+import edu.mit.ll.em.api.rs.model.Location;
 import edu.mit.ll.em.api.rs.model.ROCData;
-import edu.mit.ll.em.api.rs.model.WeatherModel;
 import edu.mit.ll.em.api.rs.model.mapper.ROCDataModelMapper;
 import edu.mit.ll.em.api.service.JurisdictionLocatorService;
 import edu.mit.ll.em.api.gateway.geocode.GeocodeAPIGateway;
@@ -24,6 +25,7 @@ import org.mockito.Mockito;
 import org.springframework.util.CollectionUtils;
 
 import javax.ws.rs.core.Response;
+import java.io.IOException;
 import java.util.Map;
 
 import static org.junit.Assert.*;
@@ -42,16 +44,14 @@ public class ROCReportServiceImplTest {
     private Double longitude = 88.0;
     private String locationCRS = "EPSG:3857";
     private Double searchRange = 10.0;
-    private Double defaultSearchRange = 10.0;
     private Double searchRangeInKM = searchRange * SADisplayConstants.KM_PER_MILE;
     private Coordinate coordinatesInCRS4326 = new Coordinate(-69.0, 76.0);
     private Weather weather = new Weather("objectid", "location",
             80.01, 9.22f, 310.0, 38.85f, "OK", 8.018);
-    private WeatherModel weatherModel = new WeatherModel(weather);
     private String sra = "sra";
-    private DirectProtectionArea directProtectionArea = new DirectProtectionArea("Local", "Contract County");
-    private String jurisdictionEntity = "jurisdiction entity xx county";
-    private Jurisdiction jurisdiction = new Jurisdiction(sra, directProtectionArea, jurisdictionEntity);
+    private DirectProtectionArea directProtectionArea = new DirectProtectionArea("Local", "Contract County", "unitid", "respondid");
+    private Jurisdiction jurisdiction = new Jurisdiction(sra, directProtectionArea);
+    private Location location = new Location("xx y st, abc city, up state, CA", "def county", "CA");
     private ROCData rocData = mock(ROCData.class);
 
     @Before
@@ -59,8 +59,8 @@ public class ROCReportServiceImplTest {
         when(crsTransformer.transformCoordinatesToTargetCRS(longitude, latitude, locationCRS, SADisplayConstants.CRS_4326)).thenReturn(coordinatesInCRS4326);
         when(jurisdictionLocatorService.getJurisdiction(coordinatesInCRS4326, SADisplayConstants.CRS_4326)).thenReturn(jurisdiction);
         when(weatherDAO.getWeatherDataFromLocation(coordinatesInCRS4326, searchRangeInKM)).thenReturn(weather);
-        when(rocDataModelMapper.convertToROCData(null, jurisdiction, null, weather, null, null, null)).thenReturn(rocData);
-        //when(locationService.getLocation(coordinatesInCRS4326)).thenReturn(location);
+        when(locationService.getLocationByGeocode(coordinatesInCRS4326)).thenReturn(location);
+        when(rocDataModelMapper.convertToROCData(null, jurisdiction, location, weather, null, null, null)).thenReturn(rocData);
     }
 
     @Test
@@ -129,8 +129,13 @@ public class ROCReportServiceImplTest {
     }
 
     @Test
-    public void getROCFormDataByLocationReturnsErrorResponseWhenFailsToGetLocationData() {
-        //to be filled later
+    public void getROCFormDataByLocationReturnsErrorResponseWhenFailsToGetLocationData() throws IOException {
+        GeocodeException exception = new GeocodeException("ERROR_CODE", "Test data");
+        Mockito.reset(locationService);
+        when(locationService.getLocationByGeocode(coordinatesInCRS4326)).thenThrow(exception);
+        APIResponse response = rocReportService.getROCFormDataByLocation(longitude, latitude, locationCRS, searchRange);
+        assertEquals(response.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+        assertTrue(response.getMessage().contains(exception.getMessage()));
     }
 
 }

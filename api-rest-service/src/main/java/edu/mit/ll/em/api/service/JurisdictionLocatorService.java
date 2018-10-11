@@ -43,12 +43,12 @@ public class JurisdictionLocatorService {
     }
 
     public DirectProtectionArea getDirectProtectionArea(Coordinate coordinate, String crs) throws Exception {
-        List<String> propertiesList = Arrays.asList("dpa_group", "agreements");
+        List<String> propertiesList = Arrays.asList("dpa_group", "agreements", "nwcg_unitid", "respond_id");
         String responseJson = geoServer.getFeatureDetails(GEOSERVER_DPA_LAYER, coordinate, crs, propertiesList, "geometry");
         JsonNode node = getPropertiesNode(responseJson);
         DirectProtectionArea directProtectionArea = null;
         if(node != null) {
-            directProtectionArea = new DirectProtectionArea(node.get("dpa_group").asText(), node.get("agreements").asText());
+            directProtectionArea = new DirectProtectionArea(node.get("dpa_group").asText(), node.get("agreements").asText(), node.get("nwcg_unitid").asText(), node.get("respond_id").asText());
         }
         return directProtectionArea;
     }
@@ -56,7 +56,7 @@ public class JurisdictionLocatorService {
     public Jurisdiction getJurisdiction(Coordinate coordinate, String crs) throws Exception {
         String sra = this.getStateResponsibilityArea(coordinate, crs);
         DirectProtectionArea directProtectionArea = this.getDirectProtectionArea(coordinate, crs);
-        Jurisdiction jurisdiction = new Jurisdiction(sra, directProtectionArea, null);
+        Jurisdiction jurisdiction = new Jurisdiction(sra, directProtectionArea);
         return jurisdiction;
     }
 }

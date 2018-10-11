@@ -21,7 +21,6 @@ public class ROCDataModelMapper {
         String state = null;
         String sra = null;
         String dpa = null;
-        Boolean isContractCounty = null;
         String jurisdictionEntity = null;
         Double temperature = null;
         Float relHumidity = null;
@@ -43,8 +42,7 @@ public class ROCDataModelMapper {
         if(jurisdiction != null) {
             sra = jurisdiction.getSRA();
             dpa = jurisdiction.getDPA();
-            isContractCounty = jurisdiction.isContractCounty();
-            jurisdictionEntity = jurisdiction.getJurisdictionEntity();
+            jurisdictionEntity = jurisdiction.getJurisdiction();
         }
         if(weather != null) {
             temperature = weather.getAirTemperature();
@@ -55,7 +53,7 @@ public class ROCDataModelMapper {
         ROCData rocFormData = new ROCData(incidentId, incidentName, longitude, latitude, incidentTypes,
         incidentDescription, incidentCause, latestReportType,
                 specificLocation, generalLocation, county, state,
-                sra, dpa, isContractCounty, jurisdictionEntity,
+                sra, dpa, jurisdictionEntity,
                 temperature, relHumidity, windSpeed, windDirection
          );
         return rocFormData;

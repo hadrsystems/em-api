@@ -3,6 +3,7 @@ package edu.mit.ll.em.api.rs.impl;
 import java.util.HashMap;
 import java.util.Map;
 import com.vividsolutions.jts.geom.Coordinate;
+import edu.mit.ll.em.api.exception.GeocodeException;
 import edu.mit.ll.em.api.gateway.geocode.GeocodeAPIGateway;
 import edu.mit.ll.em.api.service.JurisdictionLocatorService;
 import org.geotools.referencing.CRS;

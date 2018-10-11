@@ -27,10 +27,10 @@ public class JurisdictionLocatorServiceTest {
     private String crs4326 = "EPSG:4326";
     private List<String> sraPropertiesList = Arrays.asList("name");
     private String sraGeometry = "wkb_geometry";
-    private List<String> dpaPropertiesList =  Arrays.asList("dpa_agency", "agreements");
+    private List<String> dpaPropertiesList =  Arrays.asList("dpa_group", "agreements", "nwcg_unitid", "respond_id");
     private String dpaGeometry = "geometry";
     private String sraResponseJson = "{\"type\":\"FeatureCollection\",\"totalFeatures\":1,\"features\":[{\"type\":\"Feature\",\"id\":\"dpa_internal.fid-341dbb22_165b11ac098_b30\",\"geometry\":null,\"properties\":{\"name\":\"Local\"}}],\"crs\":null}";
-    private String dpaResponseJson = "{\"type\":\"FeatureCollection\",\"totalFeatures\":1,\"features\":[{\"type\":\"Feature\",\"id\":\"dpa_internal.fid-341dbb22_165b11ac098_b30\",\"geometry\":null,\"properties\":{\"dpa_group\":\"LOCAL\",\"agreements\":\"contract county\"}}],\"crs\":null}";;
+    private String dpaResponseJson = "{\"type\":\"FeatureCollection\",\"totalFeatures\":1,\"features\":[{\"type\":\"Feature\",\"id\":\"dpa_internal.fid-341dbb22_165b11ac098_b30\",\"geometry\":null,\"properties\":{\"dpa_group\":\"LOCAL\",\"agreements\":\"contract county\",\"nwcg_unitid\":\"unitid\",\"respond_id\":\"respond_id\"}}],\"crs\":null}";;
     private String emptyResponseJson = "{\"type\":\"FeatureCollection\",\"totalFeatures\":0,\"features\":[],\"crs\":null}";
 
     @Test
@@ -58,8 +58,8 @@ public class JurisdictionLocatorServiceTest {
     public void givenValidLocationGetDirectProtectionAreaReturnsValidRepsonse() throws Exception {
         when(geoServer.getFeatureDetails(JurisdictionLocatorService.GEOSERVER_DPA_LAYER, coordinate, crs4326, dpaPropertiesList, dpaGeometry)).thenReturn(dpaResponseJson);
         DirectProtectionArea directProtectionArea = service.getDirectProtectionArea(coordinate, crs4326);
-        assertEquals(directProtectionArea.getDirectProtectionAreaGroup(), "Local");
-        assertEquals(directProtectionArea.isContractCounty(), true);
+        assertEquals(directProtectionArea.getDirectProtectionAreaGroup(), "Local DPA");
+        assertEquals(directProtectionArea.getJurisdiction(), "Contract County");
     }
 
     @Test
@@ -75,9 +75,8 @@ public class JurisdictionLocatorServiceTest {
         when(geoServer.getFeatureDetails(JurisdictionLocatorService.GEOSERVER_DPA_LAYER, coordinate, crs4326, dpaPropertiesList, dpaGeometry)).thenReturn(dpaResponseJson);
         Jurisdiction jurisdiction = service.getJurisdiction(coordinate, crs4326);
         assertEquals(jurisdiction.getSRA(), "Local");
-        assertEquals(jurisdiction.getDPA(), "Local");
-        assertTrue(jurisdiction.isContractCounty());
-        assertNull(jurisdiction.getJurisdictionEntity());
+        assertEquals(jurisdiction.getDPA(), "Local DPA");
+        assertEquals("Contract County", jurisdiction.getJurisdiction());
     }
 
     @After

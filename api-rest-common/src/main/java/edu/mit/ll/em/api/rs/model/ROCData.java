@@ -23,7 +23,6 @@ public class ROCData {
     //Jurisdiction info pre populated based on incident location
     private String sra;
     private String dpa;
-    private Boolean isContractCounty;
     private String jurisdiction;
 
     //Weather data pre populated based on incident location
@@ -33,15 +32,25 @@ public class ROCData {
     private String windDirection;
 
     public ROCData(String location, String generalLocation, String county, String state,
-                   String sra, String dpa, boolean isContractCounty, String jurisdiction,
+                   String sra, String dpa, String jurisdiction,
                    Double temperature, Float relHumidity, Float windSpeed, String windDirection) {
-
+        this.location = location;
+        this.generalLocation = generalLocation;
+        this.county = county;
+        this.state = state;
+        this.sra = sra;
+        this.dpa = dpa;
+        this.jurisdiction = jurisdiction;
+        this.temperature = temperature;
+        this.relHumidity = relHumidity;
+        this.windSpeed = windSpeed;
+        this.windDirection = windDirection;
     }
 
     public ROCData(Integer incidentId, String incidentName, Double longitude, Double latitude,
                    String incidentType, String incidentDescription, String incidentCause, String latestReportType,
                    String location, String generalLocation, String county, String state,
-                   String sra, String dpa, Boolean isContractCounty, String jurisdiction,
+                   String sra, String dpa, String jurisdiction,
                    Double temperature, Float relHumidity, Float windSpeed, String windDirection) {
         this.incidentId = incidentId;
         this.incidentName = incidentName;
@@ -57,7 +66,6 @@ public class ROCData {
         this.state = state;
         this.sra = sra;
         this.dpa = dpa;
-        this.isContractCounty = isContractCounty;
         this.jurisdiction = jurisdiction;
         this.temperature = temperature;
         this.relHumidity = relHumidity;
@@ -115,10 +123,6 @@ public class ROCData {
 
     public String getDpa() {
         return dpa;
-    }
-
-    public Boolean isContractCounty() {
-        return isContractCounty;
     }
 
     public String getJurisdiction() {

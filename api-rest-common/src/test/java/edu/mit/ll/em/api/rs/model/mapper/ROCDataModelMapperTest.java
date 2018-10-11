@@ -16,8 +16,8 @@ import static org.junit.Assert.assertNull;
 
 public class ROCDataModelMapperTest {
     private String sra = "sra";
-    private DirectProtectionArea directProtectionArea = new DirectProtectionArea("dpa", "contract county");
-    private Jurisdiction jurisdiction = new Jurisdiction("sra", directProtectionArea, "jurisdiction county");
+    private DirectProtectionArea directProtectionArea = new DirectProtectionArea("dpa", "contract county", "unitid", "respondid");
+    private Jurisdiction jurisdiction = new Jurisdiction("sra", directProtectionArea);
 
     private Incident incident = new Incident(1, "incidentname", -121.987987, 35.09809, new Date(), new Date(), true, "/root/incident/folder");
     private Weather weather = new Weather("objectId", "-123, 098", 78.9, 10.0f, 214.0, 2.3f, "OK", 10.0);
@@ -54,8 +54,7 @@ public class ROCDataModelMapperTest {
         ROCData rocData = rocDataModelMapper.convertToROCData(incident, jurisdiction, location, weather, latestReportType, incidentCause, generalLocation);
         assertEquals(rocData.getSra(), jurisdiction.getSRA());
         assertEquals(rocData.getDpa(), jurisdiction.getDPA());
-        assertEquals(rocData.isContractCounty(), jurisdiction.isContractCounty());
-        assertEquals(rocData.getJurisdiction(), jurisdiction.getJurisdictionEntity());
+        assertEquals(rocData.getJurisdiction(), jurisdiction.getJurisdiction());
     }
 
     @Test
@@ -63,7 +62,6 @@ public class ROCDataModelMapperTest {
         ROCData rocData = rocDataModelMapper.convertToROCData(incident, null, location, weather, latestReportType, incidentCause, generalLocation);
         assertNull(rocData.getSra());
         assertNull(rocData.getDpa());
-        assertNull(rocData.isContractCounty());
         assertNull(rocData.getJurisdiction());
     }
 
@@ -137,8 +135,7 @@ public class ROCDataModelMapperTest {
         //roc data incident info match with given incident info
         assertEquals(rocData.getSra(), jurisdiction.getSRA());
         assertEquals(rocData.getDpa(), jurisdiction.getDPA());
-        assertEquals(rocData.isContractCounty(), jurisdiction.isContractCounty());
-        assertEquals(rocData.getJurisdiction(), jurisdiction.getJurisdictionEntity());
+        assertEquals(rocData.getJurisdiction(), jurisdiction.getJurisdiction());
 
         //roc data location info match with given location info
         assertEquals(rocData.getCounty(), location.getCounty());

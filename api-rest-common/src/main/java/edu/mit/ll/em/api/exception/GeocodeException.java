@@ -18,4 +18,8 @@ public class GeocodeException extends RuntimeException {
     public String getErrorMessage() {
         return errorMessage;
     }
+
+    public String getMessage() {
+        return String.format("ErrorCode: %s, ErrorMessage: %s", this.responseCode, this.errorMessage);
+    }
 }
