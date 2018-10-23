@@ -1,11 +1,11 @@
 package edu.mit.ll.em.api.rs.impl;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+
 import com.vividsolutions.jts.geom.Coordinate;
-import edu.mit.ll.em.api.exception.GeocodeException;
-import edu.mit.ll.em.api.gateway.geocode.GeocodeAPIGateway;
-import edu.mit.ll.em.api.service.JurisdictionLocatorService;
+import edu.mit.ll.em.api.rs.model.*;
+import edu.mit.ll.em.api.rs.response.ROCLocationBasedDataResponse;
+import edu.mit.ll.em.api.service.ROCService;
 import org.geotools.referencing.CRS;
 import org.springframework.util.CollectionUtils;
 import javax.ws.rs.core.Response;
@@ -13,93 +13,132 @@ import javax.ws.rs.core.Response;
 import edu.mit.ll.nics.common.constants.SADisplayConstants;
 import edu.mit.ll.nics.common.entity.Incident;
 import edu.mit.ll.nics.nicsdao.IncidentDAO;
-import edu.mit.ll.nics.common.entity.Weather;
-import edu.mit.ll.nics.nicsdao.WeatherDAO;
 
 import edu.mit.ll.em.api.rs.ROCReportService;
 import edu.mit.ll.em.api.rs.ValidationErrorResponse;
-import edu.mit.ll.em.api.rs.model.mapper.ROCDataModelMapper;
 import edu.mit.ll.em.api.util.APILogger;
 import edu.mit.ll.em.api.util.CRSTransformer;
 import edu.mit.ll.em.api.rs.APIResponse;
-import edu.mit.ll.em.api.rs.ROCDataResponse;
-import edu.mit.ll.em.api.rs.model.Jurisdiction;
-import edu.mit.ll.em.api.rs.model.Location;
-import edu.mit.ll.em.api.rs.model.ROCData;
+import edu.mit.ll.em.api.rs.response.ROCDataResponse;
 
 public class ROCReportServiceImpl implements ROCReportService {
 
     private static final String CNAME = ROCReportServiceImpl.class.getName();
-    private JurisdictionLocatorService jurisdictionLocatorService = null;
-    private WeatherDAO weatherDao = null;
-    private GeocodeAPIGateway geocodeAPIGateway = null;
+    private static final int ROC_FORM_TYPE_ID = 1;
     private IncidentDAO incidentDao = null;
+    private ROCService rocService = null;
     private CRSTransformer crsTransformer = null;
-    private ROCDataModelMapper rocDataModelMapper = null;
     private APILogger logger = null;
 
-    public ROCReportServiceImpl(JurisdictionLocatorService jurisdictionLocatorService, WeatherDAO weatherDao, GeocodeAPIGateway geocodeAPIGateway, CRSTransformer crsTransformer, ROCDataModelMapper rocDataModelMapper, APILogger logger) {
-        this.jurisdictionLocatorService = jurisdictionLocatorService;
-        this.weatherDao = weatherDao;
-        this.geocodeAPIGateway = geocodeAPIGateway;
+    public ROCReportServiceImpl(IncidentDAO incidentDao, ROCService rocService, CRSTransformer crsTransformer, APILogger logger) {
+        this.incidentDao = incidentDao;
+        this.rocService = rocService;
         this.crsTransformer = crsTransformer;
-        this.rocDataModelMapper = rocDataModelMapper;
         this.logger = logger;
     }
 
-    public APIResponse getROCFormDataByLocation(Double longitude, Double latitude, String locationCRS, Double searchRange) {
+    public Response getROCLocationBasedData(Double longitude, Double latitude, String locationCRS, Double searchRange) {
         Map<String, String> errors = validateParams(longitude, latitude, locationCRS, searchRange);
         if(!CollectionUtils.isEmpty(errors)) {
-            return new ValidationErrorResponse(Response.Status.BAD_REQUEST.getStatusCode(), "Invalid Request, please review the errors for more info.", errors);
+            ValidationErrorResponse errorResponseEntity = new ValidationErrorResponse(Response.Status.BAD_REQUEST.getStatusCode(), Response.Status.BAD_REQUEST.name(), errors);
+            return Response.ok().entity(errorResponseEntity).build();
         }
 
         Coordinate coordinate = new Coordinate(longitude, latitude);
-        APIResponse response;
+        Response response;
         try {
             Double searchRangeInKilometers = searchRange * SADisplayConstants.KM_PER_MILE;
             Coordinate coordinatesIn4326 = crsTransformer.transformCoordinatesToTargetCRS(longitude, latitude, locationCRS, SADisplayConstants.CRS_4326);
-            response = this.getROCData(coordinatesIn4326, searchRangeInKilometers, null, null, null, null);
+            ROCLocationBasedData rocLocationBasedData = rocService.getROCLocationBasedData(coordinatesIn4326, searchRangeInKilometers);
+            response = Response.ok().entity(new ROCLocationBasedDataResponse(rocLocationBasedData)).build();
         } catch(Exception e) {
             String errorMessage = String.format("Error getting location based data for given location %.20f, %.20f ", longitude, latitude);
             logger.e(CNAME, errorMessage, e);
-            response = new APIResponse(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), errorMessage + e.getMessage());
+            APIResponse apiResponse = new APIResponse(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), Response.Status.INTERNAL_SERVER_ERROR.name(), errorMessage + e.getMessage());
+            response = Response.ok().entity(apiResponse).build();
         }
         return response;
     }
 
-    private APIResponse getROCData(Coordinate coordinatesIn4326, Double rangeInKilometers, Incident incident, String latestReportType, String incidentCause, String generalLocation) {
-        APIResponse response;
-        try {
-            Jurisdiction jurisdiction = jurisdictionLocatorService.getJurisdiction(coordinatesIn4326, SADisplayConstants.CRS_4326);
-            Weather weather = weatherDao.getWeatherDataFromLocation(coordinatesIn4326, rangeInKilometers);
-            Location location = geocodeAPIGateway.getLocationByGeocode(coordinatesIn4326);
-            ROCData rocData = rocDataModelMapper.convertToROCData(incident, jurisdiction, location, weather, latestReportType, incidentCause, generalLocation);
-            response = new ROCDataResponse(rocData);
-        } catch(Exception e) {
-            String errorMessage = String.format("Error getting location based data for given location %.20f, %.20f ", coordinatesIn4326.x, coordinatesIn4326.y);
-            logger.e(CNAME, errorMessage, e);
-            response = new APIResponse(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), errorMessage + e.getMessage());
-        }
-        return response;
-    }
-
-    public APIResponse rocFormLocationBasedDataForAnIncident(Integer incidentId, Double searchRange) {
-        if(searchRange <=0 ) {
-            searchRange = Double.parseDouble(DEFAULT_SEARCH_RANGE_IN_MILES_FOR_WEATHER_DATA);
-        }
-//        try {
-//            Incident incident = this.incidentDao.getIncident(incidentId);
-//            Coordinate incidentLocationCoordinates = new Coordinate(incident.getLon(), incident.getLat());
-//            Jurisdiction jurisdiction = jurisdictionLocatorService.getJurisdiction(coordinate, CRS_4326);
-//            Weather weather = weatherDAO.getWeatherDataFromLocation(coordinate, rangeInKilometers);
-//            Location location = null; //fill these details later
-//            ROCData rocFormData = ROCDataFactory.convertToROCData(incident, jurisdiction, location, weather, "Update", "Incident Cause", "general location");
-//        } catch(Exception e) {
-//            String errorMessage = String.format("Error getting location based data for given incident id %d ", incidentId);
-//            logger.e(CNAME, errorMessage, e);
-//            response = new APIResponse(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), errorMessage + e.getMessage());
+//    public APIResponse getROCFormDataByLocationAsync(Double longitude, Double latitude, String locationCRS, Double searchRange) {
+//        Map<String, String> errors = validateParams(longitude, latitude, locationCRS, searchRange);
+//        if(!CollectionUtils.isEmpty(errors)) {
+//            return new ValidationErrorResponse(Response.Status.BAD_REQUEST.getStatusCode(), "Invalid Request, please review the errors for more info.", errors);
 //        }
-        return null;
+//
+//        Coordinate coordinate = new Coordinate(longitude, latitude);
+//        APIResponse response;
+//        try {
+//            Double searchRangeInKilometers = searchRange * SADisplayConstants.KM_PER_MILE;
+//            Coordinate coordinatesIn4326 = crsTransformer.transformCoordinatesToTargetCRS(longitude, latitude, locationCRS, SADisplayConstants.CRS_4326);
+//            ROCLocationBasedData rocLocationBasedData = this.getROCDataAsync(coordinatesIn4326, searchRangeInKilometers);
+//            response = new ROCLocationBasedDataResponse(rocLocationBasedData);
+//        } catch(Exception e) {
+//            String errorMessage = String.format("Error getting location based data for given location %.20f, %.20f ", longitude, latitude);
+//            logger.e(CNAME, errorMessage, e);
+//            response = new APIResponse(Response.Status.OK.getStatusCode(), Response.Status.INTERNAL_SERVER_ERROR.name(), errorMessage + e.getMessage());
+//        }
+//        return response;
+//    }
+//
+//    private ROCLocationBasedData getROCDataAsync(Coordinate coordinatesIn4326, Double rangeInKilometers) {
+//        ROCLocationBasedData rocLocationBasedData;
+//        ExecutorService threadpool = Executors.newFixedThreadPool(3);
+//        JurisdictionLocatorServiceAsync jurisdictionLocatorServiceAsync = new JurisdictionLocatorServiceAsync(jurisdictionLocatorService, coordinatesIn4326);
+//        WeatherDAOAsync weatherDAOAsync = new WeatherDAOAsync(weatherDao, coordinatesIn4326, rangeInKilometers);
+//        GeocodeAPIGatewayAsync geocodeAPIGatewayAsync = new GeocodeAPIGatewayAsync(geocodeAPIGateway, coordinatesIn4326, null);
+//        try {
+//            Future<Jurisdiction> jurisdictionFuture = threadpool.submit(jurisdictionLocatorServiceAsync);
+//            Future<Weather> weatherFuture = threadpool.submit(weatherDAOAsync);
+//            Future<Location> locationFuture = threadpool.submit(geocodeAPIGatewayAsync);
+//            while(!(jurisdictionFuture.isDone() && weatherFuture.isDone() && locationFuture.isDone())){
+//                Thread.sleep(1);
+//            }
+//            Jurisdiction jurisdiction = jurisdictionFuture.get();
+//            Weather weather = weatherFuture.get();
+//            Location location = locationFuture.get();
+//            rocLocationBasedData = new ROCLocationBasedDataBuilder()
+//                    .buildJurisdictionData(jurisdiction)
+//                    .buildLocationData(location)
+//                    .buildWeatherData(weather)
+//                    .build();
+//        } catch(Exception e) {
+//            String errorMessage = String.format("Error getting location based data for given location %.20f, %.20f ", coordinatesIn4326.x, coordinatesIn4326.y);
+//            logger.e(CNAME, errorMessage, e);
+//            return null;
+//        }
+//        return rocLocationBasedData;
+//    }
+
+    public Response getEditROCFormForAnIncident(Integer incidentId, Double searchRange) {
+        Incident incident = incidentId == null ? null : this.incidentDao.getIncident(incidentId);
+        Map<String, String> errors = this.validateParams(incidentId, incident, searchRange);
+        if(!errors.isEmpty()){
+            ValidationErrorResponse errorResponseEntity = new ValidationErrorResponse(Response.Status.BAD_REQUEST.getStatusCode(), Response.Status.BAD_REQUEST.name(), errors);
+            return Response.ok().entity(errorResponseEntity).build();
+        }
+
+        Response response = null;
+        try {
+            ROCForm rocForm = rocService.getEditROCForm(incident, searchRange * SADisplayConstants.KM_PER_MILE);
+            response = Response.ok().entity(new ROCDataResponse(rocForm)).build();
+        } catch(Exception e) {
+            String errorMessage = String.format("Error getting location based data for given incident id %d ", incidentId);
+            logger.e(CNAME, errorMessage, e);
+            response = Response.ok().entity(new APIResponse(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), Response.Status.INTERNAL_SERVER_ERROR.name(), errorMessage + e.getMessage())).build();
+        }
+        return response;
+    }
+
+    private Map<String, String> validateParams(Integer incidentId, Incident incident, Double searchRange) {
+        Map<String, String> errors = new HashMap<String, String>();
+        if(searchRange <=0 ) {
+            errors.put("searchRangeInMiles", "Please provide valid search range > 0");
+        }
+        if(incidentId == null || incident == null) {
+            errors.put("incidentId", "Invalid incidentId " + incidentId);
+        }
+        return errors;
     }
 
     private Map<String, String> validateParams(Double longitude, Double latitude, String locationCRS, Double searchRangeInMiles) {

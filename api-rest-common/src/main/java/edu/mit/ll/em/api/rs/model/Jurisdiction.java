@@ -9,11 +9,11 @@ public class Jurisdiction {
         this.directProtectionArea = directProtectionArea;
     }
 
-    public String getSRA() {
+    public String getSra() {
         return this.sra;
     }
 
-    public String getDPA() {
+    public String getDpa() {
         return this.directProtectionArea == null ? null : this.directProtectionArea.getDirectProtectionAreaGroup();
     }
 

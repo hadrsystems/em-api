@@ -5,8 +5,6 @@ import com.vividsolutions.jts.geom.Coordinate;
 
 import javax.ws.rs.core.Response;
 
-import edu.mit.ll.em.api.rs.model.mapper.ROCDataModelMapper;
-import edu.mit.ll.em.api.service.JurisdictionLocatorService;
 import edu.mit.ll.nics.common.constants.SADisplayConstants;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataAccessResourceFailureException;
@@ -34,8 +32,6 @@ public class LocationBasedServiceImplGetWeatherDataTest {
     private WeatherDAO weatherDAO = mock(WeatherDAO.class);
     private CRSTransformer crsTransformer = mock(CRSTransformer.class);
     private APILogger logger = mock(APILogger.class);
-    private JurisdictionLocatorService jurisdictionLocatorService = mock(JurisdictionLocatorService.class);
-    private ROCDataModelMapper rocDataModelMapper = mock(ROCDataModelMapper.class);
     private LocationBasedServiceImpl locationBasedService = new LocationBasedServiceImpl(weatherDAO, crsTransformer, logger);
     private Double latitude = 89.0;
     private Double longitude = 88.0;
@@ -77,8 +73,9 @@ public class LocationBasedServiceImplGetWeatherDataTest {
         when(crsTransformer.transformCoordinatesToTargetCRS(longitude, latitude, locationCRS, SADisplayConstants.CRS_4326)).thenThrow(exception);
         APIResponse response = locationBasedService.getWeatherData(longitude, latitude, locationCRS, searchRange);
 
-        assertEquals(response.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
-        assertTrue(response.getMessage().contains(exception.getMessage()));
+        assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
+        assertEquals(response.getMessage(), "INTERNAL_SERVER_ERROR");
+        assertTrue(response.getErrorMessage().contains(exception.getMessage()));
     }
 
 
@@ -90,14 +87,17 @@ public class LocationBasedServiceImplGetWeatherDataTest {
 
         APIResponse response = locationBasedService.getWeatherData(longitude, latitude, locationCRS, searchRange);
 
-        assertEquals(response.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
-        assertTrue(response.getMessage().contains(exception.getMessage()));
+        assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
+        assertEquals(response.getMessage(), "INTERNAL_SERVER_ERROR");
+        assertTrue(response.getErrorMessage().contains(exception.getMessage()));
     }
 
     @Test
     public void getWeatherDataReturnsValidationErrorsWhenLongitudeIsNotProvided() {
         ValidationErrorResponse validationErrorResponse = (ValidationErrorResponse) locationBasedService.getWeatherData(null, latitude, locationCRS, searchRange);
 
+        assertEquals(validationErrorResponse.getStatus(), 200);
+        assertEquals(validationErrorResponse.getMessage(), "BAD_REQUEST");
         Map<String, String> validationErrors = validationErrorResponse.getValidationErrors();
         assertFalse(CollectionUtils.isEmpty(validationErrors));
         assertEquals(validationErrors.get("longitude"), "Longitude is required");
@@ -107,6 +107,8 @@ public class LocationBasedServiceImplGetWeatherDataTest {
     public void getWeatherDataReturnsValidationErrorsWhenLatitudeIsNotProvided() {
         ValidationErrorResponse validationErrorResponse = (ValidationErrorResponse) locationBasedService.getWeatherData(longitude, null, locationCRS, searchRange);
 
+        assertEquals(validationErrorResponse.getStatus(), 200);
+        assertEquals(validationErrorResponse.getMessage(), "BAD_REQUEST");
         Map<String, String> validationErrors = validationErrorResponse.getValidationErrors();
         assertFalse(CollectionUtils.isEmpty(validationErrors));
         assertEquals(validationErrors.get("latitude"), "Latitude is required");
@@ -116,6 +118,8 @@ public class LocationBasedServiceImplGetWeatherDataTest {
     public void getWeatherDataReturnsValidationErrorsWhenLocationCRSIsInvalid() {
         ValidationErrorResponse validationErrorResponse = (ValidationErrorResponse) locationBasedService.getWeatherData(longitude, latitude, "InvalidCRS", searchRange);
 
+        assertEquals(validationErrorResponse.getStatus(), 200);
+        assertEquals(validationErrorResponse.getMessage(), "BAD_REQUEST");
         Map<String, String> validationErrors = validationErrorResponse.getValidationErrors();
         assertFalse(CollectionUtils.isEmpty(validationErrors));
         assertEquals(validationErrors.get("locationCRS"), "No Such CRS exists, please provide a valid CRS");
@@ -125,6 +129,8 @@ public class LocationBasedServiceImplGetWeatherDataTest {
     public void getWeatherDataReturnsValidationErrorsWhenSearchRangeIsInvalid() {
         ValidationErrorResponse validationErrorResponse = (ValidationErrorResponse) locationBasedService.getWeatherData(longitude, latitude, "InvalidCRS", -1.0);
 
+        assertEquals(validationErrorResponse.getStatus(), 200);
+        assertEquals(validationErrorResponse.getMessage(), "BAD_REQUEST");
         Map<String, String> validationErrors = validationErrorResponse.getValidationErrors();
         assertFalse(CollectionUtils.isEmpty(validationErrors));
         assertEquals(validationErrors.get("searchRangeInMiles"), "Please provide valid search range > 0");

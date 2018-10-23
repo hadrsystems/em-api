@@ -52,7 +52,13 @@
     <bean id="jurisdictionLocatorService" class="edu.mit.ll.em.api.service.JurisdictionLocatorService">
         <constructor-arg ref="geoServer"/>
     </bean>
-    <bean id="rocDataModelMapper" class="edu.mit.ll.em.api.rs.model.mapper.ROCDataModelMapper"/>
+    <bean id="rocService" class="edu.mit.ll.em.api.service.ROCService">
+        <constructor-arg ref="formDao"/>
+        <constructor-arg ref="jurisdictionLocatorService"/>
+        <constructor-arg ref="weatherDao"/>
+        <constructor-arg ref="geocodeAPIGateway"/>
+        <constructor-arg ref="objectMapper"/>
+    </bean>
 
 	<jaxrs:server id="apiv1Resource" address="/">
 		<jaxrs:properties>
@@ -102,11 +108,9 @@
                 <constructor-arg ref="logger"/>
             </bean>
             <bean class="edu.mit.ll.em.api.rs.impl.ROCReportServiceImpl">
-                <constructor-arg ref="jurisdictionLocatorService"/>
-                <constructor-arg ref="weatherDao"/>
-                <constructor-arg ref="geocodeAPIGateway"/>
+                <constructor-arg ref="incidentDao"/>
+                <constructor-arg ref="rocService"/>
                 <constructor-arg ref="crsTransformer"/>
-                <constructor-arg ref="rocDataModelMapper"/>
                 <constructor-arg ref="logger"/>
             </bean>
 			<bean class="edu.mit.ll.em.api.rs.impl.WorkspaceServiceImpl" />

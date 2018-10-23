@@ -4,6 +4,7 @@ import edu.mit.ll.nics.common.constants.SADisplayConstants;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 @Path("/reports")
 public interface ROCReportService {
@@ -23,13 +24,12 @@ public interface ROCReportService {
      *  Returns: Location, jurisdiction (SRA, DPA, jurisdiction entity), weather data of given location
      *
      */
-    public APIResponse getROCFormDataByLocation(@QueryParam("longitude") Double longitude, @QueryParam("latitude") Double latitude,
-                                                @DefaultValue(SADisplayConstants.CRS_4326) @QueryParam("CRS") String locationCRS,
-                                                @DefaultValue(DEFAULT_SEARCH_RANGE_IN_MILES_FOR_WEATHER_DATA) @QueryParam("searchRangeInMiles") Double searchRange);
+    public Response getROCLocationBasedData(@QueryParam("longitude") Double longitude, @QueryParam("latitude") Double latitude,
+                                               @DefaultValue(SADisplayConstants.CRS_4326) @QueryParam("CRS") String locationCRS,
+                                               @DefaultValue(DEFAULT_SEARCH_RANGE_IN_MILES_FOR_WEATHER_DATA) @QueryParam("searchRangeInMiles") Double searchRange);
 
     @GET
     @Path(value = "{incidentId}/1/locationBasedData")
     @Produces(MediaType.APPLICATION_JSON)
-    public APIResponse rocFormLocationBasedDataForAnIncident(@PathParam("incidentId") Integer incidentId, @DefaultValue(DEFAULT_SEARCH_RANGE_IN_MILES_FOR_WEATHER_DATA) @QueryParam("searchRangeInMiles") Double searchRange);
-
+    public Response getEditROCFormForAnIncident(@PathParam("incidentId") Integer incidentId, @DefaultValue(DEFAULT_SEARCH_RANGE_IN_MILES_FOR_WEATHER_DATA) @QueryParam("searchRangeInMiles") Double searchRange);
 }

@@ -34,6 +34,7 @@ import org.apache.commons.lang.builder.ToStringBuilder;
 public class APIResponse {
     private int status;
     private String message;
+    private String errorMessage;
 
     public APIResponse() {}
 
@@ -42,12 +43,21 @@ public class APIResponse {
         this.status = status;
     }
 
+    public APIResponse(int status, String message, String errorMessage) {
+        this(status, message);
+        this.errorMessage = errorMessage;
+    }
+
     public int getStatus() {
         return status;
     }
 
     public String getMessage() {
         return message;
+    }
+
+    public String getErrorMessage() {
+        return errorMessage;
     }
 
     public String toString() {

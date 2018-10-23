@@ -12,18 +12,18 @@ public class JurisdictionTest {
 
     @Test
     public void getSRAReturnsResponsibilityArea() {
-        assertEquals(jurisdiction.getSRA(), sra);
+        assertEquals(jurisdiction.getSra(), sra);
     }
 
     @Test
     public void getDPAReturnsDirectProtectionAreaGroup() {
-        assertEquals(jurisdiction.getDPA(), directProtectionArea.getDirectProtectionAreaGroup());
+        assertEquals(jurisdiction.getDpa(), directProtectionArea.getDirectProtectionAreaGroup());
     }
 
     @Test
     public void getDPAReturnsNullGivenDirectProtectionAreaInstanceIsNull() {
         Jurisdiction jurisdiction = new Jurisdiction(sra, null);
-        assertNull(jurisdiction.getDPA());
+        assertNull(jurisdiction.getDpa());
     }
 
     @Test

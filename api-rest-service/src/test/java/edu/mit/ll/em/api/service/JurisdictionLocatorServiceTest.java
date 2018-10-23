@@ -74,8 +74,8 @@ public class JurisdictionLocatorServiceTest {
         when(geoServer.getFeatureDetails(JurisdictionLocatorService.GEOSERVER_SRA_LAYER, coordinate, crs4326, sraPropertiesList, sraGeometry)).thenReturn(sraResponseJson);
         when(geoServer.getFeatureDetails(JurisdictionLocatorService.GEOSERVER_DPA_LAYER, coordinate, crs4326, dpaPropertiesList, dpaGeometry)).thenReturn(dpaResponseJson);
         Jurisdiction jurisdiction = service.getJurisdiction(coordinate, crs4326);
-        assertEquals(jurisdiction.getSRA(), "Local");
-        assertEquals(jurisdiction.getDPA(), "Local DPA");
+        assertEquals(jurisdiction.getSra(), "Local");
+        assertEquals(jurisdiction.getDpa(), "Local DPA");
         assertEquals("Contract County", jurisdiction.getJurisdiction());
     }
 

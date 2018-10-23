@@ -30,12 +30,11 @@
 package edu.mit.ll.em.api.configuration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.mit.ll.nics.nicsdao.IncidentDAO;
 import edu.mit.ll.em.api.notification.NotifyFailedUserRegistration;
 import edu.mit.ll.em.api.notification.NotifySuccessfulUserRegistration;
 import edu.mit.ll.em.api.openam.OpenAmGatewayFactory;
-import edu.mit.ll.em.api.rs.model.mapper.ROCDataModelMapper;
 import edu.mit.ll.em.api.gateway.geocode.GeocodeAPIGateway;
-import edu.mit.ll.em.api.service.JurisdictionLocatorService;
 import edu.mit.ll.em.api.service.UserRegistrationService;
 import edu.mit.ll.em.api.util.APIConfig;
 import edu.mit.ll.em.api.util.APILogger;
@@ -43,6 +42,7 @@ import edu.mit.ll.em.api.util.CRSTransformer;
 import edu.mit.ll.nics.common.geoserver.api.GeoServer;
 import edu.mit.ll.nics.common.rabbitmq.RabbitFactory;
 import edu.mit.ll.nics.common.rabbitmq.RabbitPubSubProducer;
+import edu.mit.ll.nics.nicsdao.FormDAO;
 import edu.mit.ll.nics.nicsdao.WeatherDAO;
 import edu.mit.ll.nics.nicsdao.impl.*;
 import org.springframework.context.annotation.Bean;
@@ -86,6 +86,11 @@ public class SpringConfiguration {
     }
 
     @Bean
+    public IncidentDAO incidentDao() {
+        return new IncidentDAOImpl();
+    }
+
+    @Bean
     public OrgDAOImpl orgDao() {
         return new OrgDAOImpl();
     }
@@ -106,6 +111,11 @@ public class SpringConfiguration {
     }
 
     @Bean
+    public FormDAO formDao() {
+        return new FormDAOImpl();
+    }
+
+    @Bean
     public OpenAmGatewayFactory openAmGatewayFactory() {
         return new OpenAmGatewayFactory();
     }
@@ -113,6 +123,11 @@ public class SpringConfiguration {
     @Bean
     public WorkspaceDAOImpl workspaceDao() {
         return new WorkspaceDAOImpl();
+    }
+
+    @Bean
+    WeatherDAO weatherDao() throws NamingException {
+        return new WeatherDAOImpl(this.dataFeedsJdbcTemplate());
     }
 
     @Bean
@@ -150,18 +165,8 @@ public class SpringConfiguration {
     }
 
     @Bean
-    WeatherDAO weatherDao() throws NamingException {
-        return new WeatherDAOImpl(this.dataFeedsJdbcTemplate());
-    }
-
-    @Bean
     CRSTransformer crsTransformer() {
         return new CRSTransformer();
-    }
-
-    @Bean
-    ROCDataModelMapper rocDataModelMapper() {
-        return new ROCDataModelMapper();
     }
 
     @Bean

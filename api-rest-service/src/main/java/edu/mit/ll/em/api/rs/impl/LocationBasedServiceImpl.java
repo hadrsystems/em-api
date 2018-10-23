@@ -33,7 +33,7 @@ public class LocationBasedServiceImpl implements LocationBasedService {
     public APIResponse getWeatherData(Double longitude, Double latitude, String locationCRS, Double searchRange) {
         Map<String, String> errors = validateParams(longitude, latitude, locationCRS, searchRange);
         if(!CollectionUtils.isEmpty(errors)) {
-            return new ValidationErrorResponse(Response.Status.BAD_REQUEST.getStatusCode(), "Invalid Request, please review the errors for more info.", errors);
+            return new ValidationErrorResponse(Response.Status.OK.getStatusCode(), "BAD_REQUEST", errors);
         }
 
         APIResponse response = null;
@@ -49,7 +49,7 @@ public class LocationBasedServiceImpl implements LocationBasedService {
         } catch (Exception e) {
             String errorMessage = String.format("Unable to fetch weather data for given location [%.20f, %.20f] %s CRS in search range of %.5f", longitude, latitude, locationCRS, searchRange);
             logger.e(CNAME, errorMessage, e);
-            response = new APIResponse(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), errorMessage + e.getMessage());
+            response = new APIResponse(Response.Status.OK.getStatusCode(), "INTERNAL_SERVER_ERROR", errorMessage + e.getMessage());
         }
 
         return response;
