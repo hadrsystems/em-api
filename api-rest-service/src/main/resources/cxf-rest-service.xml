@@ -49,9 +49,6 @@
     <bean id="configuration1" class="edu.mit.ll.em.api.configuration.SpringConfiguration"/>
     <bean id="validationProvider" class="org.apache.cxf.validation.BeanValidationProvider"/>
     <bean id="validationInInterceptor" class="org.apache.cxf.jaxrs.validation.JAXRSBeanValidationInInterceptor"/>
-    <bean id="jurisdictionLocatorService" class="edu.mit.ll.em.api.service.JurisdictionLocatorService">
-        <constructor-arg ref="geoServer"/>
-    </bean>
     <bean id="rocService" class="edu.mit.ll.em.api.service.ROCService">
         <constructor-arg ref="formDao"/>
         <constructor-arg ref="jurisdictionDao"/>

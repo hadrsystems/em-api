@@ -203,13 +203,4 @@ public class SpringConfiguration {
         org.apache.commons.configuration.Configuration emApiConfiguration = emApiConfiguration();
         return new GeocodeAPIGateway(jerseyClient(), objectMapper(), emApiConfiguration.getString(APIConfig.GEOCODE_API_URL), emApiConfiguration.getString(APIConfig.GEOCODE_API_KEY));
     }
-
-    @Bean
-    GeoServer geoServer() {
-        org.apache.commons.configuration.Configuration emApiConfiguration = emApiConfiguration();
-        String mapServerUrl = emApiConfiguration.getString(APIConfig.EXPORT_MAPSERVER_URL);
-        String mapServerUsername = emApiConfiguration.getString(APIConfig.EXPORT_MAPSERVER_USERNAME);
-        String mapServerPassword = emApiConfiguration.getString(APIConfig.EXPORT_MAPSERVER_PASSWORD);
-        return new GeoServer(mapServerUrl, mapServerUsername, mapServerPassword);
-    }
 }
