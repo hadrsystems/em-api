@@ -2,8 +2,9 @@ package edu.mit.ll.em.api.rs.model.builder;
 
 import edu.mit.ll.em.api.rs.model.*;
 
-import edu.mit.ll.nics.common.entity.Incident;
-import edu.mit.ll.nics.common.entity.Weather;
+import edu.mit.ll.nics.common.entity.DirectProtectionArea;
+import edu.mit.ll.em.api.rs.model.Location;
+import edu.mit.ll.nics.common.entity.*;
 
 import java.util.Date;
 
@@ -14,7 +15,7 @@ import static org.junit.Assert.assertNull;
 public class ROCLocationBasedDataBuilderTest {
     private String sra = "sra";
     private DirectProtectionArea directProtectionArea = new DirectProtectionArea("dpa", "contract county", "unitid", "respondid");
-    private Jurisdiction jurisdiction = new Jurisdiction("sra", directProtectionArea);
+    private Jurisdiction jurisdiction = new Jurisdiction("sra", new DirectProtectionArea("dpa", "contract county", "unitid", "respondid"));
 
     private Incident incident = new Incident(1, "incidentname", -121.987987, 35.09809, new Date(), new Date(), true, "/root/incident/folder");
     private Weather weather = new Weather("objectId", "-123, 098", 78.9, 10.0f, 214.0, 2.3f, "OK", 10.0);

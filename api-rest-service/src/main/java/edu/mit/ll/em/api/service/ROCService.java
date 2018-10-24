@@ -4,13 +4,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vividsolutions.jts.geom.Coordinate;
 import edu.mit.ll.em.api.gateway.geocode.GeocodeAPIGateway;
 import edu.mit.ll.em.api.rs.model.*;
+import edu.mit.ll.em.api.rs.model.Location;
 import edu.mit.ll.em.api.rs.model.builder.ROCFormBuilder;
 import edu.mit.ll.em.api.rs.model.builder.ROCLocationBasedDataBuilder;
 import edu.mit.ll.em.api.rs.model.builder.ROCMessageBuilder;
-import edu.mit.ll.nics.common.entity.Form;
-import edu.mit.ll.nics.common.entity.Incident;
-import edu.mit.ll.nics.common.entity.Weather;
+import edu.mit.ll.nics.common.entity.*;
+import edu.mit.ll.nics.common.entity.Jurisdiction;
 import edu.mit.ll.nics.nicsdao.FormDAO;
+import edu.mit.ll.nics.nicsdao.JurisdictionDAO;
 import edu.mit.ll.nics.nicsdao.WeatherDAO;
 import org.apache.commons.lang.StringUtils;
 
@@ -23,21 +24,21 @@ public class ROCService {
 
     private static final int FORM_TYPE_ROC_ID = 1;
     private FormDAO formDao = null;
-    private JurisdictionLocatorService jurisdictionLocatorService = null;
+    private JurisdictionDAO jurisdictionDAO = null;
     private WeatherDAO weatherDao = null;
     private GeocodeAPIGateway geocodeAPIGateway = null;
     private ObjectMapper objectMapper = null;
 
-    public ROCService(FormDAO formDao, JurisdictionLocatorService jurisdictionLocatorService , WeatherDAO weatherDao, GeocodeAPIGateway geocodeAPIGateway, ObjectMapper objectMapper) {
+    public ROCService(FormDAO formDao, JurisdictionDAO jurisdictionDAO, WeatherDAO weatherDao, GeocodeAPIGateway geocodeAPIGateway, ObjectMapper objectMapper) {
         this.formDao = formDao;
-        this.jurisdictionLocatorService = jurisdictionLocatorService;
+        this.jurisdictionDAO = jurisdictionDAO;
         this.weatherDao = weatherDao;
         this.geocodeAPIGateway = geocodeAPIGateway;
         this.objectMapper = objectMapper;
     }
 
     public ROCLocationBasedData getROCLocationBasedData(Coordinate coordinatesIn4326, Double searchRangeInKiloMeters) throws Exception {
-        Jurisdiction jurisdiction = jurisdictionLocatorService.getJurisdiction(coordinatesIn4326, edu.mit.ll.nics.common.constants.SADisplayConstants.CRS_4326);
+        Jurisdiction jurisdiction = jurisdictionDAO.getJurisdiction(coordinatesIn4326);
         Weather weather = weatherDao.getWeatherDataFromLocation(coordinatesIn4326, searchRangeInKiloMeters);
         Location location = geocodeAPIGateway.getLocationByGeocode(coordinatesIn4326);
         ROCLocationBasedData rocLocationBasedData = new ROCLocationBasedDataBuilder()
@@ -59,7 +60,7 @@ public class ROCService {
         }
     }
 
-    /** Returns ROC Message FINAL if exists
+    /** Returns ROC Message FINAL if FINAL ROC exists for given incidentId
      else returns Update ROC Form with latest create date
      **/
     private ROCMessage getLatestROCMessage(int incidentId) throws IOException {

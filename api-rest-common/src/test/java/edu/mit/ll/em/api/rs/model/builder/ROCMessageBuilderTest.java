@@ -3,9 +3,10 @@ package edu.mit.ll.em.api.rs.model.builder;
 import java.util.Date;
 
 import edu.mit.ll.em.api.rs.model.*;
-import edu.mit.ll.nics.common.entity.Incident;
-import edu.mit.ll.nics.common.entity.Weather;
+import edu.mit.ll.em.api.rs.model.Location;
 
+import edu.mit.ll.nics.common.entity.*;
+import edu.mit.ll.nics.common.entity.DirectProtectionArea;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -19,8 +20,7 @@ public class ROCMessageBuilderTest {
     private String generalLocation = "5 miles from xy";
     private Date startDateTime = new Date();
     private String sra = "sra";
-    private DirectProtectionArea directProtectionArea = new DirectProtectionArea("dpa", "contract county", "unitid", "respondid");
-    private Jurisdiction jurisdiction = new Jurisdiction("sra", directProtectionArea);
+    private Jurisdiction jurisdiction = new Jurisdiction("sra", new DirectProtectionArea("dpa", "contract county", "unitid", "respondid"));
 
     private Weather weather = new Weather("objectId", "-123, 098", 78.9, 10.0f, 214.0, 2.3f, "OK", 10.0);
     private Location location = new Location("county", "state", "000 exact st, xm city, ca, USA, 90000");

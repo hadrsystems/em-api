@@ -1,3 +1,32 @@
+/**
+ * Copyright (c) 2008-2018, Massachusetts Institute of Technology (MIT)
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ *
+ * 3. Neither the name of the copyright holder nor the names of its contributors
+ * may be used to endorse or promote products derived from this software without
+ * specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 package edu.mit.ll.em.api.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -9,7 +38,9 @@ import edu.mit.ll.em.api.rs.model.builder.ROCLocationBasedDataBuilder;
 import edu.mit.ll.em.api.rs.model.builder.ROCMessageBuilder;
 import edu.mit.ll.nics.common.constants.SADisplayConstants;
 import edu.mit.ll.nics.common.entity.*;
+import edu.mit.ll.nics.common.entity.DirectProtectionArea;
 import edu.mit.ll.nics.nicsdao.FormDAO;
+import edu.mit.ll.nics.nicsdao.JurisdictionDAO;
 import edu.mit.ll.nics.nicsdao.WeatherDAO;
 import org.springframework.dao.DataAccessException;
 
@@ -30,11 +61,11 @@ import static org.mockito.Mockito.*;
 public class ROCServiceTest {
     private static final int FORM_TYPE_ROC_ID = 1;
     private FormDAO formDao = mock(FormDAO.class);
-    private JurisdictionLocatorService jurisdictionLocatorService = mock(JurisdictionLocatorService.class);
+    private JurisdictionDAO jurisdictionDAO = mock(JurisdictionDAO.class);
     private WeatherDAO weatherDao = mock(WeatherDAO.class);
     private GeocodeAPIGateway geocodeAPIGateway = mock(GeocodeAPIGateway.class);
     private ObjectMapper objectMapper = mock(ObjectMapper.class);
-    private ROCService rocService = new ROCService(formDao, jurisdictionLocatorService, weatherDao, geocodeAPIGateway, objectMapper);
+    private ROCService rocService = new ROCService(formDao, jurisdictionDAO, weatherDao, geocodeAPIGateway, objectMapper);
 
     private Integer incidentId = 113;
     private String incidentName = "incident name";
@@ -83,7 +114,7 @@ public class ROCServiceTest {
         when(incident.getDescription()).thenReturn(incidentDescription);
 
         when(geocodeAPIGateway.getLocationByGeocode(coordinate)).thenReturn(newLocation);
-        when(jurisdictionLocatorService.getJurisdiction(coordinate, SADisplayConstants.CRS_4326)).thenReturn(newJurisdiction);
+        when(jurisdictionDAO.getJurisdiction(coordinate)).thenReturn(newJurisdiction);
         when(weatherDao.getWeatherDataFromLocation(coordinate, searchRange)).thenReturn(newWeather);
 
         rocLocationBasedData = new ROCLocationBasedDataBuilder().buildLocationData(location)
@@ -213,7 +244,7 @@ public class ROCServiceTest {
         assertEquals(startDate, rocForm.getMessage().getStartTime());
 
         verifyZeroInteractions(geocodeAPIGateway);
-        verifyZeroInteractions(jurisdictionLocatorService);
+        verifyZeroInteractions(jurisdictionDAO);
         verifyZeroInteractions(weatherDao);
     }
 
@@ -255,7 +286,7 @@ public class ROCServiceTest {
         assertEquals(weather.getDescriptiveWindDirection(), rocForm.getMessage().getWindDirection());
 
         verifyZeroInteractions(geocodeAPIGateway);
-        verifyZeroInteractions(jurisdictionLocatorService);
+        verifyZeroInteractions(jurisdictionDAO);
         verifyZeroInteractions(weatherDao);
     }
 
@@ -272,29 +303,8 @@ public class ROCServiceTest {
         assertEquals(latitude, rocForm.getLongitude());
         assertEquals(incidentDescription, rocForm.getIncidentDescription());
 
-//        assertTrue(rocForm.getMessage().getDateCreated().getTime() > rocMessageNew.getDateCreated().getTime());
-//        assertEquals(startDate, rocForm.getMessage().getDate());
-//        assertEquals(startDate, rocForm.getMessage().getStartTime());
-//
-//        assertEquals(rocMessageNew.getRocDisplayName(), rocForm.getMessage().getRocDisplayName());
-//        assertEquals(rocMessageNew.getIncidentCause(), rocForm.getMessage().getIncidentCause());
-//        assertEquals(rocMessageNew.getGeneralLocation(), rocForm.getMessage().getGeneralLocation());
-
-//        assertEquals(jurisdiction.getSra(), rocForm.getMessage().getSra());
-//        assertEquals(jurisdiction.getDpa(), rocForm.getMessage().getDpa());
-//        assertEquals(jurisdiction.getJurisdiction(), rocForm.getMessage().getJurisdiction());
-//
-//        assertEquals(location.getSpecificLocation(), rocForm.getMessage().getLocation());
-//        assertEquals(location.getCounty(), rocForm.getMessage().getCounty());
-//        assertEquals(location.getState(), rocForm.getMessage().getState());
-//
-//        assertEquals(weather.getAirTemperature(), rocForm.getMessage().getTemperature());
-//        assertEquals(weather.getHumidity(), rocForm.getMessage().getRelHumidity());
-//        assertEquals(weather.getWindSpeed(), rocForm.getMessage().getWindSpeed());
-//        assertEquals(weather.getDescriptiveWindDirection(), rocForm.getMessage().getWindDirection());
-
         verifyZeroInteractions(geocodeAPIGateway);
-        verifyZeroInteractions(jurisdictionLocatorService);
+        verifyZeroInteractions(jurisdictionDAO);
         verifyZeroInteractions(weatherDao);
     }
 
@@ -336,7 +346,7 @@ public class ROCServiceTest {
 
     @After
     public void cleanup() {
-        Mockito.reset(geocodeAPIGateway, jurisdictionLocatorService, weatherDao, objectMapper, incident);
+        Mockito.reset(geocodeAPIGateway, jurisdictionDAO, weatherDao, objectMapper, incident);
         Mockito.reset(newForm, update1Form, update2Form, finalForm);
     }
 }

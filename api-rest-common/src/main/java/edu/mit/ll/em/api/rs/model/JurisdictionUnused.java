@@ -27,38 +27,26 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package edu.mit.ll.em.api.rs;
+package edu.mit.ll.em.api.rs.model;
 
-import edu.mit.ll.nics.common.constants.SADisplayConstants;
+public class JurisdictionUnused {
+    String sra;
+    DirectProtectionArea directProtectionArea;
 
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+    public JurisdictionUnused(String sra, DirectProtectionArea directProtectionArea) {
+        this.sra = sra;
+        this.directProtectionArea = directProtectionArea;
+    }
 
-@Path("/reports")
-public interface ROCReportService {
+    public String getSra() {
+        return this.sra;
+    }
 
-    public static final String DEFAULT_SEARCH_RANGE_IN_MILES_FOR_WEATHER_DATA = "10.0";
+    public String getDpa() {
+        return this.directProtectionArea == null ? null : this.directProtectionArea.getDirectProtectionAreaGroup();
+    }
 
-    @GET
-    @Path(value = "/1/locationBasedData/")
-    @Produces(MediaType.APPLICATION_JSON)
-    /**
-     * Input:
-     *  longitude : location longitude
-     *  latitude : location latitude
-     *  locationCRS : CRS of longitude, latitude values
-     *  searchRange: search range (in miles) to find closest weather data
-     *
-     *  Returns: Location, jurisdiction (SRA, DPA, jurisdiction entity), weather data of given location
-     *
-     */
-    public Response getROCLocationBasedData(@QueryParam("longitude") Double longitude, @QueryParam("latitude") Double latitude,
-                                               @DefaultValue(SADisplayConstants.CRS_4326) @QueryParam("CRS") String locationCRS,
-                                               @DefaultValue(DEFAULT_SEARCH_RANGE_IN_MILES_FOR_WEATHER_DATA) @QueryParam("searchRangeInMiles") Double searchRange);
-
-    @GET
-    @Path(value = "/1/{incidentId}/locationBasedData")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getEditROCFormForAnIncident(@PathParam("incidentId") Integer incidentId, @DefaultValue(DEFAULT_SEARCH_RANGE_IN_MILES_FOR_WEATHER_DATA) @QueryParam("searchRangeInMiles") Double searchRange);
+    public String getJurisdiction() {
+        return this.directProtectionArea == null ? null : this.directProtectionArea.getJurisdiction();
+    }
 }

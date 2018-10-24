@@ -1,8 +1,8 @@
 package edu.mit.ll.em.api.rs.model.builder;
 
-import edu.mit.ll.em.api.rs.model.Jurisdiction;
 import edu.mit.ll.em.api.rs.model.Location;
 import edu.mit.ll.em.api.rs.model.ROCLocationBasedData;
+import edu.mit.ll.nics.common.entity.Jurisdiction;
 import edu.mit.ll.nics.common.entity.Weather;
 
 public class ROCLocationBasedDataBuilder {

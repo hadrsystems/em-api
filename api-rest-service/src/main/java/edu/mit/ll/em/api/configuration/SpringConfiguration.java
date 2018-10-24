@@ -43,6 +43,7 @@ import edu.mit.ll.nics.common.geoserver.api.GeoServer;
 import edu.mit.ll.nics.common.rabbitmq.RabbitFactory;
 import edu.mit.ll.nics.common.rabbitmq.RabbitPubSubProducer;
 import edu.mit.ll.nics.nicsdao.FormDAO;
+import edu.mit.ll.nics.nicsdao.JurisdictionDAO;
 import edu.mit.ll.nics.nicsdao.WeatherDAO;
 import edu.mit.ll.nics.nicsdao.impl.*;
 import org.springframework.context.annotation.Bean;
@@ -62,7 +63,9 @@ import java.io.IOException;
 @Configuration
 public class SpringConfiguration {
     private DataSource datafeedsDataSource = null;
+    private DataSource datalayersDataSource = null;
     private NamedParameterJdbcTemplate datafeedsJdbcTemplate = null;
+    private NamedParameterJdbcTemplate datalayersJdbcTemplate = null;
 
     @Bean
     public org.apache.commons.configuration.Configuration emApiConfiguration() {
@@ -78,6 +81,14 @@ public class SpringConfiguration {
         return this.datafeedsDataSource;
     }
 
+    private DataSource dataLayersDatasource() throws NamingException {
+        if(this.datalayersJdbcTemplate == null) {
+            InitialContext e = new InitialContext();
+            this.datalayersDataSource = (DataSource) e.lookup("java:comp/env/jboss/datalayersDatasource");
+        }
+        return this.datalayersDataSource;
+    }
+
     private NamedParameterJdbcTemplate dataFeedsJdbcTemplate() throws NamingException {
         if(this.datafeedsJdbcTemplate == null) {
             this.datafeedsJdbcTemplate = new NamedParameterJdbcTemplate(this.dataFeedsDataSource());
@@ -85,9 +96,21 @@ public class SpringConfiguration {
         return this.datafeedsJdbcTemplate;
     }
 
+    private NamedParameterJdbcTemplate dataLayersJdbcTemplate() throws NamingException {
+        if(this.datalayersDataSource == null) {
+            this.datalayersJdbcTemplate = new NamedParameterJdbcTemplate(this.dataLayersDatasource());
+        }
+        return this.datalayersJdbcTemplate;
+    }
+
     @Bean
     public IncidentDAO incidentDao() {
         return new IncidentDAOImpl();
+    }
+
+    @Bean
+    public JurisdictionDAO jurisdictionDao() throws NamingException {
+        return new JurisdictionDAOImpl(dataLayersJdbcTemplate());
     }
 
     @Bean
