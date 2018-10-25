@@ -35,7 +35,7 @@ public class ROCFormBuilderTest {
         assertEquals(rocForm.getIncidentName(), incident.getIncidentname());
         assertEquals(rocForm.getLongitude(), (Double) incident.getLon());
         assertEquals(rocForm.getLatitude(), (Double) incident.getLat());
-        assertEquals(rocForm.getIncidentType(), getIncidentTypeNames(incident.getIncidentIncidenttypes()));
+        assertEquals(StringUtils.join(incident.getIncidentTypeNames(), ", "), rocForm.getIncidentType());
         assertEquals(rocForm.getIncidentDescription(), incident.getDescription());
 
         assertNull(rocForm.getMessage());
@@ -66,16 +66,8 @@ public class ROCFormBuilderTest {
         assertEquals(rocForm.getLongitude(), (Double) incident.getLon());
         assertEquals(rocForm.getLatitude(), (Double) incident.getLat());
 
-        assertEquals(rocForm.getIncidentType(), getIncidentTypeNames(incident.getIncidentIncidenttypes()));
+        assertEquals(StringUtils.join(incident.getIncidentTypeNames(), ", "), rocForm.getIncidentType());
         assertEquals(rocForm.getIncidentDescription(), incident.getDescription());
         assertEquals(rocMessage, rocForm.getMessage());
-    }
-
-    private String getIncidentTypeNames(Set<IncidentIncidentType> incidentIncidentTypeSet) {
-        List<String> incidentTypeNameList = new ArrayList<>();
-        for(IncidentIncidentType incidentIncidentType : incidentIncidentTypeSet) {
-            incidentTypeNameList.add(incidentIncidentType.getIncidentType().getIncidentTypeName());
-        }
-        return StringUtils.join(incidentTypeNameList, ", ");
     }
 }

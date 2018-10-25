@@ -1,32 +1,3 @@
-/**
- * Copyright (c) 2008-2018, Massachusetts Institute of Technology (MIT)
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- * 1. Redistributions of source code must retain the above copyright notice, this
- * list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution.
- *
- * 3. Neither the name of the copyright holder nor the names of its contributors
- * may be used to endorse or promote products derived from this software without
- * specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
 package edu.mit.ll.em.api.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -42,6 +13,7 @@ import edu.mit.ll.nics.common.entity.DirectProtectionArea;
 import edu.mit.ll.nics.nicsdao.FormDAO;
 import edu.mit.ll.nics.nicsdao.JurisdictionDAO;
 import edu.mit.ll.nics.nicsdao.WeatherDAO;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.dao.DataAccessException;
 
 import java.io.IOException;
@@ -72,9 +44,9 @@ public class ROCServiceTest {
     private Incident incident = mock(Incident.class);
     private Double longitude = 1.0;
     private Double latitude = 1.0;
+    private List<String> incidentTypeNames = Arrays.asList("abc", "zyx");
     private Double searchRange = 10.0;
     private Coordinate coordinate = new Coordinate(longitude, latitude);
-    //private Set<Integer> incidentType = Collections.(1, 2);
     private String incidentDescription = "it is a planned event";
     private Location location = new Location("xx y st, abc city, up state, CA", "def county", "CA");
     private Weather weather = new Weather("objectid2", "location x",
@@ -110,7 +82,7 @@ public class ROCServiceTest {
         when(incident.getIncidentname()).thenReturn(incidentName);
         when(incident.getLon()).thenReturn(longitude);
         when(incident.getLat()).thenReturn(latitude);
-        //when(incident.getIncidentIncidenttypes()).thenReturn(incidentType);
+        when(incident.getIncidentTypeNames()).thenReturn(incidentTypeNames);
         when(incident.getDescription()).thenReturn(incidentDescription);
 
         when(geocodeAPIGateway.getLocationByGeocode(coordinate)).thenReturn(newLocation);
@@ -153,21 +125,6 @@ public class ROCServiceTest {
         when(objectMapper.readValue(finalMessageStr, ROCMessage.class)).thenReturn(rocMessageFinal);
     }
 
-    //rocLocationBasedData
-    //rocEditForm
-        // fails to get forms from db - throws exception - done
-        // if no existing forms found returns NEW ROC Form - done
-        // gets forms with a final type in it.. returns final ROCForm - done
-        // gets forms with only New type in it ... returns ROCForm with Update type - done
-        // gets forms with Update type .. returns ROCForm with Update type -- done
-        // if latest roc form is new or update & incident details are changed.. done
-                //new location based data is returned in ROC Form
-        //throws exception when geocode api gateway throws exception - instead should continue processing
-        //throws exception when jurisdictionLocatorService throws exception - instead should continue processing
-        //throws exception when weatherDAO throws Exception - instead should continue processing
-        //throws exception when unable to deserialize ROCMessage
-        // throws exception when unable to get location based data for an update form??
-
     @Test(expected = Exception.class)
     public void getROCEditFormThrowsExceptionIfFailsToGetFormsFromDB() throws Exception {
         when(formDao.getForms(incidentId, FORM_TYPE_ROC_ID)).thenThrow(new NonTransientDataAccessException("Test msg") {
@@ -199,6 +156,7 @@ public class ROCServiceTest {
         assertEquals(incidentName, rocForm.getIncidentName());
         assertEquals(longitude, rocForm.getLongitude());
         assertEquals(latitude, rocForm.getLongitude());
+        assertEquals(StringUtils.join(incidentTypeNames, ", "), rocForm.getIncidentType());
         assertEquals(incidentDescription, rocForm.getIncidentDescription());
 
         assertNull(rocForm.getMessage().getRocDisplayName());
@@ -233,6 +191,7 @@ public class ROCServiceTest {
         assertEquals(incidentName, rocForm.getIncidentName());
         assertEquals(longitude, rocForm.getLongitude());
         assertEquals(latitude, rocForm.getLongitude());
+        assertEquals(StringUtils.join(incidentTypeNames, ", "), rocForm.getIncidentType());
         assertEquals(incidentDescription, rocForm.getIncidentDescription());
 
         assertEquals(rocMessageFinal.getRocDisplayName(), rocForm.getMessage().getRocDisplayName());
@@ -262,6 +221,7 @@ public class ROCServiceTest {
         assertEquals(incidentName, rocForm.getIncidentName());
         assertEquals(longitude, rocForm.getLongitude());
         assertEquals(latitude, rocForm.getLongitude());
+        assertEquals(StringUtils.join(incidentTypeNames, ", "), rocForm.getIncidentType());
         assertEquals(incidentDescription, rocForm.getIncidentDescription());
 
         assertEquals(rocMessageUpdate2.getRocDisplayName(), rocForm.getMessage().getRocDisplayName());

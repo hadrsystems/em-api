@@ -114,7 +114,7 @@ public class ROCService {
     private ROCForm buildNewROCForm(Incident incident, ROCLocationBasedData rocLocationBasedData) {
         Date dateCreated = new Date();
         ROCMessage rocMessage = new ROCMessageBuilder()
-                .buildReportDetails(null, "NEW", null, StringUtils.join(incident.getIncidentIncidenttypes(), ","), null)
+                .buildReportDetails(null, "NEW", null, StringUtils.join(incident.getIncidentTypeNames(), ", "), null)
                 .buildReportDates(dateCreated, dateCreated, dateCreated)
                 .buildLocationBasedData(rocLocationBasedData)
                 .build();
