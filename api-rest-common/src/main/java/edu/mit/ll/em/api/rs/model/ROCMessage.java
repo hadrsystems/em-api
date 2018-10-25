@@ -1,5 +1,6 @@
 package edu.mit.ll.em.api.rs.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import edu.mit.ll.em.api.json.deserializer.ROCMessageDeserializer;
 import org.apache.commons.lang.builder.EqualsBuilder;
@@ -63,6 +64,8 @@ public class ROCMessage implements Cloneable, Comparable {
         this.windDirection = windDirection;
     }
 
+    @JsonFormat
+            (shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     public Date getDateCreated() {
         return dateCreated;
     }
@@ -87,10 +90,14 @@ public class ROCMessage implements Cloneable, Comparable {
         this.reportType = reportType;
     }
 
+    @JsonFormat
+            (shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
     public Date getDate() {
         return date;
     }
 
+    @JsonFormat
+            (shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
     public void setDate(Date date) {
         this.date = date;
     }
