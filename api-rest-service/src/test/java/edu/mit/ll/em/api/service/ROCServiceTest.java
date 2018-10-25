@@ -94,22 +94,22 @@ public class ROCServiceTest {
                     .buildJurisdictionData(jurisdiction)
                     .build();
 
-        rocMessageNew = new ROCMessageBuilder().buildReportDetails("name", "NEW", "cause", "planned event", "general location")
+        rocMessageNew = new ROCMessageBuilder().buildReportDetails("name", "NEW", "cause", "planned eventx", "general location")
                     .buildReportDates(startDate, startDate, startDate)
                     .buildLocationBasedData(rocLocationBasedData)
                     .build();
 
-        rocMessageUpdate1 = new ROCMessageBuilder().buildReportDetails("name", "UPDATE", "cause update1", "planned event", "general location")
+        rocMessageUpdate1 = new ROCMessageBuilder().buildReportDetails("name", "UPDATE", "cause update1", "planned eventx", "general location")
                 .buildReportDates(rocUpdate1CreateDate, startDate, startDate)
                 .buildLocationBasedData(rocLocationBasedData)
                 .build();
 
-        rocMessageUpdate2 = new ROCMessageBuilder().buildReportDetails("name", "UPDATE", "cause Update2", "planned event", "general location")
+        rocMessageUpdate2 = new ROCMessageBuilder().buildReportDetails("name", "UPDATE", "cause Update2", "planned eventx", "general location")
                 .buildReportDates(rocUpdate2CreateDate, startDate, startDate)
                 .buildLocationBasedData(rocLocationBasedData)
                 .build();
 
-        rocMessageFinal = new ROCMessageBuilder().buildReportDetails("name", "FINAL", "cause", "planned event", "general location")
+        rocMessageFinal = new ROCMessageBuilder().buildReportDetails("name", "FINAL", "cause", "planned eventx", "general location")
                 .buildReportDates(rocFinalCreateDate, startDate, startDate)
                 .buildLocationBasedData(rocLocationBasedData)
                 .build();
@@ -227,6 +227,7 @@ public class ROCServiceTest {
         assertEquals(rocMessageUpdate2.getRocDisplayName(), rocForm.getMessage().getRocDisplayName());
         assertEquals(rocMessageUpdate2.getIncidentCause(), rocForm.getMessage().getIncidentCause());
         assertEquals(rocMessageUpdate2.getGeneralLocation(), rocForm.getMessage().getGeneralLocation());
+        assertEquals(rocMessageUpdate2.getIncidentType(), rocForm.getMessage().getIncidentType());
 
         assertTrue(rocForm.getMessage().getDateCreated().getTime() > rocMessageUpdate2.getDateCreated().getTime());
         assertEquals(startDate, rocForm.getMessage().getDate());
