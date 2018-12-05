@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2016, Massachusetts Institute of Technology (MIT)
+ * Copyright (c) 2008-2018, Massachusetts Institute of Technology (MIT)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -259,10 +259,11 @@ public class IncidentServiceImpl implements IncidentService {
 		Response response = null;
 		IncidentServiceResponse incidentResponse = new IncidentServiceResponse();
 		Incident updatedIncident = null;
-		
-		
-		if(incidentDao.getIncidentByName(incident.getIncidentname(), workspaceId) != null && 
-				incidentDao.getIncidentByName(incident.getIncidentname(), workspaceId).getIncidentid() != incident.getIncidentid()){
+		APILogger.getInstance().e(CNAME, "Incidentid of incident to be updated: " + incident.getIncidentid() + " & workspaceid : " + workspaceId);
+		Incident incidentByName = incidentDao.getIncidentByName(incident.getIncidentname(), workspaceId);
+		if(incidentByName != null &&
+                incidentByName.getIncidentid() != incident.getIncidentid()){
+            APILogger.getInstance().e(CNAME, "IncidentId of incident with name (from db) " + incident.getIncidentname() + " : " + incidentByName.getIncidentid());
 			incidentResponse.setMessage(DUPLICATE_NAME);
 			return Response.ok(incidentResponse).status(Status.INTERNAL_SERVER_ERROR).build();
 		}
