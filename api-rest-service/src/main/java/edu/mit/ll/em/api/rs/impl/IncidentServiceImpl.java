@@ -259,11 +259,10 @@ public class IncidentServiceImpl implements IncidentService {
 		Response response = null;
 		IncidentServiceResponse incidentResponse = new IncidentServiceResponse();
 		Incident updatedIncident = null;
-		APILogger.getInstance().e(CNAME, "Incidentid of incident to be updated: " + incident.getIncidentid() + " & workspaceid : " + workspaceId);
+
 		Incident incidentByName = incidentDao.getIncidentByName(incident.getIncidentname(), workspaceId);
 		if(incidentByName != null &&
-                incidentByName.getIncidentid() != incident.getIncidentid()){
-            APILogger.getInstance().e(CNAME, "IncidentId of incident with name (from db) " + incident.getIncidentname() + " : " + incidentByName.getIncidentid());
+                incidentByName.getIncidentid().intValue() != incident.getIncidentid()){
 			incidentResponse.setMessage(DUPLICATE_NAME);
 			return Response.ok(incidentResponse).status(Status.INTERNAL_SERVER_ERROR).build();
 		}
