@@ -79,7 +79,7 @@
 			<!-- <bean class="edu.mit.ll.em.api.rs.impl.DatalayerBreadCrumbsImpl" /> -->
 			<bean class="edu.mit.ll.em.api.rs.impl.FeatureServiceImpl" />
 			<bean class="edu.mit.ll.em.api.rs.impl.FolderServiceImpl" />
-			<bean class="edu.mit.ll.em.api.rs.impl.IncidentServiceImpl" />
+			<bean class="edu.mit.ll.em.api.rs.impl.IncidentServiceImpl"/>
 			<bean class="edu.mit.ll.em.api.rs.impl.LoginServiceImpl" >
                 <constructor-arg ref="userDao"/>
                 <constructor-arg ref="userSessionDao"/>
@@ -91,7 +91,18 @@
 			<bean class="edu.mit.ll.em.api.rs.impl.MDTrackServiceImpl" />
 			<!-- <bean class="edu.mit.ll.em.api.rs.impl.MsgBusServiceImpl" /> -->
 			<bean class="edu.mit.ll.em.api.rs.impl.OrganizationServiceImpl" />
-			<bean class="edu.mit.ll.em.api.rs.impl.ReportServiceImpl" />
+			<bean class="edu.mit.ll.em.api.rs.impl.ReportServiceImpl">
+				<constructor-arg ref="incidentDao"/>
+                <constructor-arg ref="userDao"/>
+                <constructor-arg ref="formDao"/>
+                <constructor-arg ref="userSessionDao"/>
+                <constructor-arg ref="uxoReportDao"/>
+                <constructor-arg>
+                    <bean class="edu.mit.ll.em.api.rs.impl.IncidentServiceImpl"/>
+                </constructor-arg>
+                <constructor-arg ref="rabbitProducer"/>
+                <constructor-arg ref="reportValidator"/>
+            </bean>
 			<bean class="edu.mit.ll.em.api.rs.impl.SSOManagementServiceImpl" />
 			<!-- <bean class="edu.mit.ll.em.api.rs.impl.TaskingAssignmentServiceImpl" /> -->
 			<bean class="edu.mit.ll.em.api.rs.impl.UserServiceImpl">

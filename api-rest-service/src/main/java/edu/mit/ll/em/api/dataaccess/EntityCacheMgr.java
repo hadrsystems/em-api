@@ -65,11 +65,11 @@ import edu.mit.ll.nics.nicsdao.impl.UserSessionDAOImpl;
  */
 public class EntityCacheMgr {
 
-	private static final CollabRoomDAOImpl collabRoomDao = new CollabRoomDAOImpl();
-	private static final IncidentDAOImpl incidentDao = new IncidentDAOImpl();
-	private static final UserDAOImpl userDao = new UserDAOImpl();
-	private static final UserSessionDAOImpl userSessDao = new UserSessionDAOImpl();
-	private static final FormDAOImpl formDao = new FormDAOImpl();
+	private CollabRoomDAOImpl collabRoomDao = null;
+	private IncidentDAOImpl incidentDao = null;
+	private UserDAOImpl userDao = null;
+	private UserSessionDAOImpl userSessDao = null;
+	private FormDAOImpl formDao = null;
 	
 	// Invalidates the user cache every so many minutes.
 	TimerTask cacheRecycler;
@@ -136,6 +136,11 @@ public class EntityCacheMgr {
 
 	// Hide the default constructor.
 	private EntityCacheMgr() {
+        this.collabRoomDao = new CollabRoomDAOImpl();
+        this.incidentDao = new IncidentDAOImpl();
+        this.userDao = new UserDAOImpl();
+        this.userSessDao = new UserSessionDAOImpl();
+        this.formDao = new FormDAOImpl();
 
 		cacheRecycler = new TimerTask() { 
 			public void run() {

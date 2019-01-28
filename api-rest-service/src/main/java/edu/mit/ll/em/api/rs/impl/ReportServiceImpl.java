@@ -31,20 +31,21 @@ package edu.mit.ll.em.api.rs.impl;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import edu.mit.ll.em.api.rs.*;
+import edu.mit.ll.em.api.rs.validator.ReportValidator;
+import edu.mit.ll.nics.common.constants.SADisplayConstants;
 import edu.mit.ll.nics.common.entity.*;
+import edu.mit.ll.nics.common.entity.Incident;
+import edu.mit.ll.nics.common.entity.User;
 import edu.mit.ll.nics.common.rabbitmq.RabbitFactory;
 import edu.mit.ll.nics.common.rabbitmq.RabbitPubSubProducer;
+import edu.mit.ll.nics.nicsdao.UxoreportDAO;
 import edu.mit.ll.nics.nicsdao.impl.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.cxf.jaxrs.ext.multipart.Attachment;
@@ -60,11 +61,6 @@ import com.vividsolutions.jts.geom.PrecisionModel;
 import edu.mit.ll.em.api.dataaccess.EntityCacheMgr;
 import edu.mit.ll.em.api.dataaccess.ICSDatastoreException;
 import edu.mit.ll.em.api.exception.BadContentException;
-import edu.mit.ll.em.api.rs.QueryConstraintHelper;
-import edu.mit.ll.em.api.rs.Report;
-import edu.mit.ll.em.api.rs.ReportOptParms;
-import edu.mit.ll.em.api.rs.ReportService;
-import edu.mit.ll.em.api.rs.ReportServiceResponse;
 import edu.mit.ll.em.api.util.APIConfig;
 import edu.mit.ll.em.api.util.APILogger;
 
@@ -76,20 +72,28 @@ import edu.mit.ll.em.api.util.APILogger;
 public class ReportServiceImpl implements ReportService {
 
 	private static final String CNAME = ReportServiceImpl.class.getName();
-	
-	private static final IncidentDAOImpl incidentDao = new IncidentDAOImpl();
-	private static final UserDAOImpl userDao = new UserDAOImpl();
-	private static final FormDAOImpl formDao = new FormDAOImpl();
-	private static final PhiDAOImpl phiDao = new PhiDAOImpl();
-	private static final UserSessionDAOImpl userSessDao = new UserSessionDAOImpl();
-    private static final UxoreportDAOImpl uxoreportDao = new UxoreportDAOImpl();
-	
+	private IncidentDAOImpl incidentDao = null;
+	private UserDAOImpl userDao = null;
+	private FormDAOImpl formDao = null;
+	private UserSessionDAOImpl userSessionDao = null;
+    private UxoreportDAO uxoReportDao = null;
+	private IncidentService incidentService = null;
 	private RabbitPubSubProducer rabbitProducer = null;
-	
+    private ReportValidator reportValidator = null;
+
+    public ReportServiceImpl(IncidentDAOImpl incidentDao, UserDAOImpl userDao, FormDAOImpl formDao, UserSessionDAOImpl userSessionDao, UxoreportDAO uxoReportDao, IncidentService incidentService, RabbitPubSubProducer rabbitProducer, ReportValidator reportValidator) {
+        this.incidentDao = incidentDao;
+        this.userDao = userDao;
+        this.formDao = formDao;
+        this.userSessionDao = userSessionDao;
+        this.uxoReportDao = uxoReportDao;
+        this.incidentService = incidentService;
+        this.rabbitProducer = rabbitProducer;
+        this.reportValidator = reportValidator;
+    }
 	/**
 	 * Read and return all Report items.
 	 * @return Response
-	 * @see ReportResponse
 	 */
 	public Response getReports(int incidentId, String reportType, ReportOptParms optParms) {
 		// Make sure we support this type of form.
@@ -234,8 +238,49 @@ public class ReportServiceImpl implements ReportService {
 	public Response postReports(Collection<Form> forms) {
 		return makeUnsupportedOpRequestResponse();		
 	}
-	
-	
+
+    public Response postROCAndIncident(int orgId, Form form) {
+        ReportServiceResponse reportServiceResponse = new ReportServiceResponse();
+        boolean isIncidentPersisted = false;
+        User user = null;
+        try {
+            if (form != null && (user = form.getUsersessionid() < 0 ? null : userDao.getUserBySessionId(form.getUsersessionid())) == null) {
+                return Response.ok(new APIResponse(Status.UNAUTHORIZED.getStatusCode(), "Unauthorized, session with userSessionId " + form.getUsersessionid() + " is not active.")).build();
+            }
+
+            //validate input
+            Map<String, String> validationErrors = reportValidator.validateForm(form, SADisplayConstants.FORM_TYPE_ROC, true);
+            if(!validationErrors.isEmpty()) {
+                ValidationErrorResponse validationErrorResponse = new ValidationErrorResponse(Status.BAD_REQUEST.getStatusCode(), "Invalid input", validationErrors);
+                return Response.ok(validationErrorResponse).build();
+            }
+            Response iResponse = incidentService.postIncident(SADisplayConstants.DEFAULT_WORKSPACE_ID, orgId, user.getUserId(), form.getIncident());
+            IncidentServiceResponse incidentResponse = (iResponse.getEntity() instanceof IncidentServiceResponse) ? (IncidentServiceResponse) iResponse.getEntity() : null;
+
+            if(iResponse.getStatus() == Status.OK.getStatusCode()) {
+                if(incidentResponse.getCount() < 1) {
+                    return iResponse; //send ok response with reason for FAILURE
+                }
+                isIncidentPersisted = true;
+                Incident incidentPersisted = incidentResponse.getIncidents().iterator().next();
+                return this.persistReportOnIncident(form, incidentPersisted);
+            } else {
+                APIResponse apiResponse = (incidentResponse != null) ? new APIResponse(iResponse.getStatus(), "Error persisting incident & ROC: " + incidentResponse.getMessage()) : new APIResponse(iResponse.getStatus(), "Error persisting incident & ROC");
+                return Response.ok(apiResponse).build();
+            }
+        } catch (Exception e) {
+            String errorMessage = (isIncidentPersisted ? "Successfully created new incident with name " + form.getIncident().getIncidentname() + ", but failed to persist ROC, Error: " : "Error persisting incident & ROC report: ") + e.getMessage();
+            APILogger.getInstance().e("ReportServiceImpl", errorMessage, e);
+            return Response.ok(new APIResponse(Status.INTERNAL_SERVER_ERROR.getStatusCode(), errorMessage)).build();
+        }
+    }
+
+    private Response persistReportOnIncident(Form form, Incident incident) throws Exception {
+        form.setIncidentid(incident.getIncidentid());
+        form.setIncidentname(incident.getIncidentname());
+        return this.persistReport(SADisplayConstants.FORM_TYPE_ROC, form);
+    }
+
 	/**
 	 * Persists a single Form entity. If the Form has a valid and existing formid, it is
 	 * updated. Otherwise, it is persisted as a new form.
@@ -245,123 +290,54 @@ public class ReportServiceImpl implements ReportService {
 	 */
 	public Response postReport(int incidentId, String reportType, Form form) {
 		ReportServiceResponse reportServiceResponse = new ReportServiceResponse();
-		
-		if(form == null) {
-			reportServiceResponse.setMessage("failure: Invalid Form entity");
-			return Response.ok(reportServiceResponse).status(Status.BAD_REQUEST).build();
+		if(form != null && (form.getUsersessionid() < 0 || userDao.getUserBySessionId(form.getUsersessionid()) == null)) {
+				reportServiceResponse.setMessage("Unauthorized, session with userSessionId " + form.getUsersessionid() + " is not active.");
+				return Response.ok(reportServiceResponse).status(Status.UNAUTHORIZED).build();
 		}
-		
+
 		APILogger.getInstance().i("postReport", "Got report:\nincidentId: " + incidentId + 
-				"\nreportType: " + reportType + "\nForm:\n" + form.toString());
-		FormType formType = null;
+				"\nreportType: " + reportType + "\nForm:\n" + (form == null ? null : form.toString()));
+
 		try {
-			formType = EntityCacheMgr.getInstance().getFormTypeByName(reportType);
-		} catch (NullPointerException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (ICSDatastoreException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			Map<String, String> valid = reportValidator.validateForm(form, reportType, false);
+			if (!valid.isEmpty()) {
+				reportServiceResponse.setMessage("failure: " + valid.values());
+				return Response.ok(reportServiceResponse).status(Status.EXPECTATION_FAILED).build();
+			}
+			return this.persistReport(reportType, form);
+		} catch(Exception e) {
+			APILogger.getInstance().e("ReportServiceImpl", "Exception persisting new form with type id: " +
+				form.getFormtypeid(), e);
+			reportServiceResponse.setMessage("Failed to persist report: " + e.getMessage());
+			return Response.ok(reportServiceResponse).status(Status.INTERNAL_SERVER_ERROR).build();
 		}
-		
-		if(formType == null) {
-			reportServiceResponse.setMessage("failure: Invalid report type: " + reportType);
-			return Response.ok(reportServiceResponse).status(Status.BAD_REQUEST).build();
-		}
-		if(form.getFormtypeid() <= 0) {
-			form.setFormtypeid(formType.getFormTypeId());
-		}
+	}
 
-		Response response = null;
+    private Response persistReport(String reportType, Form form) throws Exception {
+        ReportServiceResponse reportServiceResponse = new ReportServiceResponse();
+        Response response = null;
+        Form persistedForm = formDao.persistForm(form);
 
-		String valid = null;
-		String responseMessage = "";
+        if(persistedForm != null) {
+            reportServiceResponse.setMessage("success: persisted report");
+            reportServiceResponse.setCount(1);
+            reportServiceResponse.getReports().add(persistedForm);
+            reportServiceResponse.setStatus(Status.OK.getStatusCode());
+            response = Response.ok(reportServiceResponse).status(Status.OK).build();
 
-        if(form.getUsersessionid() < 0 || userDao.getUserBySessionId(form.getUsersessionid()) == null) {
-            reportServiceResponse.setMessage("Unauthorized, session with userSessionId " + form.getUsersessionid() + " is not active.");
-            return Response.ok(reportServiceResponse).status(Status.UNAUTHORIZED).build();
+            // Since it was successful, also send it out to new users, except now any persist/create calls
+            // to dao need to return the new fully formed form, with formid and everything...
+            try {
+                String topic = String.format("iweb.NICS.incident.%d.report.%s.new", form.getIncidentid(), reportType.toUpperCase());
+                notifyNewReport(topic, form);
+            } catch (IOException e) {
+                APILogger.getInstance().e("ReportServiceImpl", "Exception publishing new form with type id: " +
+                        form.getFormtypeid());
+                e.printStackTrace();
+            }
         }
-
-		valid = validateForm(form);
-		if(!valid.isEmpty()) {
-			
-			responseMessage += valid;
-			reportServiceResponse.setMessage("failure: " + responseMessage);
-			response = Response.ok(reportServiceResponse).status(Status.EXPECTATION_FAILED).build();
-		} else {
-			Form affected = null;
-			
-			try {
-				affected = formDao.persistForm(form);
-			} catch(Exception e) {
-				responseMessage += e.getMessage();
-			}
-			
-			if(affected != null) {				
-				responseMessage += "persisted report";
-				reportServiceResponse.setMessage("success: " + responseMessage);
-				reportServiceResponse.setCount(1);
-				reportServiceResponse.getReports().add(affected);
-				response = Response.ok(reportServiceResponse).status(Status.OK).build();
-				
-				// Since it was successful, also send it out to new users, except now any persist/create calls
-				// to dao need to return the new fully formed form, with formid and everything... 
-				try {
-					String topic = String.format("iweb.NICS.incident.%d.report.%s.new", form.getIncidentid(), formType.getFormTypeName());
-					notifyNewReport(topic, form);
-				} catch (IOException e) {
-					APILogger.getInstance().e("ReportServiceImpl", "Exception publishing new form with type id: " + 
-							form.getFormtypeid());
-					e.printStackTrace();
-				}
-			} else {
-				responseMessage = "Failed to persist report: " + responseMessage;
-				reportServiceResponse.setMessage("failure: " + responseMessage);
-				response = Response.ok(reportServiceResponse).status(Status.EXPECTATION_FAILED).build();
-			}
-		}
-		
-		return response;
-	}
-		
-	
-	// TODO: better to return json with a boolean and the reasons why
-	private String validateForm(Form form) {
-		StringBuilder sb = new StringBuilder();
-		
-		if(form == null) {
-			sb.append("Form cannot be null");
-			return sb.toString();
-		}
-		
-		int incidentId = form.getIncidentid();
-		if(incidentId < 0) {
-			sb.append(" incidentId(" + incidentId + ") is not valid");
-		} else {
-			try {
-				if(EntityCacheMgr.getInstance().getIncidentEntity(incidentId) == null) {
-					sb.append(" incidentId(" + incidentId + ") is not valid ");
-				}
-			} catch(Exception e) {
-				sb.append(" error validating incidentId: " + e.getMessage());
-			}
-		}		
-		
-		int formTypeId = form.getFormtypeid();
-		if(formTypeId < 0) {
-			sb.append(" formTypeId(" + formTypeId + ") is not valid");
-		} else {
-			try {
-				if(EntityCacheMgr.getInstance().getFormTypeById(formTypeId) == null) {
-					sb.append(" formTypeId(" + formTypeId + ") is not valid");
-				}
-			} catch(Exception e) {
-				sb.append(" error validating formTypeId: " + e.getMessage());
-			}
-		}
-
-		return (sb.toString().isEmpty()) ? "" : "Form validation failed: " + sb.toString();
-	}
+        return response;
+    }
 	
 	/**
 	 *  Creation of a single Report item.
@@ -530,17 +506,15 @@ public class ReportServiceImpl implements ReportService {
 	private Response makeIllegalOpRequestResponse() {
 		ReportServiceResponse reportResponse = new ReportServiceResponse();
 		reportResponse.setMessage("Request ignored.") ;
-		Response response = Response.notModified("Illegal operation requested").
+		return Response.notModified("Illegal operation requested").
 				status(Status.FORBIDDEN).build();
-		return response;
 	}
 
 	private Response makeUnsupportedOpRequestResponse() {
 		ReportServiceResponse reportResponse = new ReportServiceResponse();
 		reportResponse.setMessage("Request ignored.") ;
-		Response response = Response.notModified("Unsupported operation requested").
+		return Response.notModified("Unsupported operation requested").
 				status(Status.NOT_IMPLEMENTED).build();
-		return response;
 	}
 
 	private Response validateReportType(String reportType, String htmlOp) {
@@ -635,7 +609,7 @@ public class ReportServiceImpl implements ReportService {
 					location.setUserid(Integer.parseInt(value));
 					user = userDao.getUserById(location.getUserid());
 					if(form.getUsersessionid() < 0) {
-						form.setUsersessionid(userSessDao.getUserSessionid(Integer.parseInt(value)));
+						form.setUsersessionid(userSessionDao.getUserSessionid(Integer.parseInt(value)));
 					}
 					report.setSenderUserId(user.getUserId());
 					msg.put("user", user.getUsername());
@@ -834,7 +808,7 @@ public class ReportServiceImpl implements ReportService {
 					// Removed this section because grabbing userid from currenusersessionid
 					
 					//user = userDao.getUserById(location.getUserid());
-					//int usersessid = userSessDao.getUserSessionid(location.getUserid());
+					//int usersessid = userSessionDao.getUserSessionid(location.getUserid());
 					//if(usersessid > 0 && form.getUsersessionid() < 0) {
 						//form.setUsersessionid(usersessid);						
 					//}
@@ -1005,7 +979,7 @@ public class ReportServiceImpl implements ReportService {
 					//location.setUserid(Integer.parseInt(value));
 					//user = db.readUser(location.getUserid());
 					//user = userDao.getUserById(location.getUserid());
-					//int usersessid = userSessDao.getUserSessionid(location.getUserid());
+					//int usersessid = userSessionDao.getUserSessionid(location.getUserid());
 					//if(usersessid > 0 && form.getUsersessionid() < 0) {
 					//	form.setUsersessionid(usersessid);						
 					//}
@@ -1133,7 +1107,7 @@ public class ReportServiceImpl implements ReportService {
             report.setLon(lla.x);
 
             APILogger.getInstance().i(CNAME, "Trying to insert uxoreport");
-            uxoreportDao.persistUxoreport(report);
+            uxoReportDao.persistUxoreport(report);
             APILogger.getInstance().i(CNAME, "Inserted uxoreport");
         } catch (Exception e)
         {
@@ -1166,7 +1140,7 @@ public class ReportServiceImpl implements ReportService {
 	/**
 	 * Get Rabbit producer to send message
 	 * @return
-	 * @throws IOException
+	 * @throws java.io.IOException
 	 */
 	private RabbitPubSubProducer getRabbitProducer() throws IOException {
 		if (rabbitProducer == null) {

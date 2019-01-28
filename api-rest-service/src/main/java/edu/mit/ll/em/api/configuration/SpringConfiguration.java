@@ -30,7 +30,9 @@
 package edu.mit.ll.em.api.configuration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import edu.mit.ll.nics.nicsdao.IncidentDAO;
+import edu.mit.ll.em.api.dataaccess.EntityCacheMgr;
+import edu.mit.ll.em.api.rs.validator.ReportValidator;
+import edu.mit.ll.nics.nicsdao.*;
 import edu.mit.ll.em.api.notification.NotifyFailedUserRegistration;
 import edu.mit.ll.em.api.notification.NotifySuccessfulUserRegistration;
 import edu.mit.ll.em.api.openam.OpenAmGatewayFactory;
@@ -42,9 +44,6 @@ import edu.mit.ll.em.api.util.CRSTransformer;
 import edu.mit.ll.nics.common.geoserver.api.GeoServer;
 import edu.mit.ll.nics.common.rabbitmq.RabbitFactory;
 import edu.mit.ll.nics.common.rabbitmq.RabbitPubSubProducer;
-import edu.mit.ll.nics.nicsdao.FormDAO;
-import edu.mit.ll.nics.nicsdao.JurisdictionDAO;
-import edu.mit.ll.nics.nicsdao.WeatherDAO;
 import edu.mit.ll.nics.nicsdao.impl.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -144,6 +143,11 @@ public class SpringConfiguration {
     }
 
     @Bean
+    public UxoreportDAO uxoReportDao() {
+        return new UxoreportDAOImpl();
+    }
+
+    @Bean
     public WorkspaceDAOImpl workspaceDao() {
         return new WorkspaceDAOImpl();
     }
@@ -151,6 +155,11 @@ public class SpringConfiguration {
     @Bean
     WeatherDAO weatherDao() throws NamingException {
         return new WeatherDAOImpl(this.dataFeedsJdbcTemplate());
+    }
+
+    @Bean
+    ReportValidator reportValidator() {
+        return new ReportValidator(EntityCacheMgr.getInstance());
     }
 
     @Bean

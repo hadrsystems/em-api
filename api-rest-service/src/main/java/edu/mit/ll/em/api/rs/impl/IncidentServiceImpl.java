@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2016, Massachusetts Institute of Technology (MIT)
+ * Copyright (c) 2008-2018, Massachusetts Institute of Technology (MIT)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -77,7 +77,7 @@ public class IncidentServiceImpl implements IncidentService {
 	
 	private static final String WORKING_MAP = "Working Map";
 	
-	private static final String DUPLICATE_NAME = "Incident name already exists.";
+	public static final String DUPLICATE_NAME = "Incident name already exists.";
 	
 	/** The Incident DAO */
 	private static final IncidentDAOImpl incidentDao = new IncidentDAOImpl();
@@ -96,7 +96,7 @@ public class IncidentServiceImpl implements IncidentService {
 	
 	private RabbitPubSubProducer rabbitProducer;
 	
-	
+
 	/**
 	 * Read and return all Incident items.
 	 * 
@@ -413,11 +413,11 @@ public class IncidentServiceImpl implements IncidentService {
 			}else{
 				incidentResponse.setMessage(Status.EXPECTATION_FAILED.getReasonPhrase());
 				incidentResponse.setCount(0);
-				response = Response.ok(incidentResponse).status(Status.INTERNAL_SERVER_ERROR).build();
+				return Response.ok(incidentResponse).status(Status.INTERNAL_SERVER_ERROR).build();
 			}
 		} catch (Exception e) {
 			incidentResponse.setMessage("postIncident failed: " + e.getMessage());
-			response = Response.ok(incidentResponse).status(Status.INTERNAL_SERVER_ERROR).build();
+			return Response.ok(incidentResponse).status(Status.INTERNAL_SERVER_ERROR).build();
 		}
 		
 		//Create default rooms
@@ -467,8 +467,6 @@ public class IncidentServiceImpl implements IncidentService {
 				} catch (Exception e) {
 					APILogger.getInstance().e(CNAME,"Failed to send new Incident email alerts");
 				}
-				
-				
 			} catch (Exception e) {
 				APILogger.getInstance().e(CNAME,"Failed to publish a new Incident message event");
 			}
