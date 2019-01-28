@@ -239,7 +239,7 @@ public class ReportServiceImpl implements ReportService {
 		return makeUnsupportedOpRequestResponse();		
 	}
 
-    public Response postROCAndIncident(int orgId, Form form) {
+    public Response postROCAndIncident(int workspaceId, int orgId, Form form) {
         ReportServiceResponse reportServiceResponse = new ReportServiceResponse();
         boolean isIncidentPersisted = false;
         User user = null;
@@ -254,7 +254,7 @@ public class ReportServiceImpl implements ReportService {
                 ValidationErrorResponse validationErrorResponse = new ValidationErrorResponse(Status.BAD_REQUEST.getStatusCode(), "Invalid input", validationErrors);
                 return Response.ok(validationErrorResponse).build();
             }
-            Response iResponse = incidentService.postIncident(SADisplayConstants.DEFAULT_WORKSPACE_ID, orgId, user.getUserId(), form.getIncident());
+            Response iResponse = incidentService.postIncident(workspaceId, orgId, user.getUserId(), form.getIncident());
             IncidentServiceResponse incidentResponse = (iResponse.getEntity() instanceof IncidentServiceResponse) ? (IncidentServiceResponse) iResponse.getEntity() : null;
 
             if(iResponse.getStatus() == Status.OK.getStatusCode()) {

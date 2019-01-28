@@ -68,7 +68,7 @@ public class ReportServiceImplPostROCReportAndIncidentTest {
     @Test
     public void postROCReportAndIncidentReturnsErrorResponseGivenInvalidUserSession() {
         form.setUsersessionid(-1);
-        Response response = reportServiceImpl.postROCAndIncident(orgId, form);
+        Response response = reportServiceImpl.postIncidentAndROC(orgId, form);
 
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         assertEquals("Unauthorized, session with userSessionId " + form.getUsersessionid() + " is not active.", ((APIResponse)response.getEntity()).getMessage());
@@ -76,7 +76,7 @@ public class ReportServiceImplPostROCReportAndIncidentTest {
 
         form.setUsersessionid(1);
         when(userDao.getActiveUsers(form.getUsersessionid())).thenReturn(null);
-        response = reportServiceImpl.postROCAndIncident(orgId, form);
+        response = reportServiceImpl.postIncidentAndROC(orgId, form);
 
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         APIResponse apiResponse = ((APIResponse)response.getEntity());
@@ -89,7 +89,7 @@ public class ReportServiceImplPostROCReportAndIncidentTest {
         Map<String, String> validationErrors = new HashMap<>();
         validationErrors.put("form", "validation error");
         when(reportValidator.validateForm(null, reportType, true)).thenReturn(validationErrors);
-        Response response = reportServiceImpl.postROCAndIncident(orgId, null);
+        Response response = reportServiceImpl.postIncidentAndROC(orgId, null);
 
         assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         assertEquals(validationErrors, ((ValidationErrorResponse)response.getEntity()).getValidationErrors());
@@ -106,7 +106,7 @@ public class ReportServiceImplPostROCReportAndIncidentTest {
 
         when(userDao.getUserBySessionId(form.getUsersessionid())).thenReturn(user);
         when(incidentService.postIncident(workspaceId, orgId, userId, incident)).thenReturn(Response.ok(incidentServiceResponse).status(Response.Status.INTERNAL_SERVER_ERROR).build());
-        Response returnedResponse = reportServiceImpl.postROCAndIncident(orgId, form);
+        Response returnedResponse = reportServiceImpl.postIncidentAndROC(orgId, form);
         assertEquals(response.getStatus(), returnedResponse.getStatus());
         assertEquals(apiResponse, (APIResponse)returnedResponse.getEntity());
     }
@@ -126,7 +126,7 @@ public class ReportServiceImplPostROCReportAndIncidentTest {
         Exception exception = new Exception("Test Exception");
         when(formDao.persistForm(form)).thenThrow(exception);
         String expectedErrorMessage = "Successfully created new incident with name " + form.getIncident().getIncidentname() + ", but failed to persist ROC, Error: " + exception.getMessage();
-        Response returnedMessage = reportServiceImpl.postROCAndIncident(orgId, form);
+        Response returnedMessage = reportServiceImpl.postIncidentAndROC(orgId, form);
         assertEquals(Response.Status.OK.getStatusCode(), returnedMessage.getStatus());
         APIResponse apiResponse = (APIResponse) returnedMessage.getEntity();
         assertEquals(expectedErrorMessage, apiResponse.getMessage());
@@ -149,7 +149,7 @@ public class ReportServiceImplPostROCReportAndIncidentTest {
         Form persistedForm =  new Form();
         when(formDao.persistForm(form)).thenReturn(persistedForm);
 
-        Response returnedMessage = reportServiceImpl.postROCAndIncident(orgId, form);
+        Response returnedMessage = reportServiceImpl.postIncidentAndROC(orgId, form);
         String topic = String.format("iweb.NICS.incident.%d.report.%s.new", form.getIncidentid(), reportType.toUpperCase());
         verify(rabbitProducer, times(1)).produce(topic, objectMapper.writeValueAsString(form));
         assertEquals(Response.Status.OK.getStatusCode(), returnedMessage.getStatus());
@@ -178,7 +178,7 @@ public class ReportServiceImplPostROCReportAndIncidentTest {
         String topic = String.format("iweb.NICS.incident.%d.report.%s.new", form.getIncidentid(), reportType.toUpperCase());
         doThrow(new RuntimeException("Test")).when(rabbitProducer).produce(topic, objectMapper.writeValueAsString(form));
 
-        Response returnedMessage = reportServiceImpl.postROCAndIncident(orgId, form);
+        Response returnedMessage = reportServiceImpl.postIncidentAndROC(orgId, form);
         assertEquals(Response.Status.OK.getStatusCode(), returnedMessage.getStatus());
         ReportServiceResponse reportServiceResponse = (ReportServiceResponse) returnedMessage.getEntity();
         assertEquals("success: persisted report", reportServiceResponse.getMessage());
