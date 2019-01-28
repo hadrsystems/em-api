@@ -67,8 +67,8 @@ public interface ReportService {
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	@Path("/{workspaceId}/{orgId}/ROC")
-	public Response postROCAndIncident(@PathParam("workspaceId") int workspaceId, @PathParam("orgId") int orgId, Form form);
+	@Path("/{orgId}/IncidentAndROC")
+	public Response postIncidentAndROC(@PathParam("orgId") int orgId, Form form);
 
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
