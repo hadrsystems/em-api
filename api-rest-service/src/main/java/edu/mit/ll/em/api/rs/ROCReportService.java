@@ -38,7 +38,7 @@ import javax.ws.rs.core.Response;
 @Path("/reports")
 public interface ROCReportService {
 
-    public static final String DEFAULT_SEARCH_RANGE_IN_MILES_FOR_WEATHER_DATA = "10.0";
+    public static final String DEFAULT_SEARCH_RANGE_IN_MILES_FOR_WEATHER_DATA = "20.0";
 
     @GET
     @Path(value = "/1/locationBasedData/")
