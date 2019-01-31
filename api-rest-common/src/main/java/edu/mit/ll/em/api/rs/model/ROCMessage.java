@@ -34,7 +34,7 @@ public class ROCMessage implements Cloneable, Comparable {
     private Double temperature;
     private Float relHumidity;
     private Float windSpeed;
-    private String windDirection;
+    private Double windDirection;
 
     public ROCMessage() {
     }
@@ -43,7 +43,7 @@ public class ROCMessage implements Cloneable, Comparable {
                       String incidentCause, String incidentType,
                       String location, String generalLocation, String county, String state,
                       String sra, String dpa, String jurisdiction,
-                      Double temperature, Float relHumidity, Float windSpeed, String windDirection) {
+                      Double temperature, Float relHumidity, Float windSpeed, Double windDirection) {
         this.dateCreated = dateCreated;
         this.rocDisplayName = rocDisplayName;
         this.reportType = reportType;
@@ -206,11 +206,11 @@ public class ROCMessage implements Cloneable, Comparable {
         this.windSpeed = windSpeed;
     }
 
-    public String getWindDirection() {
+    public Double getWindDirection() {
         return windDirection;
     }
 
-    public void setWindDirection(String windDirection) {
+    public void setWindDirection(Double windDirection) {
         this.windDirection = windDirection;
     }
 

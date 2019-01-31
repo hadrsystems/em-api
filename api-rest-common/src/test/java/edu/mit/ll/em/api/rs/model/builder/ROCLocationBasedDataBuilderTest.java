@@ -69,7 +69,7 @@ public class ROCLocationBasedDataBuilderTest {
         assertEquals(weather.getAirTemperature(), rocLocationBasedData.getTemperature());
         assertEquals(weather.getHumidity(), rocLocationBasedData.getRelHumidity());
         assertEquals(weather.getWindSpeed(), rocLocationBasedData.getWindSpeed());
-        assertEquals(weather.getDescriptiveWindDirection(), rocLocationBasedData.getWindDirection());
+        assertEquals(weather.getWindDirection(), rocLocationBasedData.getWindDirection());
     }
 
     @Test
@@ -103,6 +103,6 @@ public class ROCLocationBasedDataBuilderTest {
         assertEquals(weather.getAirTemperature(), rocLocationBasedData.getTemperature());
         assertEquals(weather.getHumidity(), rocLocationBasedData.getRelHumidity());
         assertEquals(weather.getWindSpeed(), rocLocationBasedData.getWindSpeed());
-        assertEquals(weather.getDescriptiveWindDirection(), rocLocationBasedData.getWindDirection());
+        assertEquals(weather.getWindDirection(), rocLocationBasedData.getWindDirection());
     }
 }

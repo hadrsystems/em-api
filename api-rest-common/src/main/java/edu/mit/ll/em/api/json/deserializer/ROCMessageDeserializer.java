@@ -69,7 +69,7 @@ public class ROCMessageDeserializer extends StdDeserializer<ROCMessage>  {
         Double temperature = reportNode.get("temperature") == null ? null : reportNode.get("temperature").asDouble();
         Float relHumidity = reportNode.get("relHumidity") == null ? null : Float.parseFloat(reportNode.get("relHumidity").asText());
         Float windSpeed = reportNode.get("windSpeed") == null ? null : Float.parseFloat(reportNode.get("windSpeed").asText());
-        String windDirection = reportNode.get("windDirection") == null ? null : reportNode.get("windDirection").asText();
+        Double windDirection = reportNode.get("windDirection") == null ? null : reportNode.get("windDirection").asDouble();
         return new ROCMessage(dateCreated, rocDisplayName, reportType, date, startTime,
                 incidentCause, incidentType,
                 location, generalLocation, county, state,

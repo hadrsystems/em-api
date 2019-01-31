@@ -33,7 +33,7 @@ public class ROCMessageDeserializerTest {
     private Double temperature = 92.0;
     private Float relHumidity = 10.0f;
     private Float windSpeed = 8.0f;
-    private String windDirection = "South";
+    private Double windDirection = 180.0;
     private Date dateCreated, startDate;
 
 
