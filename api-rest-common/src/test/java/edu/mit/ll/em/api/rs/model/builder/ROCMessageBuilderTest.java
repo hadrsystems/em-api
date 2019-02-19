@@ -1,6 +1,6 @@
 package edu.mit.ll.em.api.rs.model.builder;
 
-import java.util.Date;
+import java.util.*;
 
 import edu.mit.ll.em.api.rs.model.*;
 import edu.mit.ll.em.api.rs.model.Location;
@@ -16,7 +16,7 @@ public class ROCMessageBuilderTest {
     private String rocDisplayName = "name";
     private String reportType = "UPDATE";
     private String incidentCause = "cause";
-    private String incidentType = "Planned event";
+    private List<IncidentType> incidentTypes = Arrays.asList(new IncidentType(1, "Planned Event"), new IncidentType(2, "Fun Event"));
     private String generalLocation = "5 miles from xy";
     private Date startDateTime = new Date();
     private String sra = "sra";
@@ -27,7 +27,7 @@ public class ROCMessageBuilderTest {
 
     @Test
     public void buildsROCMessageWithGivenReportDetailsAndLeavesOtherFieldsBlank() {
-        ROCMessage rocMessage = new ROCMessageBuilder().buildReportDetails(rocDisplayName, reportType, incidentCause, incidentType, generalLocation)
+        ROCMessage rocMessage = new ROCMessageBuilder().buildReportDetails(rocDisplayName, reportType, incidentCause, incidentTypes, generalLocation)
                 .build();
         assertEquals(rocDisplayName, rocMessage.getRocDisplayName());
         assertEquals(reportType, rocMessage.getReportType());
@@ -128,7 +128,7 @@ public class ROCMessageBuilderTest {
                 .build();
 
         ROCMessage rocMessage = new ROCMessageBuilder()
-                .buildReportDetails(rocDisplayName, reportType, incidentCause, incidentType, generalLocation)
+                .buildReportDetails(rocDisplayName, reportType, incidentCause, incidentTypes, generalLocation)
                 .buildReportDates(startDateTime, startDateTime, startDateTime)
                 .buildLocationBasedData(rocLocationBasedData).build();
 

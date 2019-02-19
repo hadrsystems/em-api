@@ -2,17 +2,21 @@ package edu.mit.ll.em.api.rs.model.builder;
 
 import edu.mit.ll.em.api.rs.model.ROCLocationBasedData;
 import edu.mit.ll.em.api.rs.model.ROCMessage;
+import edu.mit.ll.nics.common.entity.IncidentType;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 public class ROCMessageBuilder {
     private ROCMessage rocMessage = new ROCMessage();
 
-    public ROCMessageBuilder buildReportDetails(String rocDisplayName, String reportType, String incidentCause, String incidentType, String generalLocation) {
+    public ROCMessageBuilder buildReportDetails(String rocDisplayName, String reportType, String incidentCause, List<IncidentType> incidentTypes, String generalLocation) {
         this.rocMessage.setRocDisplayName(rocDisplayName);
         this.rocMessage.setReportType(reportType);
         this.rocMessage.setIncidentCause(incidentCause);
-        this.rocMessage.setIncidentType(incidentType);
+        if(incidentTypes != null)
+            this.rocMessage.setIncidentTypes(new ArrayList<>(incidentTypes));
         this.rocMessage.setGeneralLocation(generalLocation);
         return this;
     }

@@ -12,6 +12,7 @@ import org.junit.Before;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class ROCMessageDeserializerTest {
 
@@ -71,7 +72,7 @@ public class ROCMessageDeserializerTest {
         assertEquals(rocMessage.getReportType(), reportType);
         assertEquals(rocMessage.getRocDisplayName(), rocDisplayName);
         assertEquals(rocMessage.getIncidentCause(), incidentCause);
-        assertEquals(rocMessage.getIncidentType(), incidentType);
+        assertTrue(rocMessage.getIncidentTypes().isEmpty());
         assertEquals(rocMessage.getDate(), startDate);
         assertEquals(rocMessage.getStartTime(), startDate);
         assertEquals(rocMessage.getLocation(), location);
@@ -98,7 +99,7 @@ public class ROCMessageDeserializerTest {
         assertNull(rocMessage.getReportType());
         assertNull(rocMessage.getRocDisplayName());
         assertNull(rocMessage.getIncidentCause());
-        assertNull(rocMessage.getIncidentType());
+        assertTrue(rocMessage.getIncidentTypes().isEmpty());
         assertNull(rocMessage.getDate());
         assertNull(rocMessage.getStartTime());
         assertNull(rocMessage.getLocation());

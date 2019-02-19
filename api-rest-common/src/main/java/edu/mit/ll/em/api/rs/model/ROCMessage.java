@@ -3,9 +3,12 @@ package edu.mit.ll.em.api.rs.model;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import edu.mit.ll.em.api.json.deserializer.ROCMessageDeserializer;
+import edu.mit.ll.nics.common.entity.IncidentType;
 import org.apache.commons.lang.builder.EqualsBuilder;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 @JsonDeserialize(using = ROCMessageDeserializer.class)
 public class ROCMessage implements Cloneable, Comparable {
@@ -17,7 +20,7 @@ public class ROCMessage implements Cloneable, Comparable {
     private Date date;
     private Date startTime;
     private String incidentCause;
-    private String incidentType;
+    private List<IncidentType> incidentTypes;
 
     //Location info pre populated based on incident location
     private String location; //specific location
@@ -40,7 +43,7 @@ public class ROCMessage implements Cloneable, Comparable {
     }
 
     public ROCMessage(Date dateCreated, String rocDisplayName, String reportType, Date date, Date startTime,
-                      String incidentCause, String incidentType,
+                      String incidentCause, List<IncidentType> incidentTypes,
                       String location, String generalLocation, String county, String state,
                       String sra, String dpa, String jurisdiction,
                       Double temperature, Float relHumidity, Float windSpeed, Double windDirection) {
@@ -50,7 +53,7 @@ public class ROCMessage implements Cloneable, Comparable {
         this.date = date;
         this.startTime = startTime;
         this.incidentCause = incidentCause;
-        this.incidentType = incidentType;
+        this.incidentTypes = (incidentTypes == null) ? new ArrayList<IncidentType>() : new ArrayList<IncidentType>(incidentTypes);
         this.location = location;
         this.generalLocation = generalLocation;
         this.county = county;
@@ -118,12 +121,12 @@ public class ROCMessage implements Cloneable, Comparable {
         this.incidentCause = incidentCause;
     }
 
-    public String getIncidentType() {
-        return incidentType;
+    public List<IncidentType> getIncidentTypes() {
+        return incidentTypes;
     }
 
-    public void setIncidentType(String incidentType) {
-        this.incidentType = incidentType;
+    public void setIncidentTypes(List<IncidentType> incidentTypes) {
+        this.incidentTypes = incidentTypes;
     }
 
     public String getLocation() {

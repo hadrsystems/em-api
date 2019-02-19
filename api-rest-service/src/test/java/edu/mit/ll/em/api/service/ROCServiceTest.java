@@ -7,14 +7,12 @@ import edu.mit.ll.em.api.rs.model.*;
 import edu.mit.ll.em.api.rs.model.Location;
 import edu.mit.ll.em.api.rs.model.builder.ROCLocationBasedDataBuilder;
 import edu.mit.ll.em.api.rs.model.builder.ROCMessageBuilder;
-import edu.mit.ll.nics.common.constants.SADisplayConstants;
 import edu.mit.ll.nics.common.entity.*;
 import edu.mit.ll.nics.common.entity.DirectProtectionArea;
 import edu.mit.ll.nics.nicsdao.FormDAO;
 import edu.mit.ll.nics.nicsdao.JurisdictionDAO;
 import edu.mit.ll.nics.nicsdao.WeatherDAO;
 import org.apache.commons.lang.StringUtils;
-import org.springframework.dao.DataAccessException;
 
 import java.io.IOException;
 import java.util.*;
@@ -24,7 +22,6 @@ import org.mockito.Mockito;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.dao.NonTransientDataAccessException;
-import org.springframework.util.CollectionUtils;
 
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -44,7 +41,7 @@ public class ROCServiceTest {
     private Incident incident = mock(Incident.class);
     private Double longitude = 1.0;
     private Double latitude = 1.0;
-    private List<String> incidentTypeNames = Arrays.asList("abc", "zyx");
+    private List<IncidentType> incidentTypes = Arrays.asList(new IncidentType(1, "Test Event1"), new IncidentType(2, "Test Event2"));
     private Double searchRange = 10.0;
     private Coordinate coordinate = new Coordinate(longitude, latitude);
     private String incidentDescription = "it is a planned event";
@@ -82,7 +79,7 @@ public class ROCServiceTest {
         when(incident.getIncidentname()).thenReturn(incidentName);
         when(incident.getLon()).thenReturn(longitude);
         when(incident.getLat()).thenReturn(latitude);
-        when(incident.getIncidentTypeNames()).thenReturn(incidentTypeNames);
+        when(incident.getIncidentTypes()).thenReturn(incidentTypes);
         when(incident.getDescription()).thenReturn(incidentDescription);
 
         when(geocodeAPIGateway.getLocationByGeocode(coordinate)).thenReturn(newLocation);
@@ -94,22 +91,22 @@ public class ROCServiceTest {
                     .buildJurisdictionData(jurisdiction)
                     .build();
 
-        rocMessageNew = new ROCMessageBuilder().buildReportDetails("name", "NEW", "cause", "planned eventx", "general location")
+        rocMessageNew = new ROCMessageBuilder().buildReportDetails("name", "NEW", "cause", null, "general location")
                     .buildReportDates(startDate, startDate, startDate)
                     .buildLocationBasedData(rocLocationBasedData)
                     .build();
 
-        rocMessageUpdate1 = new ROCMessageBuilder().buildReportDetails("name", "UPDATE", "cause update1", "planned eventx", "general location")
+        rocMessageUpdate1 = new ROCMessageBuilder().buildReportDetails("name", "UPDATE", "cause update1", null, "general location")
                 .buildReportDates(rocUpdate1CreateDate, startDate, startDate)
                 .buildLocationBasedData(rocLocationBasedData)
                 .build();
 
-        rocMessageUpdate2 = new ROCMessageBuilder().buildReportDetails("name", "UPDATE", "cause Update2", "planned eventx", "general location")
+        rocMessageUpdate2 = new ROCMessageBuilder().buildReportDetails("name", "UPDATE", "cause Update2", null, "general location")
                 .buildReportDates(rocUpdate2CreateDate, startDate, startDate)
                 .buildLocationBasedData(rocLocationBasedData)
                 .build();
 
-        rocMessageFinal = new ROCMessageBuilder().buildReportDetails("name", "FINAL", "cause", "planned eventx", "general location")
+        rocMessageFinal = new ROCMessageBuilder().buildReportDetails("name", "FINAL", "cause", null, "general location")
                 .buildReportDates(rocFinalCreateDate, startDate, startDate)
                 .buildLocationBasedData(rocLocationBasedData)
                 .build();
@@ -156,7 +153,7 @@ public class ROCServiceTest {
         assertEquals(incidentName, rocForm.getIncidentName());
         assertEquals(longitude, rocForm.getLongitude());
         assertEquals(latitude, rocForm.getLongitude());
-        assertEquals(StringUtils.join(incidentTypeNames, ", "), rocForm.getIncidentType());
+        assertEquals(incidentTypes, rocForm.getIncidentTypes());
         assertEquals(incidentDescription, rocForm.getIncidentDescription());
 
         assertNull(rocForm.getMessage().getRocDisplayName());
@@ -191,7 +188,7 @@ public class ROCServiceTest {
         assertEquals(incidentName, rocForm.getIncidentName());
         assertEquals(longitude, rocForm.getLongitude());
         assertEquals(latitude, rocForm.getLongitude());
-        assertEquals(StringUtils.join(incidentTypeNames, ", "), rocForm.getIncidentType());
+        assertEquals(incidentTypes, rocForm.getIncidentTypes());
         assertEquals(incidentDescription, rocForm.getIncidentDescription());
 
         assertEquals(rocMessageFinal.getRocDisplayName(), rocForm.getMessage().getRocDisplayName());
@@ -221,13 +218,13 @@ public class ROCServiceTest {
         assertEquals(incidentName, rocForm.getIncidentName());
         assertEquals(longitude, rocForm.getLongitude());
         assertEquals(latitude, rocForm.getLongitude());
-        assertEquals(StringUtils.join(incidentTypeNames, ", "), rocForm.getIncidentType());
+        assertEquals(incidentTypes, rocForm.getIncidentTypes());
         assertEquals(incidentDescription, rocForm.getIncidentDescription());
 
         assertEquals(rocMessageUpdate2.getRocDisplayName(), rocForm.getMessage().getRocDisplayName());
         assertEquals(rocMessageUpdate2.getIncidentCause(), rocForm.getMessage().getIncidentCause());
         assertEquals(rocMessageUpdate2.getGeneralLocation(), rocForm.getMessage().getGeneralLocation());
-        assertEquals(rocMessageUpdate2.getIncidentType(), rocForm.getMessage().getIncidentType());
+        assertEquals(rocMessageUpdate2.getIncidentTypes(), rocForm.getMessage().getIncidentTypes());
 
         assertTrue(rocForm.getMessage().getDateCreated().getTime() > rocMessageUpdate2.getDateCreated().getTime());
         assertEquals(startDate, rocForm.getMessage().getDate());

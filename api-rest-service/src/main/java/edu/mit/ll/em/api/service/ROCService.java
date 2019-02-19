@@ -13,7 +13,6 @@ import edu.mit.ll.nics.common.entity.Jurisdiction;
 import edu.mit.ll.nics.nicsdao.FormDAO;
 import edu.mit.ll.nics.nicsdao.JurisdictionDAO;
 import edu.mit.ll.nics.nicsdao.WeatherDAO;
-import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
 import java.util.Date;
@@ -101,7 +100,7 @@ public class ROCService {
 
     private ROCForm buildROCForm(Incident incident, ROCMessage existingROCMessage, ROCLocationBasedData rocLocationBasedData) {
         ROCMessage rocMessage = new ROCMessageBuilder()
-                .buildReportDetails(existingROCMessage.getRocDisplayName(), existingROCMessage.getReportType(), existingROCMessage.getIncidentCause(), existingROCMessage.getIncidentType(), existingROCMessage.getGeneralLocation())
+                .buildReportDetails(existingROCMessage.getRocDisplayName(), existingROCMessage.getReportType(), existingROCMessage.getIncidentCause(), existingROCMessage.getIncidentTypes(), existingROCMessage.getGeneralLocation())
                 .buildReportDates(new Date(), existingROCMessage.getDate(), existingROCMessage.getStartTime())
                 .buildLocationBasedData(rocLocationBasedData)
                 .build();
@@ -114,7 +113,7 @@ public class ROCService {
     private ROCForm buildNewROCForm(Incident incident, ROCLocationBasedData rocLocationBasedData) {
         Date dateCreated = new Date();
         ROCMessage rocMessage = new ROCMessageBuilder()
-                .buildReportDetails(null, "NEW", null, StringUtils.join(incident.getIncidentTypeNames(), ", "), null)
+                .buildReportDetails(null, "NEW", null, incident.getIncidentTypes(), null)
                 .buildReportDates(dateCreated, dateCreated, dateCreated)
                 .buildLocationBasedData(rocLocationBasedData)
                 .build();

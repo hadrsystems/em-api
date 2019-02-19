@@ -1,8 +1,12 @@
 package edu.mit.ll.em.api.rs.model;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 
 import edu.mit.ll.em.api.rs.model.builder.ROCMessageBuilder;
+import edu.mit.ll.nics.common.entity.IncidentType;
 import org.junit.Before;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
@@ -25,24 +29,25 @@ public class ROCMessageTest {
 
     @Before
     public void setup() {
+        List<IncidentType> incidentTypes = Arrays.asList(new IncidentType(1, "Planned Event"));
         rocMessageFirstFinal = new ROCMessageBuilder()
-                .buildReportDetails("name", "FINAL", "cause", "Planned Event", null)
+                .buildReportDetails("name", "FINAL", "cause", incidentTypes, null)
                 .buildReportDates(dateCreatedFirstFinal, rocStartDate, rocStartDate)
                 .build();
         rocMessageSecondFinal = new ROCMessageBuilder()
-                .buildReportDetails("name", "FINAL", "cause", "Planned Event", null)
+                .buildReportDetails("name", "FINAL", "cause", incidentTypes, null)
                 .buildReportDates(dateCreatedSecondFinal, rocStartDate, rocStartDate)
                 .build();
         rocMessageFirstUpdate = new ROCMessageBuilder()
-                .buildReportDetails("name", "UPDATE", "cause", "Planned Event", null)
+                .buildReportDetails("name", "UPDATE", "cause", incidentTypes, null)
                 .buildReportDates(dateCreatedFirstUpdate, rocStartDate, rocStartDate)
                 .build();
         rocMessageSecondUpdate = new ROCMessageBuilder()
-                .buildReportDetails("name", "UPDATE", "cause", "Planned Event", null)
+                .buildReportDetails("name", "UPDATE", "cause", incidentTypes, null)
                 .buildReportDates(dateCreatedSecondUpdate, rocStartDate, rocStartDate)
                 .build();
         rocMessageNullCreateDate = new ROCMessageBuilder()
-                .buildReportDetails("name", "UPDATE", "cause", "Planned Event", null)
+                .buildReportDetails("name", "UPDATE", "cause", incidentTypes, null)
                 .buildReportDates(null, null, null)
                 .build();
         rocMessageNullCreateDate.setDateCreated(null);
