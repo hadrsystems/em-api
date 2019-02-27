@@ -66,8 +66,10 @@ public class ROCMessageDeserializer extends StdDeserializer<ROCMessage>  {
         String dpa = reportNode.get("dpa") == null ? null : reportNode.get("dpa").asText();
         String jurisdiction = reportNode.get("jurisdiction") == null ? null : reportNode.get("jurisdiction").asText();
         Double temperature = reportNode.get("temperature") == null ? null : reportNode.get("temperature").asDouble();
-        Float relHumidity = reportNode.get("relHumidity") == null ? null : Float.parseFloat(reportNode.get("relHumidity").asText());
-        Float windSpeed = reportNode.get("windSpeed") == null ? null : Float.parseFloat(reportNode.get("windSpeed").asText());
+        JsonNode relHumidityJsonNode = reportNode.get("relHumidity");
+        Float relHumidity = (relHumidityJsonNode == null || relHumidityJsonNode.isNull() || StringUtils.isBlank(relHumidityJsonNode.asText()) ) ? null : Float.parseFloat(relHumidityJsonNode.asText());
+        JsonNode windSpeedJsonNode = reportNode.get("windSpeed");
+        Float windSpeed = (windSpeedJsonNode == null || windSpeedJsonNode.isNull() || StringUtils.isBlank(windSpeedJsonNode.asText())) ? null : Float.parseFloat(windSpeedJsonNode.asText());
         Double windDirection = reportNode.get("windDirection") == null ? null : reportNode.get("windDirection").asDouble();
         return new ROCMessage(dateCreated, rocDisplayName, reportType, date, startTime,
                 incidentCause, null,

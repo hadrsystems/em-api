@@ -117,6 +117,60 @@ public class ROCMessageDeserializerTest {
     }
 
     @Test
+    public void deserializeROCMessageCanHandelEmptyStrings() throws IOException {
+        String rocJsonWithEmptyString = "{\"message\":{\"datecreated\":\"" + dateCreatedStr + "\"" +
+                ",\"report\":{\"reportType\":\"" + reportType + "\"" +
+                ",\"date\":\"" + startDateStr + "\",\"starttime\":\"" + startDateStr + "\"" +
+                ",\"formTypeId\":1,\"reportBy\":\"sneha nagole\",\"email\":\"sneha.nagole@tabordasolutions.com\"" +
+                ",\"rocDisplayName\":\"" + rocDisplayName + "\",\"county\":\"" + county + "\"" +
+                ",\"state\":\"" + state + "\"" +
+                ",\"location\":\"" + location + "\"" +
+                ",\"generalLocation\":\"" + generalLocation + "\"" +
+                ",\"sra\":\"" + sra + "\"" +
+                ",\"dpa\":\"" + dpa + "\"" +
+                ",\"jurisdiction\":\"" + jurisdiction + "\"" +
+                ",\"incidentType\":\"" + incidentType + "\"" +
+                ",\"incidentCause\":\"" + incidentCause + "\"" +
+                ",\"scope\":\"2\",\"spreadRate\":\"2\",\"percentContained\":\"1\"" +
+                ",\"temperature\":\"\"" +
+                ",\"relHumidity\":\"\"" +
+                ",\"windSpeed\":\"\"" +
+                ",\"windDirection\":\"" + windDirection + "\",\"predictedWeather\":\"mild\",\"evacuations\":\"0\",\"structuresThreat\":\"0\",\"infrastructuresThreat\":\"0\",\"comments\":\"lkjljklj - Final 1\",\"simplifiedEmail\":true,\"airAttack\":\"none\"" +
+                "}}}\"";
+        ROCMessage rocMessage = objectMapper.readValue(rocJsonWithEmptyString, ROCMessage.class);
+        assertEquals(rocMessage.getTemperature(), Double.valueOf(0.0));
+        assertNull(rocMessage.getRelHumidity());
+        assertNull(rocMessage.getWindSpeed());
+    }
+
+    @Test
+    public void deserializeROCMessageCanHandelNulls() throws IOException {
+        String rocJsonWithEmptyString = "{\"message\":{\"datecreated\":\"" + dateCreatedStr + "\"" +
+                ",\"report\":{\"reportType\":\"" + reportType + "\"" +
+                ",\"date\":\"" + startDateStr + "\",\"starttime\":\"" + startDateStr + "\"" +
+                ",\"formTypeId\":1,\"reportBy\":\"sneha nagole\",\"email\":\"sneha.nagole@tabordasolutions.com\"" +
+                ",\"rocDisplayName\":\"" + rocDisplayName + "\",\"county\":\"" + county + "\"" +
+                ",\"state\":\"" + state + "\"" +
+                ",\"location\":\"" + location + "\"" +
+                ",\"generalLocation\":\"" + generalLocation + "\"" +
+                ",\"sra\":\"" + sra + "\"" +
+                ",\"dpa\":\"" + dpa + "\"" +
+                ",\"jurisdiction\":\"" + jurisdiction + "\"" +
+                ",\"incidentType\":\"" + incidentType + "\"" +
+                ",\"incidentCause\":\"" + incidentCause + "\"" +
+                ",\"scope\":\"2\",\"spreadRate\":\"2\",\"percentContained\":\"1\"" +
+                ",\"temperature\": null" +
+                ",\"relHumidity\": null" +
+                ",\"windSpeed\": null" +
+                ",\"windDirection\":\"" + windDirection + "\",\"predictedWeather\":\"mild\",\"evacuations\":\"0\",\"structuresThreat\":\"0\",\"infrastructuresThreat\":\"0\",\"comments\":\"lkjljklj - Final 1\",\"simplifiedEmail\":true,\"airAttack\":\"none\"" +
+                "}}}\"";
+        ROCMessage rocMessage = objectMapper.readValue(rocJsonWithEmptyString, ROCMessage.class);
+        assertEquals(rocMessage.getTemperature(), Double.valueOf(0.0));
+        assertNull(rocMessage.getRelHumidity());
+        assertNull(rocMessage.getWindSpeed());
+    }
+
+    @Test
     public void deserializerReturnsROCMessageWithBlankReportFields() throws IOException {
         String rocJson = "{\"message\":{\"datecreated\":\"" + dateCreatedStr + "\"}}";
         ROCMessage rocMessage = objectMapper.readValue(rocJson, ROCMessage.class);

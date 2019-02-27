@@ -91,6 +91,9 @@ public class ROCService {
             ROCLocationBasedData rocLocationBasedData = this.getROCLocationBasedData(new Coordinate(incident.getLon(), incident.getLat()), searchRange);
             rocForm = buildROCForm(incident, editROCMessage, rocLocationBasedData);
         } else {
+            Coordinate coordinate = new Coordinate(incident.getLon(), incident.getLat());
+            Weather weather = weatherDao.getWeatherDataFromLocation(coordinate, searchRange);
+            editROCMessage.updateWeatherInformation(weather);
             rocForm = new ROCFormBuilder().buildIncidentData(incident)
                     .buildROCMessage(editROCMessage)
                     .build();

@@ -238,14 +238,13 @@ public class ROCServiceTest {
         assertEquals(location.getCounty(), rocForm.getMessage().getCounty());
         assertEquals(location.getState(), rocForm.getMessage().getState());
 
-        assertEquals(weather.getAirTemperature(), rocForm.getMessage().getTemperature());
-        assertEquals(weather.getHumidity(), rocForm.getMessage().getRelHumidity());
-        assertEquals(weather.getWindSpeed(), rocForm.getMessage().getWindSpeed());
-        assertEquals(weather.getWindDirection(), rocForm.getMessage().getWindDirection());
+        assertEquals(newWeather.getAirTemperature(), rocForm.getMessage().getTemperature());
+        assertEquals(newWeather.getHumidity(), rocForm.getMessage().getRelHumidity());
+        assertEquals(newWeather.getWindSpeed(), rocForm.getMessage().getWindSpeed());
+        assertEquals(newWeather.getWindDirection(), rocForm.getMessage().getWindDirection());
 
         verifyZeroInteractions(geocodeAPIGateway);
         verifyZeroInteractions(jurisdictionDAO);
-        verifyZeroInteractions(weatherDao);
     }
 
     @Test
@@ -263,7 +262,6 @@ public class ROCServiceTest {
 
         verifyZeroInteractions(geocodeAPIGateway);
         verifyZeroInteractions(jurisdictionDAO);
-        verifyZeroInteractions(weatherDao);
     }
 
     @Test

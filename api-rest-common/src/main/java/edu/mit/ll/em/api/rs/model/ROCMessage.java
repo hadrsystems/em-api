@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import edu.mit.ll.em.api.json.deserializer.ROCMessageDeserializer;
 import edu.mit.ll.nics.common.entity.IncidentType;
+import edu.mit.ll.nics.common.entity.Weather;
 import org.apache.commons.lang.builder.EqualsBuilder;
 
 import java.util.ArrayList;
@@ -215,6 +216,15 @@ public class ROCMessage implements Cloneable, Comparable {
 
     public void setWindDirection(Double windDirection) {
         this.windDirection = windDirection;
+    }
+
+    public void updateWeatherInformation(Weather weather) {
+        if(weather != null) {
+            this.setTemperature(weather.getAirTemperature());
+            this.setRelHumidity(weather.getHumidity());
+            this.setWindSpeed(weather.getWindSpeed());
+            this.setWindDirection(weather.getWindDirection());
+        }
     }
 
     public boolean equals(Object other) {
