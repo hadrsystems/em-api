@@ -3,7 +3,6 @@ package edu.mit.ll.em.api.rs.model;
 public class ROCLocationBasedData {
 
     private String location; //specific location
-    private String generalLocation; //general location
     private String county;
     private String state;
 
@@ -23,10 +22,6 @@ public class ROCLocationBasedData {
 
     public String getLocation() {
         return location;
-    }
-
-    public String getGeneralLocation() {
-        return generalLocation;
     }
 
     public String getCounty() {
@@ -67,10 +62,6 @@ public class ROCLocationBasedData {
 
     public void setLocation(String location) {
         this.location = location;
-    }
-
-    public void setGeneralLocation(String generalLocation) {
-        this.generalLocation = generalLocation;
     }
 
     public void setCounty(String county) {

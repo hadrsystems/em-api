@@ -27,28 +27,12 @@ public class ROCForm {
     }
 
     public ROCForm(Integer incidentId, String incidentName, Double longitude, Double latitude,
-                   List<IncidentType> incidentTypes, String incidentDescription, String incidentCause,
-                   ROCMessage rocMessage) {
+                   List<IncidentType> incidentTypes, ROCMessage rocMessage) {
         this.incidentId = incidentId;
         this.incidentName = incidentName;
         this.longitude = longitude;
         this.latitude = latitude;
         this.incidentTypes = new ArrayList<>(incidentTypes);
-        this.incidentDescription = incidentDescription;
-        this.incidentCause = incidentCause;
-        this.message = rocMessage;
-    }
-
-    public ROCForm(Integer incidentId, String incidentName, Double longitude, Double latitude,
-                   List<IncidentType> incidentTypes, String incidentDescription,
-                   ROCMessage rocMessage) {
-        this.incidentId = incidentId;
-        this.incidentName = incidentName;
-        this.longitude = longitude;
-        this.latitude = latitude;
-        this.incidentTypes = new ArrayList<>(incidentTypes);
-        this.incidentDescription = incidentDescription;
-        this.incidentCause = incidentCause;
         this.message = rocMessage;
     }
 
@@ -70,12 +54,6 @@ public class ROCForm {
 
     public List<IncidentType> getIncidentTypes() {
         return incidentTypes;
-    }
-
-    public String getIncidentDescription() { return incidentDescription; }
-
-    public String getIncidentCause() {
-        return incidentCause;
     }
 
     public ROCMessage getMessage() {
@@ -104,14 +82,6 @@ public class ROCForm {
 
     public void setIncidentTypes(List<IncidentType> incidentTypes) {
         this.incidentTypes = new ArrayList<>(incidentTypes);
-    }
-
-    public void setIncidentDescription(String incidentDescription) {
-        this.incidentDescription = incidentDescription;
-    }
-
-    public void setIncidentCause(String incidentCause) {
-        this.incidentCause = incidentCause;
     }
 
     public void setMessage(ROCMessage message) {

@@ -13,10 +13,10 @@ import static org.junit.Assert.assertNull;
 
 public class ROCMessageBuilderTest {
 
-    private String rocDisplayName = "name";
+    private String additionalAffectedCounties = "name";
     private String reportType = "UPDATE";
-    private String incidentCause = "cause";
-    private List<IncidentType> incidentTypes = Arrays.asList(new IncidentType(1, "Planned Event"), new IncidentType(2, "Fun Event"));
+    private String fuelTypes = "cause";
+    private String additionalFuelTypes = "other fuel types";
     private String generalLocation = "5 miles from xy";
     private Date startDateTime = new Date();
     private String sra = "sra";
@@ -27,12 +27,13 @@ public class ROCMessageBuilderTest {
 
     @Test
     public void buildsROCMessageWithGivenReportDetailsAndLeavesOtherFieldsBlank() {
-        ROCMessage rocMessage = new ROCMessageBuilder().buildReportDetails(rocDisplayName, reportType, incidentCause, incidentTypes, generalLocation)
+        ROCMessage rocMessage = new ROCMessageBuilder().buildReportDetails(reportType, additionalAffectedCounties, generalLocation, fuelTypes, additionalFuelTypes)
                 .build();
-        assertEquals(rocDisplayName, rocMessage.getRocDisplayName());
         assertEquals(reportType, rocMessage.getReportType());
-        assertEquals(incidentCause, rocMessage.getIncidentCause());
+        assertEquals(additionalAffectedCounties, rocMessage.getAdditionalAffectedCounties());
         assertEquals(generalLocation, rocMessage.getGeneralLocation());
+        assertEquals(fuelTypes, rocMessage.getFuelTypes());
+        assertEquals(additionalFuelTypes, rocMessage.getOtherFuelTypes());
 
         assertNull(rocMessage.getDateCreated());
         assertNull(rocMessage.getDate());
@@ -58,10 +59,11 @@ public class ROCMessageBuilderTest {
         assertEquals(startDateTime, rocMessage.getDate());
         assertEquals(startDateTime, rocMessage.getStartTime());
 
-        assertNull(rocMessage.getRocDisplayName());
         assertNull(rocMessage.getReportType());
-        assertNull(rocMessage.getIncidentCause());
+        assertNull(rocMessage.getAdditionalAffectedCounties());
         assertNull(rocMessage.getGeneralLocation());
+        assertNull(rocMessage.getFuelTypes());
+        assertNull(rocMessage.getOtherFuelTypes());
 
         assertNull(rocMessage.getLocation());
         assertNull(rocMessage.getCounty());
@@ -94,10 +96,11 @@ public class ROCMessageBuilderTest {
         assertEquals(rocLocationBasedData.getWindSpeed(), rocMessage.getWindSpeed());
         assertEquals(rocLocationBasedData.getWindDirection(), rocMessage.getWindDirection());
 
-        assertNull(rocMessage.getRocDisplayName());
         assertNull(rocMessage.getReportType());
-        assertNull(rocMessage.getIncidentCause());
+        assertNull(rocMessage.getAdditionalAffectedCounties());
         assertNull(rocMessage.getGeneralLocation());
+        assertNull(rocMessage.getFuelTypes());
+        assertNull(rocMessage.getOtherFuelTypes());
 
         assertNull(rocMessage.getDateCreated());
         assertNull(rocMessage.getDate());
@@ -128,14 +131,15 @@ public class ROCMessageBuilderTest {
                 .build();
 
         ROCMessage rocMessage = new ROCMessageBuilder()
-                .buildReportDetails(rocDisplayName, reportType, incidentCause, incidentTypes, generalLocation)
+                .buildReportDetails(reportType, additionalAffectedCounties, generalLocation, fuelTypes, additionalFuelTypes)
                 .buildReportDates(startDateTime, startDateTime, startDateTime)
                 .buildLocationBasedData(rocLocationBasedData).build();
 
-        assertEquals(rocDisplayName, rocMessage.getRocDisplayName());
         assertEquals(reportType, rocMessage.getReportType());
-        assertEquals(incidentCause, rocMessage.getIncidentCause());
+        assertEquals(additionalAffectedCounties, rocMessage.getAdditionalAffectedCounties());
         assertEquals(generalLocation, rocMessage.getGeneralLocation());
+        assertEquals(fuelTypes, rocMessage.getFuelTypes());
+        assertEquals(additionalFuelTypes, rocMessage.getOtherFuelTypes());
 
         assertEquals(startDateTime, rocMessage.getDateCreated());
         assertEquals(startDateTime, rocMessage.getDate());

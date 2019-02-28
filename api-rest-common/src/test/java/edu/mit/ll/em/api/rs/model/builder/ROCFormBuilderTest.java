@@ -64,7 +64,6 @@ public class ROCFormBuilderTest {
         assertEquals(rocForm.getLongitude(), (Double) incident.getLon());
         assertEquals(rocForm.getLatitude(), (Double) incident.getLat());
         assertEquals(incident.getIncidentTypes(), rocForm.getIncidentTypes());
-        assertEquals(rocForm.getIncidentDescription(), incident.getDescription());
 
         assertNull(rocForm.getMessage());
     }
@@ -79,7 +78,6 @@ public class ROCFormBuilderTest {
         assertNull(rocForm.getLongitude());
         assertNull(rocForm.getLatitude());
         assertNull(rocForm.getIncidentTypes());
-        assertNull(rocForm.getIncidentDescription());
     }
 
     @Test
@@ -95,7 +93,6 @@ public class ROCFormBuilderTest {
         assertEquals(rocForm.getLatitude(), (Double) incident.getLat());
 
         assertEquals(incident.getIncidentTypes(), rocForm.getIncidentTypes());
-        assertEquals(rocForm.getIncidentDescription(), incident.getDescription());
         assertEquals(rocMessage, rocForm.getMessage());
     }
 }

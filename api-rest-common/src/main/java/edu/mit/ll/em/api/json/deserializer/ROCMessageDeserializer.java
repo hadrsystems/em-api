@@ -42,9 +42,7 @@ public class ROCMessageDeserializer extends StdDeserializer<ROCMessage>  {
             return rocMessage;
         }
 
-        String rocDisplayName = reportNode.get("rocDisplayName") == null ? null : reportNode.get("rocDisplayName").asText();
         String reportType = reportNode.get("reportType") == null ? null : reportNode.get("reportType").asText();
-        String incidentCause = reportNode.get("incidentCause") == null ? null : reportNode.get("incidentCause").asText();
         String dateStr = reportNode.get("date") == null ? null : reportNode.get("date").asText();
         Date date, startTime;
         try {
@@ -61,6 +59,7 @@ public class ROCMessageDeserializer extends StdDeserializer<ROCMessage>  {
         String location = reportNode.get("location") == null ? null : reportNode.get("location").asText();
         String generalLocation = reportNode.get("generalLocation") == null ? null : reportNode.get("generalLocation").asText();
         String county = reportNode.get("county") == null ? null : reportNode.get("county").asText();
+        String additionalAffectedCounties = reportNode.get("additionalAffectedCounties") == null ? null : reportNode.get("additionalAffectedCounties").asText();
         String state = reportNode.get("state") == null ? null : reportNode.get("state").asText();
         String sra = reportNode.get("sra") == null ? null : reportNode.get("sra").asText();
         String dpa = reportNode.get("dpa") == null ? null : reportNode.get("dpa").asText();
@@ -71,10 +70,12 @@ public class ROCMessageDeserializer extends StdDeserializer<ROCMessage>  {
         JsonNode windSpeedJsonNode = reportNode.get("windSpeed");
         Float windSpeed = (windSpeedJsonNode == null || windSpeedJsonNode.isNull() || StringUtils.isBlank(windSpeedJsonNode.asText())) ? null : Float.parseFloat(windSpeedJsonNode.asText());
         Double windDirection = reportNode.get("windDirection") == null ? null : reportNode.get("windDirection").asDouble();
-        return new ROCMessage(dateCreated, rocDisplayName, reportType, date, startTime,
-                incidentCause, null,
-                location, generalLocation, county, state,
+        String fuelTypes = reportNode.get("fuelTypes") == null ? null : reportNode.get("fuelTypes").asText();
+        String otherFuelTypes = reportNode.get("otherFuelTypes") == null ? null : reportNode.get("otherFuelTypes").asText();
+        return new ROCMessage(dateCreated, reportType, date, startTime,
+                location, generalLocation, county, additionalAffectedCounties, state,
                 sra, dpa, jurisdiction,
-                temperature, relHumidity, windSpeed, windDirection);
+                temperature, relHumidity, windSpeed, windDirection,
+                fuelTypes, otherFuelTypes);
     }
 }

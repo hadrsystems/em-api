@@ -14,7 +14,6 @@ public class ROCFormBuilder {
             rocForm.setLongitude(incident.getLon());
             rocForm.setLatitude(incident.getLat());
             rocForm.setIncidentTypes(incident.getIncidentTypes());
-            rocForm.setIncidentDescription(incident.getDescription());
         }
         return this;
     }

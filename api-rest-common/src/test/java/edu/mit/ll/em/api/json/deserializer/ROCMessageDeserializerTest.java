@@ -20,11 +20,10 @@ public class ROCMessageDeserializerTest {
     private static final SimpleDateFormat startDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
     private String dateCreatedStr = "2018-09-10 10:32:16";
     private String reportType = "FINAL";
-    private String rocDisplayName = "NAME";
-    private String incidentCause = "CAUSE";
     private String incidentType = "Planned event";
     private String startDateStr = "2018-09-10T17:10:49.881Z";
     private String county = "sacramento";
+    private String additionalAffectedCounties = "addtl counties";
     private String state = "state";
     private String location = "88 hello dr, Folsom, ca";
     private String generalLocation = "20 miles south of x";
@@ -35,6 +34,8 @@ public class ROCMessageDeserializerTest {
     private Float relHumidity = 10.0f;
     private Float windSpeed = 8.0f;
     private Double windDirection = 180.0;
+    private String fuelTypes = "grass";
+    private String otherFuelTypes = "other types";
     private Date dateCreated, startDate;
 
 
@@ -42,7 +43,7 @@ public class ROCMessageDeserializerTest {
             ",\"report\":{\"reportType\":\"" + reportType + "\"" +
             ",\"date\":\"" + startDateStr + "\",\"starttime\":\"" + startDateStr + "\"" +
             ",\"formTypeId\":1,\"reportBy\":\"sneha nagole\",\"email\":\"sneha.nagole@tabordasolutions.com\"" +
-            ",\"rocDisplayName\":\"" + rocDisplayName + "\",\"county\":\"" + county + "\"" +
+            ",\"additionalAffectedCounties\":\"" + additionalAffectedCounties + "\",\"county\":\"" + county + "\"" +
             ",\"state\":\"" + state + "\"" +
             ",\"location\":\"" + location + "\"" +
             ",\"generalLocation\":\"" + generalLocation + "\"" +
@@ -50,7 +51,8 @@ public class ROCMessageDeserializerTest {
             ",\"dpa\":\"" + dpa + "\"" +
             ",\"jurisdiction\":\"" + jurisdiction + "\"" +
             ",\"incidentType\":\"" + incidentType + "\"" +
-            ",\"incidentCause\":\"" + incidentCause + "\"" +
+            ",\"fuelTypes\":\"" + fuelTypes + "\"" +
+            ",\"otherFuelTypes\":\"" + otherFuelTypes + "\"" +
             ",\"scope\":\"2\",\"spreadRate\":\"2\",\"percentContained\":\"1\"" +
             ",\"temperature\":\"" + temperature + "\"" +
             ",\"relHumidity\":\"" + relHumidity + "\"" +
@@ -70,9 +72,10 @@ public class ROCMessageDeserializerTest {
         ROCMessage rocMessage = objectMapper.readValue(rocJson, ROCMessage.class);
         assertEquals(rocMessage.getDateCreated(), dateCreated);
         assertEquals(rocMessage.getReportType(), reportType);
-        assertEquals(rocMessage.getRocDisplayName(), rocDisplayName);
-        assertEquals(rocMessage.getIncidentCause(), incidentCause);
-        assertTrue(rocMessage.getIncidentTypes().isEmpty());
+        assertEquals(rocMessage.getAdditionalAffectedCounties(), additionalAffectedCounties);
+        assertEquals(rocMessage.getGeneralLocation(), generalLocation);
+        assertEquals(rocMessage.getFuelTypes(), fuelTypes);
+        assertEquals(rocMessage.getOtherFuelTypes(), otherFuelTypes);
         assertEquals(rocMessage.getDate(), startDate);
         assertEquals(rocMessage.getStartTime(), startDate);
         assertEquals(rocMessage.getLocation(), location);
@@ -82,6 +85,8 @@ public class ROCMessageDeserializerTest {
         assertEquals(rocMessage.getSra(), sra);
         assertEquals(rocMessage.getDpa(), dpa);
         assertEquals(rocMessage.getJurisdiction(), jurisdiction);
+        assertEquals(rocMessage.getFuelTypes(), fuelTypes);
+        assertEquals(rocMessage.getOtherFuelTypes(), otherFuelTypes);
 
         assertEquals(rocMessage.getTemperature(), temperature);
         assertEquals(rocMessage.getRelHumidity(), relHumidity);
@@ -97,9 +102,10 @@ public class ROCMessageDeserializerTest {
         ROCMessage rocMessage = objectMapper.readValue(rocJsonWithEmptyReportSection, ROCMessage.class);
         assertEquals(rocMessage.getDateCreated(), dateCreated);
         assertNull(rocMessage.getReportType());
-        assertNull(rocMessage.getRocDisplayName());
-        assertNull(rocMessage.getIncidentCause());
-        assertTrue(rocMessage.getIncidentTypes().isEmpty());
+        assertNull(rocMessage.getAdditionalAffectedCounties());
+        assertNull(rocMessage.getGeneralLocation());
+        assertNull(rocMessage.getFuelTypes());
+        assertNull(rocMessage.getOtherFuelTypes());
         assertNull(rocMessage.getDate());
         assertNull(rocMessage.getStartTime());
         assertNull(rocMessage.getLocation());
@@ -109,6 +115,8 @@ public class ROCMessageDeserializerTest {
         assertNull(rocMessage.getSra());
         assertNull(rocMessage.getDpa());
         assertNull(rocMessage.getJurisdiction());
+        assertNull(rocMessage.getFuelTypes());
+        assertNull(rocMessage.getOtherFuelTypes());
 
         assertNull(rocMessage.getTemperature());
         assertNull(rocMessage.getRelHumidity());
@@ -122,7 +130,7 @@ public class ROCMessageDeserializerTest {
                 ",\"report\":{\"reportType\":\"" + reportType + "\"" +
                 ",\"date\":\"" + startDateStr + "\",\"starttime\":\"" + startDateStr + "\"" +
                 ",\"formTypeId\":1,\"reportBy\":\"sneha nagole\",\"email\":\"sneha.nagole@tabordasolutions.com\"" +
-                ",\"rocDisplayName\":\"" + rocDisplayName + "\",\"county\":\"" + county + "\"" +
+                ",\"additionalAffectedCounties\":\"" + additionalAffectedCounties + "\",\"county\":\"" + county + "\"" +
                 ",\"state\":\"" + state + "\"" +
                 ",\"location\":\"" + location + "\"" +
                 ",\"generalLocation\":\"" + generalLocation + "\"" +
@@ -130,7 +138,8 @@ public class ROCMessageDeserializerTest {
                 ",\"dpa\":\"" + dpa + "\"" +
                 ",\"jurisdiction\":\"" + jurisdiction + "\"" +
                 ",\"incidentType\":\"" + incidentType + "\"" +
-                ",\"incidentCause\":\"" + incidentCause + "\"" +
+                ",\"fuelTypes\":\"" + fuelTypes + "\"" +
+                ",\"otherFuelTypes\":\"" + otherFuelTypes + "\"" +
                 ",\"scope\":\"2\",\"spreadRate\":\"2\",\"percentContained\":\"1\"" +
                 ",\"temperature\":\"\"" +
                 ",\"relHumidity\":\"\"" +
@@ -149,7 +158,7 @@ public class ROCMessageDeserializerTest {
                 ",\"report\":{\"reportType\":\"" + reportType + "\"" +
                 ",\"date\":\"" + startDateStr + "\",\"starttime\":\"" + startDateStr + "\"" +
                 ",\"formTypeId\":1,\"reportBy\":\"sneha nagole\",\"email\":\"sneha.nagole@tabordasolutions.com\"" +
-                ",\"rocDisplayName\":\"" + rocDisplayName + "\",\"county\":\"" + county + "\"" +
+                ",\"additionalAffectedCounties\":\"" + additionalAffectedCounties + "\",\"county\":\"" + county + "\"" +
                 ",\"state\":\"" + state + "\"" +
                 ",\"location\":\"" + location + "\"" +
                 ",\"generalLocation\":\"" + generalLocation + "\"" +
@@ -157,7 +166,8 @@ public class ROCMessageDeserializerTest {
                 ",\"dpa\":\"" + dpa + "\"" +
                 ",\"jurisdiction\":\"" + jurisdiction + "\"" +
                 ",\"incidentType\":\"" + incidentType + "\"" +
-                ",\"incidentCause\":\"" + incidentCause + "\"" +
+                ",\"fuelTypes\":\"" + fuelTypes + "\"" +
+                ",\"additionalFuelTypes\":\"" + otherFuelTypes + "\"" +
                 ",\"scope\":\"2\",\"spreadRate\":\"2\",\"percentContained\":\"1\"" +
                 ",\"temperature\": null" +
                 ",\"relHumidity\": null" +

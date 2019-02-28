@@ -29,25 +29,24 @@ public class ROCMessageTest {
 
     @Before
     public void setup() {
-        List<IncidentType> incidentTypes = Arrays.asList(new IncidentType(1, "Planned Event"));
         rocMessageFirstFinal = new ROCMessageBuilder()
-                .buildReportDetails("name", "FINAL", "cause", incidentTypes, null)
+                .buildReportDetails("FINAL", null, "generalLocation", "grass", "other fuel type")
                 .buildReportDates(dateCreatedFirstFinal, rocStartDate, rocStartDate)
                 .build();
         rocMessageSecondFinal = new ROCMessageBuilder()
-                .buildReportDetails("name", "FINAL", "cause", incidentTypes, null)
+                .buildReportDetails("FINAL", "county1, county2", "general location1", "brass", "other fuel type1")
                 .buildReportDates(dateCreatedSecondFinal, rocStartDate, rocStartDate)
                 .build();
         rocMessageFirstUpdate = new ROCMessageBuilder()
-                .buildReportDetails("name", "UPDATE", "cause", incidentTypes, null)
+                .buildReportDetails("UPDATE", "county1, county2", "general location2", "brass", "other fuel type2")
                 .buildReportDates(dateCreatedFirstUpdate, rocStartDate, rocStartDate)
                 .build();
         rocMessageSecondUpdate = new ROCMessageBuilder()
-                .buildReportDetails("name", "UPDATE", "cause", incidentTypes, null)
+                .buildReportDetails("UPDATE", "county1, county2", "general location3", "brass", "other fuel type3")
                 .buildReportDates(dateCreatedSecondUpdate, rocStartDate, rocStartDate)
                 .build();
         rocMessageNullCreateDate = new ROCMessageBuilder()
-                .buildReportDetails("name", "UPDATE", "cause", incidentTypes, null)
+                .buildReportDetails("UPDATE", "county1, county2", "general location4", "brass", "other fuel type4")
                 .buildReportDates(null, null, null)
                 .build();
         rocMessageNullCreateDate.setDateCreated(null);
@@ -84,7 +83,7 @@ public class ROCMessageTest {
     @Test
     public void compareToReturnsZeroOnComparingROCMessagesWithNullCreateDates() throws Exception {
         ROCMessage rocMessageNullCreateDate2 = (ROCMessage) rocMessageNullCreateDate.clone();
-        rocMessageNullCreateDate2.setIncidentCause("cause2");
+        rocMessageNullCreateDate2.setGeneralLocation("general location2");
         assertEquals(0, rocMessageNullCreateDate2.compareTo(rocMessageNullCreateDate));
         assertEquals(0, rocMessageNullCreateDate.compareTo(rocMessageNullCreateDate2));
     }

@@ -12,7 +12,6 @@ import edu.mit.ll.nics.common.entity.DirectProtectionArea;
 import edu.mit.ll.nics.nicsdao.FormDAO;
 import edu.mit.ll.nics.nicsdao.JurisdictionDAO;
 import edu.mit.ll.nics.nicsdao.WeatherDAO;
-import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
 import java.util.*;
@@ -44,7 +43,8 @@ public class ROCServiceTest {
     private List<IncidentType> incidentTypes = Arrays.asList(new IncidentType(1, "Test Event1"), new IncidentType(2, "Test Event2"));
     private Double searchRange = 10.0;
     private Coordinate coordinate = new Coordinate(longitude, latitude);
-    private String incidentDescription = "it is a planned event";
+    private String fuelTypes = "Grass";
+    private String otherFuelTypes = "other fuel";
     private Location location = new Location("xx y st, abc city, up state, CA", "def county", "CA");
     private Weather weather = new Weather("objectid2", "location x",
             80.01, 9.22f, 310.0, 38.85f, "OK", 8.018);
@@ -80,7 +80,6 @@ public class ROCServiceTest {
         when(incident.getLon()).thenReturn(longitude);
         when(incident.getLat()).thenReturn(latitude);
         when(incident.getIncidentTypes()).thenReturn(incidentTypes);
-        when(incident.getDescription()).thenReturn(incidentDescription);
 
         when(geocodeAPIGateway.getLocationByGeocode(coordinate)).thenReturn(newLocation);
         when(jurisdictionDAO.getJurisdiction(coordinate)).thenReturn(newJurisdiction);
@@ -91,22 +90,22 @@ public class ROCServiceTest {
                     .buildJurisdictionData(jurisdiction)
                     .build();
 
-        rocMessageNew = new ROCMessageBuilder().buildReportDetails("name", "NEW", "cause", null, "general location")
+        rocMessageNew = new ROCMessageBuilder().buildReportDetails("NEW", "addtl counties", "general location", fuelTypes, otherFuelTypes)
                     .buildReportDates(startDate, startDate, startDate)
                     .buildLocationBasedData(rocLocationBasedData)
                     .build();
 
-        rocMessageUpdate1 = new ROCMessageBuilder().buildReportDetails("name", "UPDATE", "cause update1", null, "general location")
+        rocMessageUpdate1 = new ROCMessageBuilder().buildReportDetails("UPDATE", "addtl counties", "general location", fuelTypes, otherFuelTypes)
                 .buildReportDates(rocUpdate1CreateDate, startDate, startDate)
                 .buildLocationBasedData(rocLocationBasedData)
                 .build();
 
-        rocMessageUpdate2 = new ROCMessageBuilder().buildReportDetails("name", "UPDATE", "cause Update2", null, "general location")
+        rocMessageUpdate2 = new ROCMessageBuilder().buildReportDetails("UPDATE", "addtl counties", "general location", fuelTypes, otherFuelTypes)
                 .buildReportDates(rocUpdate2CreateDate, startDate, startDate)
                 .buildLocationBasedData(rocLocationBasedData)
                 .build();
 
-        rocMessageFinal = new ROCMessageBuilder().buildReportDetails("name", "FINAL", "cause", null, "general location")
+        rocMessageFinal = new ROCMessageBuilder().buildReportDetails("FINAL", "addtl counties", "general location", fuelTypes, otherFuelTypes)
                 .buildReportDates(rocFinalCreateDate, startDate, startDate)
                 .buildLocationBasedData(rocLocationBasedData)
                 .build();
@@ -154,11 +153,11 @@ public class ROCServiceTest {
         assertEquals(longitude, rocForm.getLongitude());
         assertEquals(latitude, rocForm.getLongitude());
         assertEquals(incidentTypes, rocForm.getIncidentTypes());
-        assertEquals(incidentDescription, rocForm.getIncidentDescription());
 
-        assertNull(rocForm.getMessage().getRocDisplayName());
-        assertNull(rocForm.getMessage().getIncidentCause());
+        assertNull(rocForm.getMessage().getAdditionalAffectedCounties());
         assertNull(rocForm.getMessage().getGeneralLocation());
+        assertNull(rocForm.getMessage().getFuelTypes());
+        assertNull(rocForm.getMessage().getOtherFuelTypes());
 
         assertEquals(newLocation.getSpecificLocation(), rocForm.getMessage().getLocation());
         assertEquals(newLocation.getCounty(), rocForm.getMessage().getCounty());
@@ -189,11 +188,11 @@ public class ROCServiceTest {
         assertEquals(longitude, rocForm.getLongitude());
         assertEquals(latitude, rocForm.getLongitude());
         assertEquals(incidentTypes, rocForm.getIncidentTypes());
-        assertEquals(incidentDescription, rocForm.getIncidentDescription());
 
-        assertEquals(rocMessageFinal.getRocDisplayName(), rocForm.getMessage().getRocDisplayName());
-        assertEquals(rocMessageFinal.getIncidentCause(), rocForm.getMessage().getIncidentCause());
+        assertEquals(rocMessageFinal.getAdditionalAffectedCounties(), rocForm.getMessage().getAdditionalAffectedCounties());
         assertEquals(rocMessageFinal.getGeneralLocation(), rocForm.getMessage().getGeneralLocation());
+        assertEquals(rocMessageFinal.getFuelTypes(), rocForm.getMessage().getFuelTypes());
+        assertEquals(rocMessageFinal.getOtherFuelTypes(), rocForm.getMessage().getOtherFuelTypes());
 
         assertNotNull(rocForm.getMessage().getDateCreated());
         assertEquals(startDate, rocForm.getMessage().getDate());
@@ -219,12 +218,11 @@ public class ROCServiceTest {
         assertEquals(longitude, rocForm.getLongitude());
         assertEquals(latitude, rocForm.getLongitude());
         assertEquals(incidentTypes, rocForm.getIncidentTypes());
-        assertEquals(incidentDescription, rocForm.getIncidentDescription());
 
-        assertEquals(rocMessageUpdate2.getRocDisplayName(), rocForm.getMessage().getRocDisplayName());
-        assertEquals(rocMessageUpdate2.getIncidentCause(), rocForm.getMessage().getIncidentCause());
+        assertEquals(rocMessageUpdate2.getAdditionalAffectedCounties(), rocForm.getMessage().getAdditionalAffectedCounties());
         assertEquals(rocMessageUpdate2.getGeneralLocation(), rocForm.getMessage().getGeneralLocation());
-        assertEquals(rocMessageUpdate2.getIncidentTypes(), rocForm.getMessage().getIncidentTypes());
+        assertEquals(rocMessageUpdate2.getFuelTypes(), rocForm.getMessage().getFuelTypes());
+        assertEquals(rocMessageFinal.getOtherFuelTypes(), rocForm.getMessage().getOtherFuelTypes());
 
         assertTrue(rocForm.getMessage().getDateCreated().getTime() > rocMessageUpdate2.getDateCreated().getTime());
         assertEquals(startDate, rocForm.getMessage().getDate());
@@ -258,7 +256,15 @@ public class ROCServiceTest {
         assertEquals(incidentName, rocForm.getIncidentName());
         assertEquals(longitude, rocForm.getLongitude());
         assertEquals(latitude, rocForm.getLongitude());
-        assertEquals(incidentDescription, rocForm.getIncidentDescription());
+
+        assertEquals(fuelTypes, rocForm.getMessage().getFuelTypes());
+        assertEquals(otherFuelTypes, rocForm.getMessage().getOtherFuelTypes());
+
+
+        assertEquals(newWeather.getAirTemperature(), rocForm.getMessage().getTemperature());
+        assertEquals(newWeather.getHumidity(), rocForm.getMessage().getRelHumidity());
+        assertEquals(newWeather.getWindSpeed(), rocForm.getMessage().getWindSpeed());
+        assertEquals(newWeather.getWindDirection(), rocForm.getMessage().getWindDirection());
 
         verifyZeroInteractions(geocodeAPIGateway);
         verifyZeroInteractions(jurisdictionDAO);
@@ -276,15 +282,15 @@ public class ROCServiceTest {
         assertEquals(incidentName, rocForm.getIncidentName());
         assertEquals(longitude, rocForm.getLongitude());
         assertEquals(latitude, rocForm.getLongitude());
-        assertEquals(incidentDescription, rocForm.getIncidentDescription());
 
         assertTrue(rocForm.getMessage().getDateCreated().getTime() > rocMessageNew.getDateCreated().getTime());
         assertEquals(startDate, rocForm.getMessage().getDate());
         assertEquals(startDate, rocForm.getMessage().getStartTime());
 
-        assertEquals(rocMessageNew.getRocDisplayName(), rocForm.getMessage().getRocDisplayName());
-        assertEquals(rocMessageNew.getIncidentCause(), rocForm.getMessage().getIncidentCause());
+        assertEquals(rocMessageNew.getAdditionalAffectedCounties(), rocForm.getMessage().getAdditionalAffectedCounties());
         assertEquals(rocMessageNew.getGeneralLocation(), rocForm.getMessage().getGeneralLocation());
+        assertEquals(rocMessageFinal.getFuelTypes(), rocForm.getMessage().getFuelTypes());
+        assertEquals(rocMessageFinal.getOtherFuelTypes(), rocForm.getMessage().getOtherFuelTypes());
 
         assertEquals(newJurisdiction.getSra(), rocForm.getMessage().getSra());
         assertEquals(newJurisdiction.getDpa(), rocForm.getMessage().getDpa());

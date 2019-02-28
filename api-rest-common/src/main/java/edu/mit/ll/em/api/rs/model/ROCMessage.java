@@ -7,7 +7,6 @@ import edu.mit.ll.nics.common.entity.IncidentType;
 import edu.mit.ll.nics.common.entity.Weather;
 import org.apache.commons.lang.builder.EqualsBuilder;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -16,17 +15,16 @@ public class ROCMessage implements Cloneable, Comparable {
 
     private Date dateCreated;
     //ROC info
-    private String rocDisplayName;
     private String reportType;
     private Date date;
     private Date startTime;
-    private String incidentCause;
     private List<IncidentType> incidentTypes;
 
     //Location info pre populated based on incident location
     private String location; //specific location
     private String generalLocation; //general location
     private String county;
+    private String additionalAffectedCounties;
     private String state;
 
     //Jurisdiction info pre populated based on incident location
@@ -40,24 +38,26 @@ public class ROCMessage implements Cloneable, Comparable {
     private Float windSpeed;
     private Double windDirection;
 
+    //Fuel types on vegetation fire
+    private String fuelTypes;
+    private String otherFuelTypes;
+
     public ROCMessage() {
     }
 
-    public ROCMessage(Date dateCreated, String rocDisplayName, String reportType, Date date, Date startTime,
-                      String incidentCause, List<IncidentType> incidentTypes,
-                      String location, String generalLocation, String county, String state,
+    public ROCMessage(Date dateCreated, String reportType, Date date, Date startTime,
+                      String location, String generalLocation, String county, String additionalAffectedCounties, String state,
                       String sra, String dpa, String jurisdiction,
-                      Double temperature, Float relHumidity, Float windSpeed, Double windDirection) {
+                      Double temperature, Float relHumidity, Float windSpeed, Double windDirection,
+                      String fuelTypes, String otherFuelTypes) {
         this.dateCreated = dateCreated;
-        this.rocDisplayName = rocDisplayName;
         this.reportType = reportType;
         this.date = date;
         this.startTime = startTime;
-        this.incidentCause = incidentCause;
-        this.incidentTypes = (incidentTypes == null) ? new ArrayList<IncidentType>() : new ArrayList<IncidentType>(incidentTypes);
         this.location = location;
         this.generalLocation = generalLocation;
         this.county = county;
+        this.additionalAffectedCounties = additionalAffectedCounties;
         this.state = state;
         this.sra = sra;
         this.dpa = dpa;
@@ -66,6 +66,8 @@ public class ROCMessage implements Cloneable, Comparable {
         this.relHumidity = relHumidity;
         this.windSpeed = windSpeed;
         this.windDirection = windDirection;
+        this.fuelTypes = fuelTypes;
+        this.otherFuelTypes = otherFuelTypes;
     }
 
     @JsonFormat
@@ -76,14 +78,6 @@ public class ROCMessage implements Cloneable, Comparable {
 
     public void setDateCreated(Date dateCreated) {
         this.dateCreated = dateCreated;
-    }
-
-    public String getRocDisplayName() {
-        return rocDisplayName;
-    }
-
-    public void setRocDisplayName(String rocDisplayName) {
-        this.rocDisplayName = rocDisplayName;
     }
 
     public String getReportType() {
@@ -114,22 +108,6 @@ public class ROCMessage implements Cloneable, Comparable {
         this.startTime = startTime;
     }
 
-    public String getIncidentCause() {
-        return incidentCause;
-    }
-
-    public void setIncidentCause(String incidentCause) {
-        this.incidentCause = incidentCause;
-    }
-
-    public List<IncidentType> getIncidentTypes() {
-        return incidentTypes;
-    }
-
-    public void setIncidentTypes(List<IncidentType> incidentTypes) {
-        this.incidentTypes = incidentTypes;
-    }
-
     public String getLocation() {
         return location;
     }
@@ -152,6 +130,14 @@ public class ROCMessage implements Cloneable, Comparable {
 
     public void setCounty(String county) {
         this.county = county;
+    }
+
+    public String getAdditionalAffectedCounties() {
+        return additionalAffectedCounties;
+    }
+
+    public void setAdditionalAffectedCounties(String additionalAffectedCounties) {
+        this.additionalAffectedCounties = additionalAffectedCounties;
     }
 
     public String getState() {
@@ -216,6 +202,22 @@ public class ROCMessage implements Cloneable, Comparable {
 
     public void setWindDirection(Double windDirection) {
         this.windDirection = windDirection;
+    }
+
+    public String getFuelTypes() {
+        return fuelTypes;
+    }
+
+    public void setFuelTypes(String fuelTypes) {
+        this.fuelTypes = fuelTypes;
+    }
+
+    public String getOtherFuelTypes() {
+        return otherFuelTypes;
+    }
+
+    public void setOtherFuelTypes(String otherFuelTypes) {
+        this.otherFuelTypes = otherFuelTypes;
     }
 
     public void updateWeatherInformation(Weather weather) {
