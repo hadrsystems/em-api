@@ -6,8 +6,8 @@ import javax.ws.rs.core.Response;
 
 @Path("/locationBasedData")
 public interface LocationBasedService {
-    public static String DEFAULT_SEARCH_RANGE_IN_MILES_FOR_WEATHER_DATA = "10.0";
-    public static String DEFAULT_SOURCE_CRS = "EPSG:3857";
+    public static String DEFAULT_SEARCH_RANGE_IN_MILES_FOR_WEATHER_DATA = "20.0";
+    public static String DEFAULT_SOURCE_CRS = "EPSG:4326";
 
     @GET
     @Path(value = "/weather")
