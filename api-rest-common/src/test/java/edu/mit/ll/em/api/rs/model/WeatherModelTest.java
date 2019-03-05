@@ -22,7 +22,7 @@ public class WeatherModelTest {
 
     @Test
     public void returnsAirTemperatureFromGivenWeatherInstance() {
-        assertEquals(weatherModel.getAirTemperature(), weather.getAirTemperature());
+        assertEquals(weatherModel.getTemperature(), weather.getAirTemperature());
     }
 
     @Test

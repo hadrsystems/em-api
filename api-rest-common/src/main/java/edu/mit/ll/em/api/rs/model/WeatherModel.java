@@ -19,7 +19,7 @@ public class WeatherModel {
         return this.weather.getLocation();
     }
 
-    public Double getAirTemperature() {
+    public Double getTemperature() {
         return this.weather.getAirTemperature();
     }
 
