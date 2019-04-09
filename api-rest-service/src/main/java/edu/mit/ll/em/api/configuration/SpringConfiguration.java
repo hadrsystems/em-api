@@ -44,6 +44,9 @@ import edu.mit.ll.em.api.util.CRSTransformer;
 import edu.mit.ll.nics.common.geoserver.api.GeoServer;
 import edu.mit.ll.nics.common.rabbitmq.RabbitFactory;
 import edu.mit.ll.nics.common.rabbitmq.RabbitPubSubProducer;
+import edu.mit.ll.nics.nicsdao.DatalayerDAO;
+import edu.mit.ll.nics.nicsdao.DocumentDAO;
+import edu.mit.ll.nics.nicsdao.FolderDAO;
 import edu.mit.ll.nics.nicsdao.impl.*;
 import edu.mit.ll.em.api.notification.RocReportNotification;
 import org.springframework.context.annotation.Bean;
@@ -66,10 +69,15 @@ public class SpringConfiguration {
     private DataSource datalayersDataSource = null;
     private NamedParameterJdbcTemplate datafeedsJdbcTemplate = null;
     private NamedParameterJdbcTemplate datalayersJdbcTemplate = null;
+    private org.apache.commons.configuration.Configuration emApiConfiguration = null;
+    private Client jerseyClient = null;
 
     @Bean
     public org.apache.commons.configuration.Configuration emApiConfiguration() {
-        return APIConfig.getInstance().getConfiguration();
+        if(this.emApiConfiguration == null) {
+            this.emApiConfiguration = APIConfig.getInstance().getConfiguration();
+        }
+        return this.emApiConfiguration;
     }
 
     private DataSource dataFeedsDataSource() throws NamingException {
@@ -112,6 +120,23 @@ public class SpringConfiguration {
     public JurisdictionDAO jurisdictionDao() throws NamingException {
         return new JurisdictionDAOImpl(dataLayersJdbcTemplate());
     }
+
+    @Bean
+    public Client jerseyClient() {
+        if(jerseyClient == null) {
+            this.jerseyClient = ClientBuilder.newClient();
+        }
+        return this.jerseyClient;
+    }
+
+    @Bean
+    public DatalayerDAO datalayerDao() { return new DatalayerDAOImpl(); }
+
+    @Bean
+    public FolderDAO folderDao() { return new FolderDAOImpl(); }
+
+    @Bean
+    public DocumentDAO documentDao() { return new DocumentDAOImpl(); }
 
     @Bean
     public OrgDAOImpl orgDao() {
@@ -196,10 +221,17 @@ public class SpringConfiguration {
     @Bean
     RabbitPubSubProducer rabbitProducer() throws IOException {
         return RabbitFactory.makeRabbitPubSubProducer(
-                    APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_HOSTNAME_KEY),
-                    APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_EXCHANGENAME_KEY),
-                    APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_USERNAME_KEY),
-                    APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_USERPWD_KEY));
+                    this.emApiConfiguration().getString(APIConfig.RABBIT_HOSTNAME_KEY),
+                    this.emApiConfiguration().getString(APIConfig.RABBIT_EXCHANGENAME_KEY),
+                    this.emApiConfiguration().getString(APIConfig.RABBIT_USERNAME_KEY),
+                    this.emApiConfiguration().getString(APIConfig.RABBIT_USERPWD_KEY));
+    }
+
+    @Override
+    public void finalize() {
+        if(this.jerseyClient != null) {
+            this.jerseyClient.close();
+        }
     }
 
     @Bean

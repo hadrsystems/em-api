@@ -75,7 +75,17 @@
 			<bean class="edu.mit.ll.em.api.rs.impl.AnnouncementServiceImpl" />
 			<bean class="edu.mit.ll.em.api.rs.impl.CollabServiceImpl" />
 			<bean class="edu.mit.ll.em.api.rs.impl.DatalayerExportImpl" />
-			<bean class="edu.mit.ll.em.api.rs.impl.DatalayerServiceImpl" />
+			<bean class="edu.mit.ll.em.api.rs.impl.DatalayerServiceImpl" >
+				<constructor-arg ref="emApiConfiguration" />
+                <constructor-arg ref="datalayerDao" />
+                <constructor-arg ref="folderDao" />
+                <constructor-arg ref="documentDao" />
+                <constructor-arg ref="userDao" />
+                <constructor-arg ref="userOrgDao" />
+                <constructor-arg ref="userSessionDao" />
+                <constructor-arg ref="rabbitProducer" />
+                <constructor-arg ref="jerseyClient" />
+			</bean>
 			<!-- <bean class="edu.mit.ll.em.api.rs.impl.DatalayerBreadCrumbsImpl" /> -->
 			<bean class="edu.mit.ll.em.api.rs.impl.FeatureServiceImpl" />
 			<bean class="edu.mit.ll.em.api.rs.impl.FolderServiceImpl" />

@@ -1,0 +1,931 @@
+<!--
+
+    Copyright (c) 2008-2018, Massachusetts Institute of Technology (MIT)
+    All rights reserved.
+
+    Redistribution and use in source and binary forms, with or without
+    modification, are permitted provided that the following conditions are met:
+
+    1. Redistributions of source code must retain the above copyright notice, this
+    list of conditions and the following disclaimer.
+
+    2. Redistributions in binary form must reproduce the above copyright notice,
+    this list of conditions and the following disclaimer in the documentation
+    and/or other materials provided with the distribution.
+
+    3. Neither the name of the copyright holder nor the names of its contributors
+    may be used to endorse or promote products derived from this software without
+    specific prior written permission.
+
+    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+    AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+    IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+    DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+    FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+    DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+    SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+    CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+    OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+    OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+-->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: IncidentServiceImpl</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">edu.mit.ll.em.api.rs.impl</a> ]
+</div>
+
+<h1>Coverage Summary for Class: IncidentServiceImpl (edu.mit.ll.em.api.rs.impl)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">IncidentServiceImpl</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/ 1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/ 29)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/ 264)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;/**
+<i>2</i>&nbsp; * Copyright (c) 2008-2016, Massachusetts Institute of Technology (MIT)
+<i>3</i>&nbsp; * All rights reserved.
+<i>4</i>&nbsp; *
+<i>5</i>&nbsp; * Redistribution and use in source and binary forms, with or without
+<i>6</i>&nbsp; * modification, are permitted provided that the following conditions are met:
+<i>7</i>&nbsp; *
+<i>8</i>&nbsp; * 1. Redistributions of source code must retain the above copyright notice, this
+<i>9</i>&nbsp; * list of conditions and the following disclaimer.
+<i>10</i>&nbsp; *
+<i>11</i>&nbsp; * 2. Redistributions in binary form must reproduce the above copyright notice,
+<i>12</i>&nbsp; * this list of conditions and the following disclaimer in the documentation
+<i>13</i>&nbsp; * and/or other materials provided with the distribution.
+<i>14</i>&nbsp; *
+<i>15</i>&nbsp; * 3. Neither the name of the copyright holder nor the names of its contributors
+<i>16</i>&nbsp; * may be used to endorse or promote products derived from this software without
+<i>17</i>&nbsp; * specific prior written permission.
+<i>18</i>&nbsp; *
+<i>19</i>&nbsp; * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot;
+<i>20</i>&nbsp; * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+<i>21</i>&nbsp; * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+<i>22</i>&nbsp; * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+<i>23</i>&nbsp; * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+<i>24</i>&nbsp; * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+<i>25</i>&nbsp; * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+<i>26</i>&nbsp; * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+<i>27</i>&nbsp; * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+<i>28</i>&nbsp; * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+<i>29</i>&nbsp; */
+<i>30</i>&nbsp;package edu.mit.ll.em.api.rs.impl;
+<i>31</i>&nbsp;
+<i>32</i>&nbsp;import java.io.IOException;
+<i>33</i>&nbsp;import java.net.InetAddress;
+<i>34</i>&nbsp;import java.text.SimpleDateFormat;
+<i>35</i>&nbsp;import java.util.Collection;
+<i>36</i>&nbsp;import java.util.Date;
+<i>37</i>&nbsp;import java.util.List;
+<i>38</i>&nbsp;
+<i>39</i>&nbsp;import javax.ws.rs.core.Response;
+<i>40</i>&nbsp;import javax.ws.rs.core.Response.Status;
+<i>41</i>&nbsp;
+<i>42</i>&nbsp;import edu.mit.ll.em.api.util.APIConfig;
+<i>43</i>&nbsp;import edu.mit.ll.em.api.util.SADisplayConstants;
+<i>44</i>&nbsp;import edu.mit.ll.nics.common.rabbitmq.RabbitFactory;
+<i>45</i>&nbsp;import edu.mit.ll.nics.common.rabbitmq.RabbitPubSubProducer;
+<i>46</i>&nbsp;
+<i>47</i>&nbsp;import org.codehaus.jackson.map.ObjectMapper;
+<i>48</i>&nbsp;import org.springframework.dao.DataAccessException;
+<i>49</i>&nbsp;
+<i>50</i>&nbsp;import edu.mit.ll.nics.common.entity.CollabRoom;
+<i>51</i>&nbsp;import edu.mit.ll.nics.common.entity.Org;
+<i>52</i>&nbsp;import edu.mit.ll.nics.common.entity.User;
+<i>53</i>&nbsp;import edu.mit.ll.em.api.exception.DuplicateCollabRoomException;
+<i>54</i>&nbsp;import edu.mit.ll.em.api.rs.CollabService;
+<i>55</i>&nbsp;import edu.mit.ll.em.api.rs.FieldMapResponse;
+<i>56</i>&nbsp;import edu.mit.ll.em.api.rs.IncidentService;
+<i>57</i>&nbsp;import edu.mit.ll.em.api.rs.IncidentServiceResponse;
+<i>58</i>&nbsp;import edu.mit.ll.em.api.util.APILogger;
+<i>59</i>&nbsp;import edu.mit.ll.nics.nicsdao.impl.IncidentDAOImpl;
+<i>60</i>&nbsp;import edu.mit.ll.nics.nicsdao.impl.OrgDAOImpl;
+<i>61</i>&nbsp;import edu.mit.ll.nics.nicsdao.impl.UserDAOImpl;
+<i>62</i>&nbsp;import edu.mit.ll.nics.nicsdao.impl.UserOrgDAOImpl;
+<i>63</i>&nbsp;import edu.mit.ll.nics.nicsdao.impl.WorkspaceDAOImpl;
+<i>64</i>&nbsp;import edu.mit.ll.nics.common.entity.Incident;
+<i>65</i>&nbsp;import edu.mit.ll.nics.common.email.JsonEmail;
+<i>66</i>&nbsp;
+<i>67</i>&nbsp;
+<i>68</i>&nbsp;/**
+<i>69</i>&nbsp; * 
+<i>70</i>&nbsp; * @AUTHOR sa23148
+<i>71</i>&nbsp; *
+<i>72</i>&nbsp; */
+<b class="nc"><i>73</i>&nbsp;public class IncidentServiceImpl implements IncidentService {</b>
+<i>74</i>&nbsp;	
+<i>75</i>&nbsp;	/** CNAME - the name of this class for referencing in loggers */
+<b class="nc"><i>76</i>&nbsp;	private static final String CNAME = IncidentServiceImpl.class.getName();</b>
+<i>77</i>&nbsp;	
+<i>78</i>&nbsp;	private static final String WORKING_MAP = &quot;Working Map&quot;;
+<i>79</i>&nbsp;	
+<i>80</i>&nbsp;	private static final String DUPLICATE_NAME = &quot;Incident name already exists.&quot;;
+<i>81</i>&nbsp;	
+<i>82</i>&nbsp;	/** The Incident DAO */
+<b class="nc"><i>83</i>&nbsp;	private static final IncidentDAOImpl incidentDao = new IncidentDAOImpl();</b>
+<i>84</i>&nbsp;	
+<i>85</i>&nbsp;	/** The Org DAO */
+<b class="nc"><i>86</i>&nbsp;	private static final OrgDAOImpl orgDao = new OrgDAOImpl();</b>
+<i>87</i>&nbsp;	
+<i>88</i>&nbsp;	/** The User DAO */
+<b class="nc"><i>89</i>&nbsp;	private static final UserDAOImpl userDao = new UserDAOImpl();</b>
+<i>90</i>&nbsp;	
+<i>91</i>&nbsp;	/** The User DAO */
+<b class="nc"><i>92</i>&nbsp;	private static final UserOrgDAOImpl userOrgDao = new UserOrgDAOImpl();</b>
+<i>93</i>&nbsp;	
+<i>94</i>&nbsp;	/** The User DAO */
+<b class="nc"><i>95</i>&nbsp;	private static final WorkspaceDAOImpl workspaceDao = new WorkspaceDAOImpl();</b>
+<i>96</i>&nbsp;	
+<i>97</i>&nbsp;	private RabbitPubSubProducer rabbitProducer;
+<i>98</i>&nbsp;	
+<i>99</i>&nbsp;	
+<i>100</i>&nbsp;	/**
+<i>101</i>&nbsp;	 * Read and return all Incident items.
+<i>102</i>&nbsp;	 * 
+<i>103</i>&nbsp;	 * @param workspaceId
+<i>104</i>&nbsp;	 * @param accessibleByUserId
+<i>105</i>&nbsp;	 * 
+<i>106</i>&nbsp;	 * @return Response IncidentResponse containing all Incidents with the specified workspace
+<i>107</i>&nbsp;	 * @see IncidentResponse
+<i>108</i>&nbsp;	 */
+<i>109</i>&nbsp;	public Response getIncidents(Integer workspaceId, Integer accessibleByUserId) {
+<b class="nc"><i>110</i>&nbsp;		Response response = null;</b>
+<b class="nc"><i>111</i>&nbsp;		IncidentServiceResponse incidentResponse = new IncidentServiceResponse();</b>
+<b class="nc"><i>112</i>&nbsp;		List&lt;edu.mit.ll.nics.common.entity.Incident&gt; incidents = null;</b>
+<i>113</i>&nbsp;		try {
+<b class="nc"><i>114</i>&nbsp;			incidents = incidentDao.getIncidents(workspaceId); //.getIncidentsAccessibleByUser(workspaceId, accessibleByUserId);</b>
+<i>115</i>&nbsp;			
+<b class="nc"><i>116</i>&nbsp;			incidentResponse.setIncidents(incidents);</b>
+<b class="nc"><i>117</i>&nbsp;			incidentResponse.setCount(incidents.size());</b>
+<b class="nc"><i>118</i>&nbsp;			incidentResponse.setMessage(&quot;ok&quot;);</b>
+<b class="nc"><i>119</i>&nbsp;			response = Response.ok(incidentResponse).status(Status.OK).build();			</b>
+<b class="nc"><i>120</i>&nbsp;		} catch (DataAccessException e) { //(ICSDatastoreException e) {</b>
+<b class="nc"><i>121</i>&nbsp;			APILogger.getInstance().e(CNAME, &quot;Data access exception while getting Incidents&quot;</b>
+<i>122</i>&nbsp;					+ &quot;in (workspaceid,accessibleByUserId): &quot; + workspaceId + &quot;, &quot; 
+<b class="nc"><i>123</i>&nbsp;					+ accessibleByUserId + &quot;: &quot; + e.getMessage());</b>
+<b class="nc"><i>124</i>&nbsp;			incidentResponse.setMessage(&quot;Data access failure. Unable to read all incidents: &quot; + e.getMessage());</b>
+<b class="nc"><i>125</i>&nbsp;			incidentResponse.setCount(incidentResponse.getIncidents().size());</b>
+<b class="nc"><i>126</i>&nbsp;			response = Response.ok(incidentResponse).status(Status.INTERNAL_SERVER_ERROR).build();			</b>
+<b class="nc"><i>127</i>&nbsp;		} catch (Exception e) {</b>
+<b class="nc"><i>128</i>&nbsp;			APILogger.getInstance().e(CNAME, &quot;Unhandled exception while getting Incidents&quot;</b>
+<i>129</i>&nbsp;					+ &quot;in (workspaceid,accessibleByUserId): &quot; + workspaceId + &quot;, &quot; 
+<b class="nc"><i>130</i>&nbsp;					+ accessibleByUserId + &quot;: &quot; + e.getMessage());</b>
+<i>131</i>&nbsp;			
+<b class="nc"><i>132</i>&nbsp;			incidentResponse.setMessage(&quot;Unhandled exception. Unable to read all incidents: &quot; + e.getMessage());			</b>
+<b class="nc"><i>133</i>&nbsp;			response = Response.ok(incidentResponse).status(Status.INTERNAL_SERVER_ERROR).build();</b>
+<b class="nc"><i>134</i>&nbsp;		}</b>
+<b class="nc"><i>135</i>&nbsp;		return response;</b>
+<i>136</i>&nbsp;	}
+<i>137</i>&nbsp;	
+<i>138</i>&nbsp;	public Response findArchivedIncidents(Integer workspaceId, String orgPrefix, String name){
+<b class="nc"><i>139</i>&nbsp;		FieldMapResponse mapResponse = new FieldMapResponse();</b>
+<b class="nc"><i>140</i>&nbsp;		if(orgPrefix != null){</b>
+<b class="nc"><i>141</i>&nbsp;			mapResponse.setData(incidentDao.findArchivedIncidentsByPrefix(workspaceId, orgPrefix));</b>
+<i>142</i>&nbsp;		}else{
+<b class="nc"><i>143</i>&nbsp;			mapResponse.setData(incidentDao.findArchivedIncidentsByName(workspaceId, name));</b>
+<i>144</i>&nbsp;		}
+<i>145</i>&nbsp;		
+<b class="nc"><i>146</i>&nbsp;		return Response.ok(mapResponse).status(Status.OK).build();</b>
+<i>147</i>&nbsp;	}
+<i>148</i>&nbsp;	
+<i>149</i>&nbsp;	public Response activateIncident(int workspaceId, int incidentId, String username){
+<b class="nc"><i>150</i>&nbsp;		if(userOrgDao.isUserRole(username, SADisplayConstants.SUPER_ROLE_ID) ||</b>
+<b class="nc"><i>151</i>&nbsp;				incidentDao.isAdmin(workspaceId, incidentId, username)){</b>
+<i>152</i>&nbsp;		
+<b class="nc"><i>153</i>&nbsp;			boolean ret = incidentDao.setIncidentActive(incidentId, true);</b>
+<b class="nc"><i>154</i>&nbsp;			if(ret){</b>
+<b class="nc"><i>155</i>&nbsp;				String topic = String.format(&quot;iweb.NICS.ws.%s.newIncident&quot;, workspaceId);</b>
+<i>156</i>&nbsp;				try{
+<b class="nc"><i>157</i>&nbsp;					this.notifyIncident(incidentDao.getIncident(incidentId), topic);</b>
+<b class="nc"><i>158</i>&nbsp;					return Response.ok(Status.OK.toString()).status(Status.OK).build();</b>
+<b class="nc"><i>159</i>&nbsp;				}catch(Exception e){</b>
+<b class="nc"><i>160</i>&nbsp;					return Response.ok(&quot;The incident was activated successfully, but there &quot;</b>
+<b class="nc"><i>161</i>&nbsp;							+ &quot;was an error notifying the users.&quot;).status(Status.INTERNAL_SERVER_ERROR).build();</b>
+<i>162</i>&nbsp;				}
+<i>163</i>&nbsp;			}
+<b class="nc"><i>164</i>&nbsp;			return Response.ok(&quot;There was an error activating the incident&quot;).status(Status.INTERNAL_SERVER_ERROR).build();</b>
+<i>165</i>&nbsp;		}else{
+<b class="nc"><i>166</i>&nbsp;			return Response.ok(Status.FORBIDDEN).status(Status.FORBIDDEN).build();</b>
+<i>167</i>&nbsp;		}
+<i>168</i>&nbsp;	}
+<i>169</i>&nbsp;	
+<i>170</i>&nbsp;	public Response archiveIncident(int workspaceId, int incidentId, String username){
+<b class="nc"><i>171</i>&nbsp;		if(userOrgDao.isUserRole(username, SADisplayConstants.SUPER_ROLE_ID) ||</b>
+<b class="nc"><i>172</i>&nbsp;				incidentDao.isAdmin(workspaceId, incidentId, username)){</b>
+<b class="nc"><i>173</i>&nbsp;			boolean ret = incidentDao.setIncidentActive(incidentId, false);</b>
+<b class="nc"><i>174</i>&nbsp;			if(ret){</b>
+<b class="nc"><i>175</i>&nbsp;				String topic = String.format(&quot;iweb.NICS.ws.%s.removeIncident&quot;, workspaceId);</b>
+<i>176</i>&nbsp;				try{
+<b class="nc"><i>177</i>&nbsp;					this.notifyIncident(incidentId, topic);</b>
+<b class="nc"><i>178</i>&nbsp;					return Response.ok(Status.OK.toString()).status(Status.OK).build();</b>
+<b class="nc"><i>179</i>&nbsp;				}catch(Exception e){</b>
+<b class="nc"><i>180</i>&nbsp;					return Response.ok(&quot;The incident was activated successfully, but there &quot;</b>
+<b class="nc"><i>181</i>&nbsp;							+ &quot;was an error notifying the users.&quot;).status(Status.INTERNAL_SERVER_ERROR).build();</b>
+<i>182</i>&nbsp;				}
+<i>183</i>&nbsp;			}
+<b class="nc"><i>184</i>&nbsp;			return Response.ok(&quot;There was an error activating the incident&quot;).status(Status.INTERNAL_SERVER_ERROR).build();</b>
+<i>185</i>&nbsp;		}else{
+<b class="nc"><i>186</i>&nbsp;			return Response.ok(Status.FORBIDDEN).status(Status.FORBIDDEN).build();</b>
+<i>187</i>&nbsp;		}
+<i>188</i>&nbsp;
+<i>189</i>&nbsp;	}
+<i>190</i>&nbsp;	
+<i>191</i>&nbsp;	public Response getActiveIncidents(Integer workspaceId, Integer orgId){
+<b class="nc"><i>192</i>&nbsp;		return this.getIncidents(workspaceId, orgId, true);</b>
+<i>193</i>&nbsp;	}	
+<i>194</i>&nbsp;	
+<i>195</i>&nbsp;	public Response getArchivedIncidents(Integer workspaceId, Integer orgId){
+<b class="nc"><i>196</i>&nbsp;		return this.getIncidents(workspaceId, orgId, false);</b>
+<i>197</i>&nbsp;	}
+<i>198</i>&nbsp;	
+<i>199</i>&nbsp;	private Response getIncidents(Integer workspaceId, Integer orgId, boolean active){
+<b class="nc"><i>200</i>&nbsp;		FieldMapResponse response = new FieldMapResponse();</b>
+<b class="nc"><i>201</i>&nbsp;		response.setData(incidentDao.getActiveIncidents(workspaceId, orgId, active));</b>
+<b class="nc"><i>202</i>&nbsp;		return Response.ok(response).status(Status.OK).build();</b>
+<i>203</i>&nbsp;	}
+<i>204</i>&nbsp;	
+<i>205</i>&nbsp;	/**
+<i>206</i>&nbsp;	 * Read and return all Incident items.
+<i>207</i>&nbsp;	 * 
+<i>208</i>&nbsp;	 * @param workspaceId
+<i>209</i>&nbsp;	 * @param accessibleByUserId
+<i>210</i>&nbsp;	 * 
+<i>211</i>&nbsp;	 * @return Response IncidentResponse containing all Incidents with the specified workspace
+<i>212</i>&nbsp;	 * @see IncidentResponse
+<i>213</i>&nbsp;	 
+<i>214</i>&nbsp;	public Response getIncidentsTree(Integer workspaceId, Integer accessibleByUserId) {
+<i>215</i>&nbsp;
+<i>216</i>&nbsp;	 * @return Response IncidentResponse containing all Incidents with the specified workspace and there children
+<i>217</i>&nbsp;	 * @see IncidentResponse
+<i>218</i>&nbsp;	 */
+<i>219</i>&nbsp;	
+<i>220</i>&nbsp;	public Response getIncidentsTree(Integer workspaceId, Integer accessibleByUserId) {
+<b class="nc"><i>221</i>&nbsp;		Response response = null;</b>
+<b class="nc"><i>222</i>&nbsp;		IncidentServiceResponse incidentResponse = new IncidentServiceResponse();</b>
+<b class="nc"><i>223</i>&nbsp;		List&lt;edu.mit.ll.nics.common.entity.Incident&gt; incidents = null;</b>
+<i>224</i>&nbsp;		try {
+<b class="nc"><i>225</i>&nbsp;			incidents = incidentDao.getIncidentsTree(workspaceId); </b>
+<i>226</i>&nbsp;
+<i>227</i>&nbsp;			
+<b class="nc"><i>228</i>&nbsp;			incidentResponse.setIncidents(incidents);</b>
+<b class="nc"><i>229</i>&nbsp;			incidentResponse.setCount(incidents.size());</b>
+<b class="nc"><i>230</i>&nbsp;			incidentResponse.setMessage(&quot;ok&quot;);</b>
+<b class="nc"><i>231</i>&nbsp;			response = Response.ok(incidentResponse).status(Status.OK).build();			</b>
+<b class="nc"><i>232</i>&nbsp;		} catch (DataAccessException e) { //(ICSDatastoreException e) {</b>
+<b class="nc"><i>233</i>&nbsp;			APILogger.getInstance().e(CNAME, &quot;Data access exception while getting Incidents Tree&quot;</b>
+<i>234</i>&nbsp;					+ &quot;in (workspaceid,accessibleByUserId): &quot; + workspaceId + &quot;, &quot; 
+<b class="nc"><i>235</i>&nbsp;					+ accessibleByUserId + &quot;: &quot; + e.getMessage());</b>
+<b class="nc"><i>236</i>&nbsp;			incidentResponse.setMessage(&quot;Data access failure. Unable to read all incidents in tree: &quot; + e.getMessage());</b>
+<b class="nc"><i>237</i>&nbsp;			incidentResponse.setCount(incidentResponse.getIncidents().size());</b>
+<b class="nc"><i>238</i>&nbsp;			response = Response.ok(incidentResponse).status(Status.INTERNAL_SERVER_ERROR).build();			</b>
+<b class="nc"><i>239</i>&nbsp;		} catch (Exception e) {</b>
+<b class="nc"><i>240</i>&nbsp;			APILogger.getInstance().e(CNAME, &quot;Unhandled exception while getting Incidents Tree&quot;</b>
+<i>241</i>&nbsp;					+ &quot;in (workspaceid,accessibleByUserId): &quot; + workspaceId + &quot;, &quot; 
+<b class="nc"><i>242</i>&nbsp;					+ accessibleByUserId + &quot;: &quot; + e.getMessage());</b>
+<i>243</i>&nbsp;			
+<b class="nc"><i>244</i>&nbsp;			incidentResponse.setMessage(&quot;Unhandled exception. Unable to read all incidents in tree: &quot; + e.getMessage());			</b>
+<b class="nc"><i>245</i>&nbsp;			response = Response.ok(incidentResponse).status(Status.INTERNAL_SERVER_ERROR).build();</b>
+<b class="nc"><i>246</i>&nbsp;		}</b>
+<b class="nc"><i>247</i>&nbsp;		return response;</b>
+<i>248</i>&nbsp;	}
+<i>249</i>&nbsp;
+<i>250</i>&nbsp;	
+<i>251</i>&nbsp;	/**
+<i>252</i>&nbsp;	 * Updates the incident that was sent
+<i>253</i>&nbsp;	 * 
+<i>254</i>&nbsp;	 * @param workspaceId
+<i>255</i>&nbsp;	 * @param Incident to update
+<i>256</i>&nbsp;	 * 
+<i>257</i>&nbsp;	 * @return Response IncidentResponse containing the updated incident
+<i>258</i>&nbsp;	 * @see IncidentResponse
+<i>259</i>&nbsp;	 */
+<i>260</i>&nbsp;	public Response updateIncident(Integer workspaceId, Incident incident) {
+<b class="nc"><i>261</i>&nbsp;		Response response = null;</b>
+<b class="nc"><i>262</i>&nbsp;		IncidentServiceResponse incidentResponse = new IncidentServiceResponse();</b>
+<b class="nc"><i>263</i>&nbsp;		Incident updatedIncident = null;</b>
+<i>264</i>&nbsp;		
+<i>265</i>&nbsp;		
+<b class="nc"><i>266</i>&nbsp;		if(incidentDao.getIncidentByName(incident.getIncidentname(), workspaceId) != null &amp;&amp; </b>
+<b class="nc"><i>267</i>&nbsp;				incidentDao.getIncidentByName(incident.getIncidentname(), workspaceId).getIncidentid() != incident.getIncidentid()){</b>
+<b class="nc"><i>268</i>&nbsp;			incidentResponse.setMessage(DUPLICATE_NAME);</b>
+<b class="nc"><i>269</i>&nbsp;			return Response.ok(incidentResponse).status(Status.INTERNAL_SERVER_ERROR).build();</b>
+<i>270</i>&nbsp;		}
+<i>271</i>&nbsp;		
+<i>272</i>&nbsp;		try {
+<b class="nc"><i>273</i>&nbsp;			updatedIncident = incidentDao.updateIncident(workspaceId,incident); </b>
+<i>274</i>&nbsp;			
+<b class="nc"><i>275</i>&nbsp;			if (updatedIncident != null) {</b>
+<b class="nc"><i>276</i>&nbsp;				incidentResponse.setCount(1);</b>
+<b class="nc"><i>277</i>&nbsp;				incidentResponse.setMessage(Status.OK.getReasonPhrase());</b>
+<b class="nc"><i>278</i>&nbsp;				response = Response.ok(incidentResponse).status(Status.OK).build();</b>
+<i>279</i>&nbsp;			}
+<i>280</i>&nbsp;			else{
+<b class="nc"><i>281</i>&nbsp;				incidentResponse.setMessage(&quot;Error updating incident&quot;);</b>
+<b class="nc"><i>282</i>&nbsp;				incidentResponse.setCount(0);</b>
+<b class="nc"><i>283</i>&nbsp;				response = Response.ok(incidentResponse).status(Status.INTERNAL_SERVER_ERROR).build();</b>
+<i>284</i>&nbsp;			}
+<i>285</i>&nbsp;						
+<b class="nc"><i>286</i>&nbsp;		} catch (Exception e) {</b>
+<b class="nc"><i>287</i>&nbsp;			incidentResponse.setMessage(&quot;updateIncident failed: &quot; + e.getMessage());</b>
+<b class="nc"><i>288</i>&nbsp;			APILogger.getInstance().e(CNAME, &quot;Data access exception while updating Incident&quot;</b>
+<b class="nc"><i>289</i>&nbsp;					+ incident.getIncidentname() +  &quot;: &quot; + e.getMessage());</b>
+<b class="nc"><i>290</i>&nbsp;			incidentResponse.setMessage(&quot;Data access failure. Unable to update incident: &quot; + e.getMessage());</b>
+<b class="nc"><i>291</i>&nbsp;			incidentResponse.setCount(incidentResponse.getIncidents().size());</b>
+<b class="nc"><i>292</i>&nbsp;			response = Response.ok(incidentResponse).status(Status.INTERNAL_SERVER_ERROR).build();			</b>
+<b class="nc"><i>293</i>&nbsp;		}</b>
+<i>294</i>&nbsp;		
+<i>295</i>&nbsp;		
+<b class="nc"><i>296</i>&nbsp;		if (Status.OK.getStatusCode() == response.getStatus()) {</b>
+<i>297</i>&nbsp;			try {
+<b class="nc"><i>298</i>&nbsp;				String topic = String.format(&quot;iweb.NICS.ws.%s.updateIncident&quot;, workspaceId);</b>
+<b class="nc"><i>299</i>&nbsp;				notifyIncident(updatedIncident, topic);</b>
+<b class="nc"><i>300</i>&nbsp;			} catch (Exception e) {</b>
+<b class="nc"><i>301</i>&nbsp;				APILogger.getInstance().e(CNAME,&quot;Failed to publish a update Incident message event&quot;);</b>
+<b class="nc"><i>302</i>&nbsp;			}</b>
+<i>303</i>&nbsp;		}
+<i>304</i>&nbsp;		
+<b class="nc"><i>305</i>&nbsp;		return response;</b>
+<i>306</i>&nbsp;	}
+<i>307</i>&nbsp;
+<i>308</i>&nbsp;	
+<i>309</i>&nbsp;	/**
+<i>310</i>&nbsp;	 * Delete all Incident items.
+<i>311</i>&nbsp;	 * 
+<i>312</i>&nbsp;	 * &lt;p&gt;Currently this is an unsupported operation.&lt;/p&gt;
+<i>313</i>&nbsp;	 * 
+<i>314</i>&nbsp;	 * @param workspaceId ID for Workspace to delete incidents from
+<i>315</i>&nbsp;	 *  
+<i>316</i>&nbsp;	 * @see Response
+<i>317</i>&nbsp;	 * @see IncidentResponse
+<i>318</i>&nbsp;	 */
+<i>319</i>&nbsp;	public Response deleteIncidents(Integer workspaceId) {
+<b class="nc"><i>320</i>&nbsp;		return makeUnsupportedOpRequestResponse();</b>
+<i>321</i>&nbsp;	}
+<i>322</i>&nbsp;	
+<i>323</i>&nbsp;
+<i>324</i>&nbsp;	/**
+<i>325</i>&nbsp;	 * Bulk creation of Incident items.
+<i>326</i>&nbsp;	 * 
+<i>327</i>&nbsp;	 * &lt;p&gt;
+<i>328</i>&nbsp;	 * 	TODO: not used by mobile, so not converting to SpringJDBC. During refactor,
+<i>329</i>&nbsp;	 *  UI framework may choose to implement it at that time
+<i>330</i>&nbsp;	 * &lt;p&gt;
+<i>331</i>&nbsp;	 *  
+<i>332</i>&nbsp;	 * @param workspaceId
+<i>333</i>&nbsp;	 * @param incidents A collection of Incident items to be created.
+<i>334</i>&nbsp;	 *  
+<i>335</i>&nbsp;	 * @return Response IncidentServiceResponse 
+<i>336</i>&nbsp;	 *  
+<i>337</i>&nbsp;	 * @see Response
+<i>338</i>&nbsp;	 * @see IncidentResponse
+<i>339</i>&nbsp;	 */
+<i>340</i>&nbsp;	@Deprecated
+<i>341</i>&nbsp;	public Response putIncidents(Integer workspaceId, Collection&lt;Incident&gt; incidents) {
+<b class="nc"><i>342</i>&nbsp;		return makeUnsupportedOpRequestResponse();</b>
+<i>343</i>&nbsp;		/*
+<i>344</i>&nbsp;		IncidentServiceResponse incidentResponse = new IncidentServiceResponse();
+<i>345</i>&nbsp;		Response response = null;
+<i>346</i>&nbsp;		int errorCount = 0;
+<i>347</i>&nbsp;		for (Incident incident : incidents) {
+<i>348</i>&nbsp;			try {
+<i>349</i>&nbsp;				incident.setWorkspaceId(workspaceId);  // Make sure this is set consistently.
+<i>350</i>&nbsp;				Incident newIncident = IncidentDAO.getInstance().createIncident(incident);
+<i>351</i>&nbsp;				incidentResponse.getIncidents().add(newIncident);
+<i>352</i>&nbsp;			} catch (ICSDatastoreException e) {
+<i>353</i>&nbsp;				PAPILogger.getInstance().e(CNAME, e.getMessage());
+<i>354</i>&nbsp;				++errorCount;
+<i>355</i>&nbsp;			}			
+<i>356</i>&nbsp;		}
+<i>357</i>&nbsp;		
+<i>358</i>&nbsp;		if (errorCount == 0) {
+<i>359</i>&nbsp;			incidentResponse.setMessage(&quot;ok&quot;);
+<i>360</i>&nbsp;			incidentResponse.setCount(incidentResponse.getIncidents().size());
+<i>361</i>&nbsp;			response = Response.ok(incidentResponse).status(Status.OK).build();
+<i>362</i>&nbsp;		} else {
+<i>363</i>&nbsp;			incidentResponse.setMessage(&quot;Failures. &quot; + errorCount + &quot; out of &quot; + incidents.size() + &quot; were not created.&quot;);
+<i>364</i>&nbsp;			incidentResponse.setCount(incidentResponse.getIncidents().size());
+<i>365</i>&nbsp;			response = Response.ok(incidentResponse).status(Status.INTERNAL_SERVER_ERROR).build();
+<i>366</i>&nbsp;		}
+<i>367</i>&nbsp;
+<i>368</i>&nbsp;		return response;*/
+<i>369</i>&nbsp;	}
+<i>370</i>&nbsp;
+<i>371</i>&nbsp;	
+<i>372</i>&nbsp;	/**
+<i>373</i>&nbsp;	 *  Creates single Incident
+<i>374</i>&nbsp;	 *  
+<i>375</i>&nbsp;	 *  &lt;p&gt;
+<i>376</i>&nbsp;	 *  	TODO: not used by mobile, AND needs fully implemented for use with the ui-framework
+<i>377</i>&nbsp;	 *  		incident module. This call simply persists an Incident entity w/o all the
+<i>378</i>&nbsp;	 *  		other setup the SA/message does
+<i>379</i>&nbsp;	 *  &lt;/p&gt;
+<i>380</i>&nbsp;	 *  
+<i>381</i>&nbsp;	 *  @param workspaceId
+<i>382</i>&nbsp;	 *  @param incident Incident to be persisted
+<i>383</i>&nbsp;	 *  
+<i>384</i>&nbsp;	 *  @return Response
+<i>385</i>&nbsp;	 * @throws Exception 
+<i>386</i>&nbsp;	 * @throws DuplicateCollabRoomException 
+<i>387</i>&nbsp;	 * @throws DataAccessException 
+<i>388</i>&nbsp;	 *  
+<i>389</i>&nbsp;	 *  @see IncidentResponse  
+<i>390</i>&nbsp;	 *  
+<i>391</i>&nbsp;	 */	
+<i>392</i>&nbsp;	
+<i>393</i>&nbsp;	public Response postIncident(Integer workspaceId, Integer orgId, Integer userId, Incident incident) 
+<i>394</i>&nbsp;			throws DataAccessException, DuplicateCollabRoomException, Exception {
+<i>395</i>&nbsp;		
+<b class="nc"><i>396</i>&nbsp;		IncidentServiceResponse incidentResponse = new IncidentServiceResponse();</b>
+<b class="nc"><i>397</i>&nbsp;		Response response = null;</b>
+<b class="nc"><i>398</i>&nbsp;		JsonEmail email = null;</b>
+<i>399</i>&nbsp;		
+<b class="nc"><i>400</i>&nbsp;		if(incidentDao.getIncidentByName(incident.getIncidentname(), workspaceId) != null){</b>
+<b class="nc"><i>401</i>&nbsp;			incidentResponse.setMessage(DUPLICATE_NAME);</b>
+<b class="nc"><i>402</i>&nbsp;			return Response.ok(incidentResponse).status(Status.INTERNAL_SERVER_ERROR).build();</b>
+<i>403</i>&nbsp;		}
+<i>404</i>&nbsp;
+<b class="nc"><i>405</i>&nbsp;		Incident newIncident = null;</b>
+<i>406</i>&nbsp;		try {
+<b class="nc"><i>407</i>&nbsp;			incident.setCreated(new Date());</b>
+<b class="nc"><i>408</i>&nbsp;			newIncident = incidentDao.create(incident);</b>
+<i>409</i>&nbsp;			
+<b class="nc"><i>410</i>&nbsp;			if(newIncident != null){</b>
+<b class="nc"><i>411</i>&nbsp;				incidentResponse.getIncidents().add(newIncident);</b>
+<b class="nc"><i>412</i>&nbsp;				incidentResponse.setMessage(Status.OK.getReasonPhrase());</b>
+<b class="nc"><i>413</i>&nbsp;				incidentResponse.setCount(incidentResponse.getIncidents().size());</b>
+<b class="nc"><i>414</i>&nbsp;				response = Response.ok(incidentResponse).status(Status.OK).build();</b>
+<i>415</i>&nbsp;			}else{
+<b class="nc"><i>416</i>&nbsp;				incidentResponse.setMessage(Status.EXPECTATION_FAILED.getReasonPhrase());</b>
+<b class="nc"><i>417</i>&nbsp;				incidentResponse.setCount(0);</b>
+<b class="nc"><i>418</i>&nbsp;				response = Response.ok(incidentResponse).status(Status.INTERNAL_SERVER_ERROR).build();</b>
+<i>419</i>&nbsp;			}
+<b class="nc"><i>420</i>&nbsp;		} catch (Exception e) {</b>
+<b class="nc"><i>421</i>&nbsp;			incidentResponse.setMessage(&quot;postIncident failed: &quot; + e.getMessage());</b>
+<b class="nc"><i>422</i>&nbsp;			response = Response.ok(incidentResponse).status(Status.INTERNAL_SERVER_ERROR).build();</b>
+<b class="nc"><i>423</i>&nbsp;		}</b>
+<i>424</i>&nbsp;		
+<i>425</i>&nbsp;		//Create default rooms
+<b class="nc"><i>426</i>&nbsp;		CollabRoom incidentMap = createDefaultCollabRoom(newIncident.getUsersessionid(), </b>
+<b class="nc"><i>427</i>&nbsp;				APIConfig.getInstance().getConfiguration().getString(APIConfig.INCIDENT_MAP, </b>
+<i>428</i>&nbsp;						SADisplayConstants.INCIDENT_MAP));
+<b class="nc"><i>429</i>&nbsp;		List&lt;Integer&gt; admins = orgDao.getOrgAdmins(orgId,workspaceId);</b>
+<b class="nc"><i>430</i>&nbsp;		if(!admins.contains(userId)){</b>
+<b class="nc"><i>431</i>&nbsp;			incidentMap.getAdminUsers().add(userId);</b>
+<i>432</i>&nbsp;		}
+<b class="nc"><i>433</i>&nbsp;		incidentMap.getAdminUsers().addAll(admins);</b>
+<i>434</i>&nbsp;		
+<b class="nc"><i>435</i>&nbsp;		CollabService collabRoomEndpoint = new CollabServiceImpl();</b>
+<b class="nc"><i>436</i>&nbsp;		collabRoomEndpoint.createCollabRoomWithPermissions(newIncident.getIncidentid(),orgId, workspaceId,</b>
+<i>437</i>&nbsp;				incidentMap);
+<i>438</i>&nbsp;		
+<b class="nc"><i>439</i>&nbsp;		collabRoomEndpoint.createUnsecureCollabRoom(newIncident.getIncidentid(), createDefaultCollabRoom(</b>
+<b class="nc"><i>440</i>&nbsp;				newIncident.getUsersessionid(), WORKING_MAP));</b>
+<i>441</i>&nbsp;		
+<b class="nc"><i>442</i>&nbsp;		if (Status.OK.getStatusCode() == response.getStatus()) {</b>
+<i>443</i>&nbsp;			try {
+<b class="nc"><i>444</i>&nbsp;				String topic = String.format(&quot;iweb.NICS.ws.%s.newIncident&quot;, workspaceId);</b>
+<b class="nc"><i>445</i>&nbsp;				notifyIncident(newIncident, topic);</b>
+<i>446</i>&nbsp;				
+<i>447</i>&nbsp;				try {
+<i>448</i>&nbsp;					
+<b class="nc"><i>449</i>&nbsp;					String date = new SimpleDateFormat(&quot;EEE MMM d HH:mm:ss z yyyy&quot;).format(new Date());</b>
+<b class="nc"><i>450</i>&nbsp;					String alertTopic = String.format(&quot;iweb.nics.email.alert&quot;);</b>
+<b class="nc"><i>451</i>&nbsp;					String newIncidentUsers = APIConfig.getInstance().getConfiguration().getString(APIConfig.NEW_INCIDENT_USERS_EMAIL);</b>
+<b class="nc"><i>452</i>&nbsp;					String hostname = InetAddress.getLocalHost().getHostName();</b>
+<b class="nc"><i>453</i>&nbsp;					User creator = userDao.getUserBySessionId(newIncident.getUsersessionid());</b>
+<b class="nc"><i>454</i>&nbsp;					Org org = orgDao.getLoggedInOrg(creator.getUserId());		</b>
+<b class="nc"><i>455</i>&nbsp;					List&lt;String&gt;  disList = orgDao.getOrgAdmins(org.getOrgId());</b>
+<b class="nc"><i>456</i>&nbsp;					String toEmails = disList.toString().substring(1, disList.toString().length()-1) + &quot;, &quot; + newIncidentUsers;</b>
+<b class="nc"><i>457</i>&nbsp;					String siteName = workspaceDao.getWorkspaceName(workspaceId);</b>
+<i>458</i>&nbsp;					
+<b class="nc"><i>459</i>&nbsp;					if(disList.size() &gt; 0){</b>
+<b class="nc"><i>460</i>&nbsp;						email = new JsonEmail(creator.getUsername(),toEmails,&quot;Alert from NewIncident@&quot; + hostname);</b>
+<b class="nc"><i>461</i>&nbsp;						email.setBody(date + &quot;\n\n&quot; + &quot;A new incident has been created: &quot; + newIncident.getIncidentname() + &quot;\n&quot; + </b>
+<b class="nc"><i>462</i>&nbsp;										&quot;Creator: &quot; + creator.getUsername() + &quot;\n&quot; + </b>
+<b class="nc"><i>463</i>&nbsp;										&quot;Location: &quot; + newIncident.getLat() + &quot;,&quot; + newIncident.getLon() + &quot;\n&quot; +</b>
+<i>464</i>&nbsp;										&quot;Site: &quot; + siteName);
+<i>465</i>&nbsp;						
+<b class="nc"><i>466</i>&nbsp;						notifyNewIncidentEmail(email.toJsonObject().toString(),alertTopic);</b>
+<i>467</i>&nbsp;					}
+<i>468</i>&nbsp;					
+<b class="nc"><i>469</i>&nbsp;				} catch (Exception e) {</b>
+<b class="nc"><i>470</i>&nbsp;					APILogger.getInstance().e(CNAME,&quot;Failed to send new Incident email alerts&quot;);</b>
+<b class="nc"><i>471</i>&nbsp;				}</b>
+<i>472</i>&nbsp;				
+<i>473</i>&nbsp;				
+<b class="nc"><i>474</i>&nbsp;			} catch (Exception e) {</b>
+<b class="nc"><i>475</i>&nbsp;				APILogger.getInstance().e(CNAME,&quot;Failed to publish a new Incident message event&quot;);</b>
+<b class="nc"><i>476</i>&nbsp;			}</b>
+<i>477</i>&nbsp;		}
+<i>478</i>&nbsp;		
+<b class="nc"><i>479</i>&nbsp;		return response;</b>
+<i>480</i>&nbsp;	}
+<i>481</i>&nbsp;	
+<i>482</i>&nbsp;	private CollabRoom createDefaultCollabRoom(int userSessionId, String name){
+<b class="nc"><i>483</i>&nbsp;		CollabRoom collabRoom = new CollabRoom();</b>
+<b class="nc"><i>484</i>&nbsp;		collabRoom.setName(name);</b>
+<b class="nc"><i>485</i>&nbsp;		collabRoom.setUsersessionid(userSessionId);</b>
+<b class="nc"><i>486</i>&nbsp;		return collabRoom;</b>
+<i>487</i>&nbsp;	}
+<i>488</i>&nbsp;	
+<i>489</i>&nbsp;	private void notifyIncident(Incident newIncident, String topic) throws IOException {
+<b class="nc"><i>490</i>&nbsp;		if (newIncident != null) {</b>
+<b class="nc"><i>491</i>&nbsp;			ObjectMapper mapper = new ObjectMapper();</b>
+<b class="nc"><i>492</i>&nbsp;			String message = mapper.writeValueAsString(newIncident);</b>
+<b class="nc"><i>493</i>&nbsp;			getRabbitProducer().produce(topic, message);</b>
+<i>494</i>&nbsp;		}
+<i>495</i>&nbsp;	}
+<i>496</i>&nbsp;	
+<i>497</i>&nbsp;	private void notifyIncident(int incidentId, String topic) throws IOException {
+<b class="nc"><i>498</i>&nbsp;		getRabbitProducer().produce(topic, (new Integer(incidentId).toString()));</b>
+<i>499</i>&nbsp;	}
+<i>500</i>&nbsp;	
+<i>501</i>&nbsp;	
+<i>502</i>&nbsp;	private void notifyNewIncidentEmail(String email, String topic) throws IOException {
+<b class="nc"><i>503</i>&nbsp;		if (email != null) {</b>
+<b class="nc"><i>504</i>&nbsp;			getRabbitProducer().produce(topic, email);</b>
+<i>505</i>&nbsp;		}
+<i>506</i>&nbsp;	}
+<i>507</i>&nbsp;
+<i>508</i>&nbsp;	/**
+<i>509</i>&nbsp;	 *  Read a single Incident item.
+<i>510</i>&nbsp;	 *  
+<i>511</i>&nbsp;	 *  &lt;p&gt;
+<i>512</i>&nbsp;	 *  	TODO: remove workspaceid parameter IncidentID is incidentId, regardless of Workspace, why is it required?
+<i>513</i>&nbsp;	 *  &lt;/p&gt;
+<i>514</i>&nbsp;	 *  
+<i>515</i>&nbsp;	 *  @param workspaceId Workspace to filter Incident by?
+<i>516</i>&nbsp;	 *  @param incidentId Incident ID to be read
+<i>517</i>&nbsp;	 *  
+<i>518</i>&nbsp;	 *  @return Response IncidentResponse containing the requested Incident
+<i>519</i>&nbsp;	 *  @see IncidentResponse
+<i>520</i>&nbsp;	 */
+<i>521</i>&nbsp;	public Response getIncident(@Deprecated Integer workspaceId, int incidentId) {
+<b class="nc"><i>522</i>&nbsp;		Response response = null;</b>
+<b class="nc"><i>523</i>&nbsp;		IncidentServiceResponse incidentResponse = new IncidentServiceResponse();</b>
+<i>524</i>&nbsp;
+<i>525</i>&nbsp;		// TODO: the forever incident id is a hack for an early coast guard demo, needs to be factored out
+<i>526</i>&nbsp;		/*
+<i>527</i>&nbsp;		if (incidentId &lt; 0) {
+<i>528</i>&nbsp;			// The client is referring to the Default-Forever incident.
+<i>529</i>&nbsp;			int foreverIncidentId = PAPIConfig.getInstance().getConfiguration()
+<i>530</i>&nbsp;				.getInt(&quot;phinics.papi.service.incident.foreverid&quot;, -1);
+<i>531</i>&nbsp;			if (foreverIncidentId &lt; 0) {
+<i>532</i>&nbsp;				PAPILogger.getInstance().e(CNAME, &quot;No Forever Incident ID has been configured. &quot;
+<i>533</i>&nbsp;						+ &quot;Add key phinics.papi.service.incident.foreverid to file papi-svc.properties.&quot;);
+<i>534</i>&nbsp;				incidentResponse.setMessage(&quot;No Forever Incident ID has been configured. Invalid ID: &quot;
+<i>535</i>&nbsp;						+ incidentId) ;
+<i>536</i>&nbsp;				incidentResponse.setCount(incidentResponse.getIncidents().size());
+<i>537</i>&nbsp;				response = Response.ok(incidentResponse).status(Status.BAD_REQUEST).build();
+<i>538</i>&nbsp;				return response;
+<i>539</i>&nbsp;			} else {
+<i>540</i>&nbsp;				PAPILogger.getInstance().i(CNAME, &quot;Resolving Forever Incident ID to &quot;
+<i>541</i>&nbsp;						+ foreverIncidentId);
+<i>542</i>&nbsp;				incidentId = foreverIncidentId;
+<i>543</i>&nbsp;			}
+<i>544</i>&nbsp;		}*/
+<i>545</i>&nbsp;
+<b class="nc"><i>546</i>&nbsp;		String message = &quot;&quot;;</b>
+<b class="nc"><i>547</i>&nbsp;		Incident incident = null;</b>
+<i>548</i>&nbsp;		try {
+<i>549</i>&nbsp;			//incident = IncidentDAO.getInstance().getIncidentById(workspaceId, incidentId);
+<b class="nc"><i>550</i>&nbsp;			incident = incidentDao.getIncident(incidentId);</b>
+<b class="nc"><i>551</i>&nbsp;		} catch (DataAccessException e) {</b>
+<b class="nc"><i>552</i>&nbsp;			APILogger.getInstance().e(CNAME, e.getMessage());</b>
+<b class="nc"><i>553</i>&nbsp;			message = &quot;Error. Data access exception retrieving Incident with ID &quot; + </b>
+<b class="nc"><i>554</i>&nbsp;					incidentId + &quot;: &quot; + e.getMessage();</b>
+<b class="nc"><i>555</i>&nbsp;		} catch (Exception e) {</b>
+<b class="nc"><i>556</i>&nbsp;			APILogger.getInstance().e(CNAME, e.getMessage());</b>
+<b class="nc"><i>557</i>&nbsp;			message = &quot;Error. Unhandled exception retrieving Incident with ID &quot; + </b>
+<b class="nc"><i>558</i>&nbsp;					incidentId + &quot;: &quot; + e.getMessage();</b>
+<b class="nc"><i>559</i>&nbsp;		}</b>
+<i>560</i>&nbsp;		
+<b class="nc"><i>561</i>&nbsp;		if (incident == null) {</b>
+<b class="nc"><i>562</i>&nbsp;			incidentResponse.setMessage(message);</b>
+<i>563</i>&nbsp;			// TODO: double check mobile wasn&#39;t specifically handling 404, the Status was previously set to Not Found
+<b class="nc"><i>564</i>&nbsp;			response = Response.ok(incidentResponse).status(Status.INTERNAL_SERVER_ERROR).build();</b>
+<b class="nc"><i>565</i>&nbsp;			return response;</b>
+<i>566</i>&nbsp;		}
+<i>567</i>&nbsp;		
+<b class="nc"><i>568</i>&nbsp;		incidentResponse.getIncidents().add(incident);</b>
+<b class="nc"><i>569</i>&nbsp;		incidentResponse.setCount(1);</b>
+<b class="nc"><i>570</i>&nbsp;		incidentResponse.setMessage(&quot;ok&quot;);</b>
+<b class="nc"><i>571</i>&nbsp;		response = Response.ok(incidentResponse).status(Status.OK).build();</b>
+<i>572</i>&nbsp;
+<b class="nc"><i>573</i>&nbsp;		return response;</b>
+<i>574</i>&nbsp;	}
+<i>575</i>&nbsp;
+<i>576</i>&nbsp;	public Response getIncident(@Deprecated Integer workspaceId, String incidentName) {
+<b class="nc"><i>577</i>&nbsp;		Response response = null;</b>
+<b class="nc"><i>578</i>&nbsp;		IncidentServiceResponse incidentResponse = new IncidentServiceResponse();</b>
+<i>579</i>&nbsp;
+<b class="nc"><i>580</i>&nbsp;		String message = &quot;&quot;;</b>
+<b class="nc"><i>581</i>&nbsp;		Incident incident = null;</b>
+<i>582</i>&nbsp;		try {
+<i>583</i>&nbsp;			//incident = IncidentDAO.getInstance().getIncidentById(workspaceId, incidentId);
+<b class="nc"><i>584</i>&nbsp;			incident = incidentDao.getIncidentByName(incidentName,workspaceId);</b>
+<b class="nc"><i>585</i>&nbsp;		} catch (DataAccessException e) {</b>
+<b class="nc"><i>586</i>&nbsp;			APILogger.getInstance().e(CNAME, e.getMessage());</b>
+<b class="nc"><i>587</i>&nbsp;			message = &quot;Error. Data access exception retrieving Incident with name &quot; + </b>
+<b class="nc"><i>588</i>&nbsp;					incidentName + &quot;: &quot; + e.getMessage();</b>
+<b class="nc"><i>589</i>&nbsp;		} catch (Exception e) {</b>
+<b class="nc"><i>590</i>&nbsp;			APILogger.getInstance().e(CNAME, e.getMessage());</b>
+<b class="nc"><i>591</i>&nbsp;			message = &quot;Error. Unhandled exception retrieving Incident with name &quot; + </b>
+<b class="nc"><i>592</i>&nbsp;					incidentName + &quot;: &quot; + e.getMessage();</b>
+<b class="nc"><i>593</i>&nbsp;		}</b>
+<i>594</i>&nbsp;		
+<b class="nc"><i>595</i>&nbsp;		if (incident == null) {</b>
+<b class="nc"><i>596</i>&nbsp;			incidentResponse.setMessage(message);</b>
+<i>597</i>&nbsp;			// TODO: double check mobile wasn&#39;t specifically handling 404, the Status was previously set to Not Found
+<b class="nc"><i>598</i>&nbsp;			response = Response.ok(incidentResponse).status(Status.INTERNAL_SERVER_ERROR).build();</b>
+<b class="nc"><i>599</i>&nbsp;			return response;</b>
+<i>600</i>&nbsp;		}
+<i>601</i>&nbsp;		
+<b class="nc"><i>602</i>&nbsp;		incidentResponse.getIncidents().add(incident);</b>
+<b class="nc"><i>603</i>&nbsp;		incidentResponse.setCount(1);</b>
+<b class="nc"><i>604</i>&nbsp;		incidentResponse.setMessage(&quot;ok&quot;);</b>
+<b class="nc"><i>605</i>&nbsp;		response = Response.ok(incidentResponse).status(Status.OK).build();</b>
+<i>606</i>&nbsp;
+<b class="nc"><i>607</i>&nbsp;		return response;</b>
+<i>608</i>&nbsp;	}
+<i>609</i>&nbsp;	
+<i>610</i>&nbsp;	public Response getIncidentOrgs(Integer workspaceId){
+<b class="nc"><i>611</i>&nbsp;		FieldMapResponse dataResponse = new FieldMapResponse();</b>
+<b class="nc"><i>612</i>&nbsp;        dataResponse.setData(incidentDao.getIncidentOrg(workspaceId));</b>
+<i>613</i>&nbsp;        
+<b class="nc"><i>614</i>&nbsp;        dataResponse.setMessage(Status.OK.getReasonPhrase());</b>
+<b class="nc"><i>615</i>&nbsp;		return Response.ok(dataResponse).status(Status.OK).build();</b>
+<i>616</i>&nbsp;	}
+<i>617</i>&nbsp;	
+<i>618</i>&nbsp;	
+<i>619</i>&nbsp;	/**
+<i>620</i>&nbsp;	 *  Delete a single Incident
+<i>621</i>&nbsp;	 *  
+<i>622</i>&nbsp;	 *  @param workspaceId 
+<i>623</i>&nbsp;	 *  @param incidentId ID of Incident item to be read.
+<i>624</i>&nbsp;	 *  
+<i>625</i>&nbsp;	 *  @return Response
+<i>626</i>&nbsp;	 *  @see IncidentResponse
+<i>627</i>&nbsp;	 */	
+<i>628</i>&nbsp;	public Response deleteIncident(@Deprecated Integer workspaceId, int incidentId) {
+<b class="nc"><i>629</i>&nbsp;		return makeUnsupportedOpRequestResponse();</b>
+<i>630</i>&nbsp;		/* We don&#39;t support simply deleting an incident entity, there&#39;s an archive process
+<i>631</i>&nbsp;		 * 
+<i>632</i>&nbsp;		Response response = null;
+<i>633</i>&nbsp;		IncidentServiceResponse incidentResponse = new IncidentServiceResponse();
+<i>634</i>&nbsp;
+<i>635</i>&nbsp;		if (incidentId &lt; 1) {
+<i>636</i>&nbsp;			incidentResponse.setMessage(&quot;Invalid incidentId value: &quot; + incidentId) ;
+<i>637</i>&nbsp;			incidentResponse.setCount(incidentResponse.getIncidents().size());
+<i>638</i>&nbsp;			response = Response.ok(incidentResponse).status(Status.BAD_REQUEST).build();
+<i>639</i>&nbsp;			return response;
+<i>640</i>&nbsp;		}
+<i>641</i>&nbsp;
+<i>642</i>&nbsp;		try {
+<i>643</i>&nbsp;			IncidentDAO.getInstance().removeIncident(incidentId);
+<i>644</i>&nbsp;			incidentResponse.setMessage(&quot;ok&quot;);
+<i>645</i>&nbsp;			incidentResponse.setCount(incidentResponse.getIncidents().size());
+<i>646</i>&nbsp;			response = Response.ok(incidentResponse).status(Status.OK).build();			
+<i>647</i>&nbsp;		} catch (ICSDatastoreException e) {
+<i>648</i>&nbsp;			incidentResponse.setMessage(e.getMessage()) ;
+<i>649</i>&nbsp;			incidentResponse.setCount(incidentResponse.getIncidents().size());
+<i>650</i>&nbsp;			response = Response.ok(incidentResponse).status(Status.NOT_FOUND).build();			
+<i>651</i>&nbsp;		}
+<i>652</i>&nbsp;
+<i>653</i>&nbsp;		return response;*/
+<i>654</i>&nbsp;	}
+<i>655</i>&nbsp;	
+<i>656</i>&nbsp;
+<i>657</i>&nbsp;	/**
+<i>658</i>&nbsp;	 *  Update a single Incident
+<i>659</i>&nbsp;	 *  
+<i>660</i>&nbsp;	 *  @param workspaceId
+<i>661</i>&nbsp;	 *  @param incidentId ID of Incident item to be read
+<i>662</i>&nbsp;	 *  @param incident The incident entity to be used to update the existing one
+<i>663</i>&nbsp;	 *  
+<i>664</i>&nbsp;	 *  @return Response
+<i>665</i>&nbsp;	 *  @see IncidentResponse
+<i>666</i>&nbsp;	 */	
+<i>667</i>&nbsp;	public Response putIncident(Integer workspaceId, int incidentId, Incident incident) {
+<i>668</i>&nbsp;		// TODO: mobile never used this, implement when web needs it
+<b class="nc"><i>669</i>&nbsp;		return makeUnsupportedOpRequestResponse();</b>
+<i>670</i>&nbsp;		/*
+<i>671</i>&nbsp;		Response response = null;
+<i>672</i>&nbsp;		IncidentServiceResponse incidentResponse = new IncidentServiceResponse();
+<i>673</i>&nbsp;
+<i>674</i>&nbsp;		if (incidentId &lt; 0) {
+<i>675</i>&nbsp;			incidentResponse.setMessage(&quot;Invalid incidentId value: &quot; + incidentId) ;
+<i>676</i>&nbsp;			response = Response.ok(incidentResponse).status(Status.BAD_REQUEST).build();
+<i>677</i>&nbsp;			incidentResponse.setCount(incidentResponse.getIncidents().size());
+<i>678</i>&nbsp;			return response;
+<i>679</i>&nbsp;		}
+<i>680</i>&nbsp;
+<i>681</i>&nbsp;		if (incident == null) {
+<i>682</i>&nbsp;			incidentResponse.setMessage(&quot;Invalid null Incident object.&quot;) ;
+<i>683</i>&nbsp;			incidentResponse.setCount(incidentResponse.getIncidents().size());
+<i>684</i>&nbsp;			response = Response.ok(incidentResponse).status(Status.BAD_REQUEST).build();
+<i>685</i>&nbsp;			return response;
+<i>686</i>&nbsp;		}		
+<i>687</i>&nbsp;
+<i>688</i>&nbsp;		try {			
+<i>689</i>&nbsp;			IncidentDAO.getInstance().updateIncident(incidentId, incident);			
+<i>690</i>&nbsp;			Incident u = IncidentDAO.getInstance().getIncidentById(workspaceId, incidentId);
+<i>691</i>&nbsp;			incidentResponse.getIncidents().add(u);
+<i>692</i>&nbsp;			incidentResponse.setMessage(&quot;ok&quot;);
+<i>693</i>&nbsp;			incidentResponse.setCount(incidentResponse.getIncidents().size());
+<i>694</i>&nbsp;			response = Response.ok(incidentResponse).status(Status.OK).build();			
+<i>695</i>&nbsp;		} catch (Exception e) {
+<i>696</i>&nbsp;			incidentResponse.setMessage(e.getMessage()) ;
+<i>697</i>&nbsp;			incidentResponse.setCount(incidentResponse.getIncidents().size());
+<i>698</i>&nbsp;			response = Response.ok(incidentResponse).status(Status.NOT_FOUND).build();	
+<i>699</i>&nbsp;		}
+<i>700</i>&nbsp;
+<i>701</i>&nbsp;		return response;*/
+<i>702</i>&nbsp;	}
+<i>703</i>&nbsp;	
+<i>704</i>&nbsp;
+<i>705</i>&nbsp;	/**
+<i>706</i>&nbsp;	 *  Return the number of Incidents in the specified workspace 
+<i>707</i>&nbsp;	 *  
+<i>708</i>&nbsp;	 *  @param workspaceId ID of workspace to get incident count from
+<i>709</i>&nbsp;	 *    
+<i>710</i>&nbsp;	 *  @return Response An IncidentResponse with the count field set to the count of incidents
+<i>711</i>&nbsp;	 *  @see IncidentResponse
+<i>712</i>&nbsp;	 */		
+<i>713</i>&nbsp;	public Response getIncidentCount(Integer workspaceId) {
+<i>714</i>&nbsp;		Response response;
+<b class="nc"><i>715</i>&nbsp;		IncidentServiceResponse incidentResponse = new IncidentServiceResponse();</b>
+<b class="nc"><i>716</i>&nbsp;		incidentResponse.setMessage(&quot;ok&quot;);</b>
+<b class="nc"><i>717</i>&nbsp;		int count = incidentDao.getIncidentCount(workspaceId);		</b>
+<b class="nc"><i>718</i>&nbsp;		incidentResponse.setCount(count);</b>
+<b class="nc"><i>719</i>&nbsp;		if(count == -1) {</b>
+<b class="nc"><i>720</i>&nbsp;			incidentResponse.setMessage(&quot;error&quot;);			</b>
+<b class="nc"><i>721</i>&nbsp;			response = Response.ok(incidentResponse)</b>
+<b class="nc"><i>722</i>&nbsp;					.status(Status.INTERNAL_SERVER_ERROR).build();</b>
+<b class="nc"><i>723</i>&nbsp;			return response;</b>
+<i>724</i>&nbsp;		}
+<i>725</i>&nbsp;		
+<b class="nc"><i>726</i>&nbsp;		response = Response.ok(incidentResponse).status(Status.OK).build();		</b>
+<b class="nc"><i>727</i>&nbsp;		return response;</b>
+<i>728</i>&nbsp;	}
+<i>729</i>&nbsp;
+<i>730</i>&nbsp;
+<i>731</i>&nbsp;	/**
+<i>732</i>&nbsp;	 *  Search the Incident items stored. 
+<i>733</i>&nbsp;	 *  
+<i>734</i>&nbsp;	 *  @return Response
+<i>735</i>&nbsp;	 *  @see IncidentResponse
+<i>736</i>&nbsp;	 */		
+<i>737</i>&nbsp;	public Response searchIncidentResources() {
+<b class="nc"><i>738</i>&nbsp;		return makeUnsupportedOpRequestResponse();</b>
+<i>739</i>&nbsp;	}
+<i>740</i>&nbsp;
+<i>741</i>&nbsp;	/**
+<i>742</i>&nbsp;	 * Retrieves notification form associated with specified incident
+<i>743</i>&nbsp;	 * 
+<i>744</i>&nbsp;	 * @param workspaceId Not used, remove
+<i>745</i>&nbsp;	 * @param incidentId ID of incident to get form for
+<i>746</i>&nbsp;	 */
+<i>747</i>&nbsp;	@Deprecated	
+<i>748</i>&nbsp;	public Response getIncidentNotificationForm(@Deprecated Integer workspaceId, int incidentId) {
+<i>749</i>&nbsp;		// TODO: Not used, and no real &quot;notification&quot; form anymore. THere&#39;s also a FormService, but
+<i>750</i>&nbsp;		//  this call can probably be removed
+<b class="nc"><i>751</i>&nbsp;		return makeUnsupportedOpRequestResponse();</b>
+<i>752</i>&nbsp;		/*
+<i>753</i>&nbsp;		Response response = null;
+<i>754</i>&nbsp;		IncidentServiceResponse incidentResponse = new IncidentServiceResponse();
+<i>755</i>&nbsp;
+<i>756</i>&nbsp;		if (incidentId &lt; 1) {
+<i>757</i>&nbsp;			incidentResponse.setMessage(&quot;Invalid incidentId value: &quot; + incidentId) ;
+<i>758</i>&nbsp;			incidentResponse.setCount(incidentResponse.getIncidents().size());
+<i>759</i>&nbsp;			response = Response.ok(incidentResponse).status(Status.BAD_REQUEST).build();
+<i>760</i>&nbsp;			return response;
+<i>761</i>&nbsp;		}
+<i>762</i>&nbsp;
+<i>763</i>&nbsp;		Incident u = null;
+<i>764</i>&nbsp;		try {
+<i>765</i>&nbsp;			u = IncidentDAO.getInstance().getIncidentById(workspaceId, incidentId);
+<i>766</i>&nbsp;		} catch (ICSDatastoreException e) {
+<i>767</i>&nbsp;			PAPILogger.getInstance().e(CNAME, e.getMessage());
+<i>768</i>&nbsp;			e.printStackTrace();
+<i>769</i>&nbsp;		}
+<i>770</i>&nbsp;		if (u == null) {
+<i>771</i>&nbsp;			incidentResponse.setMessage(&quot;No incident found for incidentId value: &quot; + incidentId) ;
+<i>772</i>&nbsp;			response = Response.ok(incidentResponse).status(Status.NOT_FOUND).build();
+<i>773</i>&nbsp;			incidentResponse.setCount(incidentResponse.getIncidents().size());
+<i>774</i>&nbsp;			return response;			
+<i>775</i>&nbsp;		}
+<i>776</i>&nbsp;		
+<i>777</i>&nbsp;		Incident ret = new Incident();
+<i>778</i>&nbsp;		//ret.setNotificationForm(u.getNotificationForm());
+<i>779</i>&nbsp;
+<i>780</i>&nbsp;		incidentResponse.getIncidents().add(ret);
+<i>781</i>&nbsp;		incidentResponse.setMessage(&quot;ok&quot;);
+<i>782</i>&nbsp;		incidentResponse.setCount(incidentResponse.getIncidents().size());
+<i>783</i>&nbsp;		response = Response.ok(incidentResponse).status(Status.OK).build();
+<i>784</i>&nbsp;
+<i>785</i>&nbsp;		return response;*/
+<i>786</i>&nbsp;	}
+<i>787</i>&nbsp;
+<i>788</i>&nbsp;	private Response makeIllegalOpRequestResponse() {
+<b class="nc"><i>789</i>&nbsp;		IncidentServiceResponse incidentResponse = new IncidentServiceResponse();</b>
+<b class="nc"><i>790</i>&nbsp;		incidentResponse.setMessage(&quot;Request ignored.&quot;) ;</b>
+<b class="nc"><i>791</i>&nbsp;		Response response = Response.notModified(&quot;Illegal operation requested&quot;).</b>
+<b class="nc"><i>792</i>&nbsp;				status(Status.FORBIDDEN).build();</b>
+<b class="nc"><i>793</i>&nbsp;		return response;</b>
+<i>794</i>&nbsp;	}	
+<i>795</i>&nbsp;	
+<i>796</i>&nbsp;	private Response makeUnsupportedOpRequestResponse() {
+<b class="nc"><i>797</i>&nbsp;		IncidentServiceResponse incidentResponse = new IncidentServiceResponse();</b>
+<b class="nc"><i>798</i>&nbsp;		incidentResponse.setMessage(&quot;Request ignored.&quot;) ;</b>
+<b class="nc"><i>799</i>&nbsp;		Response response = Response.notModified(&quot;Unsupported operation requested&quot;).</b>
+<b class="nc"><i>800</i>&nbsp;				status(Status.NOT_IMPLEMENTED).build();</b>
+<b class="nc"><i>801</i>&nbsp;		return response;</b>
+<i>802</i>&nbsp;	}
+<i>803</i>&nbsp;	
+<i>804</i>&nbsp;	/**
+<i>805</i>&nbsp;	 * Get Rabbit producer to send message
+<i>806</i>&nbsp;	 * @return
+<i>807</i>&nbsp;	 * @throws IOException
+<i>808</i>&nbsp;	 */
+<i>809</i>&nbsp;	private RabbitPubSubProducer getRabbitProducer() throws IOException {
+<b class="nc"><i>810</i>&nbsp;		if (rabbitProducer == null) {</b>
+<b class="nc"><i>811</i>&nbsp;			rabbitProducer = RabbitFactory.makeRabbitPubSubProducer(</b>
+<b class="nc"><i>812</i>&nbsp;					APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_HOSTNAME_KEY),</b>
+<b class="nc"><i>813</i>&nbsp;					APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_EXCHANGENAME_KEY),</b>
+<b class="nc"><i>814</i>&nbsp;					APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_USERNAME_KEY),</b>
+<b class="nc"><i>815</i>&nbsp;					APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_USERPWD_KEY));</b>
+<i>816</i>&nbsp;		}
+<b class="nc"><i>817</i>&nbsp;		return rabbitProducer;</b>
+<i>818</i>&nbsp;	}
+<i>819</i>&nbsp;}
+<i>820</i>&nbsp;
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2017-03-23 12:52</div>
+</div>
+</body>
+</html>

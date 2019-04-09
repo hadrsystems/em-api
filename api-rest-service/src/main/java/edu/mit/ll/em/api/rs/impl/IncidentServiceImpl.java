@@ -259,10 +259,10 @@ public class IncidentServiceImpl implements IncidentService {
 		Response response = null;
 		IncidentServiceResponse incidentResponse = new IncidentServiceResponse();
 		Incident updatedIncident = null;
-		
-		
-		if(incidentDao.getIncidentByName(incident.getIncidentname(), workspaceId) != null && 
-				incidentDao.getIncidentByName(incident.getIncidentname(), workspaceId).getIncidentid() != incident.getIncidentid()){
+
+		Incident incidentByName = incidentDao.getIncidentByName(incident.getIncidentname(), workspaceId);
+		if(incidentByName != null &&
+                incidentByName.getIncidentid().intValue() != incident.getIncidentid()){
 			incidentResponse.setMessage(DUPLICATE_NAME);
 			return Response.ok(incidentResponse).status(Status.INTERNAL_SERVER_ERROR).build();
 		}

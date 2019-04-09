@@ -22,3 +22,4 @@ release.properties
 .idea/
 config
 tomcat-config
+.DS_Store
