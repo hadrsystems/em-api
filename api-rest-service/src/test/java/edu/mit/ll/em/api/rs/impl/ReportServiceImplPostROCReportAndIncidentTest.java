@@ -1,6 +1,36 @@
+/**
+ * Copyright (c) 2008-2018, Massachusetts Institute of Technology (MIT)
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ *
+ * 3. Neither the name of the copyright holder nor the names of its contributors
+ * may be used to endorse or promote products derived from this software without
+ * specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 package edu.mit.ll.em.api.rs.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.configuration.Configuration;
 import edu.mit.ll.em.api.rs.*;
 import edu.mit.ll.em.api.rs.validator.ReportValidator;
 import edu.mit.ll.nics.common.constants.SADisplayConstants;
@@ -10,6 +40,8 @@ import edu.mit.ll.nics.common.entity.Incident;
 import edu.mit.ll.nics.common.entity.User;
 import edu.mit.ll.nics.common.rabbitmq.RabbitPubSubProducer;
 import edu.mit.ll.nics.nicsdao.impl.*;
+import edu.mit.ll.em.api.notification.RocReportNotification;
+import org.apache.commons.configuration.Configuration;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -35,7 +67,9 @@ public class ReportServiceImplPostROCReportAndIncidentTest {
     private IncidentService incidentService = mock(IncidentService.class);
     private RabbitPubSubProducer rabbitProducer = mock(RabbitPubSubProducer.class);
     private ReportValidator reportValidator = mock(ReportValidator.class);
-    public ReportServiceImpl reportServiceImpl = new ReportServiceImpl(incidentDao, userDao, formDao, userSessionDao, uxoreportDao, incidentService, rabbitProducer, reportValidator);
+    private Configuration emApConfiguration = mock(Configuration.class);
+    public  RocReportNotification rocReportNotification = new RocReportNotification(emApConfiguration, rabbitProducer);
+    public ReportServiceImpl reportServiceImpl = new ReportServiceImpl(incidentDao, userDao, formDao, userSessionDao, uxoreportDao, incidentService, rabbitProducer, reportValidator, rocReportNotification);
     private int userSessionId = 1;
     private Form form = null;
     private int formTypeId =  1;

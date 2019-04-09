@@ -47,6 +47,7 @@ import edu.mit.ll.nics.common.rabbitmq.RabbitFactory;
 import edu.mit.ll.nics.common.rabbitmq.RabbitPubSubProducer;
 import edu.mit.ll.nics.nicsdao.UxoreportDAO;
 import edu.mit.ll.nics.nicsdao.impl.*;
+import edu.mit.ll.em.api.notification.RocReportNotification;
 import org.apache.commons.io.FileUtils;
 import org.apache.cxf.jaxrs.ext.multipart.Attachment;
 import org.apache.cxf.jaxrs.ext.multipart.MultipartBody;
@@ -80,8 +81,12 @@ public class ReportServiceImpl implements ReportService {
     private IncidentService incidentService = null;
     private RabbitPubSubProducer rabbitProducer = null;
     private ReportValidator reportValidator = null;
+    private RocReportNotification rocReportNotification = null;
 
-    public ReportServiceImpl(IncidentDAOImpl incidentDao, UserDAOImpl userDao, FormDAOImpl formDao, UserSessionDAOImpl userSessionDao, UxoreportDAO uxoReportDao, IncidentService incidentService, RabbitPubSubProducer rabbitProducer, ReportValidator reportValidator) {
+    public ReportServiceImpl(IncidentDAOImpl incidentDao, UserDAOImpl userDao, FormDAOImpl formDao, UserSessionDAOImpl userSessionDao,
+                             UxoreportDAO uxoReportDao, IncidentService incidentService,
+                             RabbitPubSubProducer rabbitProducer, ReportValidator reportValidator,
+                             RocReportNotification rocReportNotification) {
         this.incidentDao = incidentDao;
         this.userDao = userDao;
         this.formDao = formDao;
@@ -90,6 +95,7 @@ public class ReportServiceImpl implements ReportService {
         this.incidentService = incidentService;
         this.rabbitProducer = rabbitProducer;
         this.reportValidator = reportValidator;
+        this.rocReportNotification = rocReportNotification;
     }
     /**
      * Read and return all Report items.
@@ -262,6 +268,7 @@ public class ReportServiceImpl implements ReportService {
                     return iResponse; //send ok response with reason for FAILURE
                 }
                 isIncidentPersisted = true;
+
                 Incident incidentPersisted = incidentResponse.getIncidents().iterator().next();
                 return this.persistReportOnIncident(form, incidentPersisted);
             } else {
@@ -1132,7 +1139,16 @@ public class ReportServiceImpl implements ReportService {
         if (form != null) {
             ObjectMapper mapper = new ObjectMapper();
             String message = mapper.writeValueAsString(form);
+            notifyReportCreation(form);
             getRabbitProducer().produce(topic, message);
+        }
+    }
+
+    private void notifyReportCreation(Form form) throws IOException {
+        if (form != null) {
+            ObjectMapper mapper = new ObjectMapper();
+            String message = mapper.writeValueAsString(form);
+            rocReportNotification.notify(form);
         }
     }
 
