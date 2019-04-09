@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2016, Massachusetts Institute of Technology (MIT)
+ * Copyright (c) 2008-2018, Massachusetts Institute of Technology (MIT)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,15 +31,7 @@ package edu.mit.ll.em.api.rs;
 
 import java.util.Collection;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -51,14 +43,14 @@ import edu.mit.ll.nics.common.entity.Form;
 //@Path("/reports/{incidentId}/{reportType}")
 @Path("/reports")
 public interface ReportService {
-	
+
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/{incidentId}/{reportType}")
 	public Response getReports(@PathParam("incidentId") int incidentId,
-			@PathParam("reportType") String reportType,
-			//@QueryParam("username") String userName, // WHY?			
-			@QueryParam("") ReportOptParms optParms);
+                               @PathParam("reportType") String reportType,
+                               //@QueryParam("username") String userName, // WHY?
+                               @QueryParam("") ReportOptParms optParms);
 
 	@DELETE
 	@Produces(MediaType.APPLICATION_JSON)
@@ -70,15 +62,21 @@ public interface ReportService {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/{incidentId}/{reportType}")
 	public Response putReports(@PathParam("reportType") int reportType,
-			Collection<Report> reports);
+                               Collection<Report> reports);
+
+	@POST
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/{orgId}/IncidentAndROC")
+	public Response postIncidentAndROC(@PathParam("orgId") int orgId, Form form);
 
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/{incidentId}/{reportType}")
 	public Response postReport(@PathParam("incidentId") int incidentId,
-			@PathParam("reportType") String reportType, Form form);
-	
+                               @PathParam("reportType") String reportType, Form form);
+
 	/*@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
@@ -91,7 +89,7 @@ public interface ReportService {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/{incidentId}/{reportType}")
 	public Response postReports(@PathParam("incidentId") int incidentId,
-			@PathParam("reportType") String reportType, MultipartBody body);
+                                @PathParam("reportType") String reportType, MultipartBody body);
 	
 	@GET
 	@Path(value = "/count")
@@ -107,33 +105,33 @@ public interface ReportService {
 	@Path(value = "/search")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response searchReportResources(@PathParam("reportType") int reportType,
-			@QueryParam("") ReportOptParms optParms);	
+                                          @QueryParam("") ReportOptParms optParms);
 	
 		
 	@GET
 	@Path(value = "/{reportId}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getReport(@PathParam("reportType") int reportType,
-			@PathParam("reportId") int reportId,
-			@QueryParam("fields") String fields);
+                              @PathParam("reportId") int reportId,
+                              @QueryParam("fields") String fields);
 
 	@DELETE
 	@Path(value = "/{reportId}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response deleteReport(@PathParam("reportType") int reportType,
-			@PathParam("reportId") int reportId);
+                                 @PathParam("reportId") int reportId);
 
 	@PUT
 	@Path(value = "/{reportId}")
     @Consumes(MediaType.APPLICATION_JSON)	
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response putReport(@PathParam("reportType") int reportType,
-			@PathParam("reportId") int reportId, Report report);
+                              @PathParam("reportId") int reportId, Report report);
 
 	@POST
 	@Path(value = "/{reportId}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response postReport(@PathParam("reportType") int reportType,
-			@PathParam("reportId") int reportId);	
+                               @PathParam("reportId") int reportId);
 }
 

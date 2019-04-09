@@ -1,0 +1,1304 @@
+<!--
+
+    Copyright (c) 2008-2018, Massachusetts Institute of Technology (MIT)
+    All rights reserved.
+
+    Redistribution and use in source and binary forms, with or without
+    modification, are permitted provided that the following conditions are met:
+
+    1. Redistributions of source code must retain the above copyright notice, this
+    list of conditions and the following disclaimer.
+
+    2. Redistributions in binary form must reproduce the above copyright notice,
+    this list of conditions and the following disclaimer in the documentation
+    and/or other materials provided with the distribution.
+
+    3. Neither the name of the copyright holder nor the names of its contributors
+    may be used to endorse or promote products derived from this software without
+    specific prior written permission.
+
+    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+    AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+    IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+    DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+    FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+    DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+    SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+    CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+    OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+    OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+-->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html id="htmlId">
+<head>
+  <title>Coverage Report :: ReportServiceImpl</title>
+  <style type="text/css">
+    @import "../../.css/coverage.css";
+  </style>
+</head>
+
+<body>
+<div class="header"></div>
+
+<div class="content">
+<div class="breadCrumbs">
+    [ <a href="../../index.html">all classes</a> ]
+    [ <a href="../index.html">edu.mit.ll.em.api.rs.impl</a> ]
+</div>
+
+<h1>Coverage Summary for Class: ReportServiceImpl (edu.mit.ll.em.api.rs.impl)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">ReportServiceImpl</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/ 1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/ 26)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/ 564)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<div class="sourceCode"><i>1</i>&nbsp;/**
+<i>2</i>&nbsp; * Copyright (c) 2008-2016, Massachusetts Institute of Technology (MIT)
+<i>3</i>&nbsp; * All rights reserved.
+<i>4</i>&nbsp; *
+<i>5</i>&nbsp; * Redistribution and use in source and binary forms, with or without
+<i>6</i>&nbsp; * modification, are permitted provided that the following conditions are met:
+<i>7</i>&nbsp; *
+<i>8</i>&nbsp; * 1. Redistributions of source code must retain the above copyright notice, this
+<i>9</i>&nbsp; * list of conditions and the following disclaimer.
+<i>10</i>&nbsp; *
+<i>11</i>&nbsp; * 2. Redistributions in binary form must reproduce the above copyright notice,
+<i>12</i>&nbsp; * this list of conditions and the following disclaimer in the documentation
+<i>13</i>&nbsp; * and/or other materials provided with the distribution.
+<i>14</i>&nbsp; *
+<i>15</i>&nbsp; * 3. Neither the name of the copyright holder nor the names of its contributors
+<i>16</i>&nbsp; * may be used to endorse or promote products derived from this software without
+<i>17</i>&nbsp; * specific prior written permission.
+<i>18</i>&nbsp; *
+<i>19</i>&nbsp; * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot;
+<i>20</i>&nbsp; * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+<i>21</i>&nbsp; * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+<i>22</i>&nbsp; * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+<i>23</i>&nbsp; * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+<i>24</i>&nbsp; * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+<i>25</i>&nbsp; * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+<i>26</i>&nbsp; * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+<i>27</i>&nbsp; * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+<i>28</i>&nbsp; * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+<i>29</i>&nbsp; */
+<i>30</i>&nbsp;package edu.mit.ll.em.api.rs.impl;
+<i>31</i>&nbsp;
+<i>32</i>&nbsp;import java.io.File;
+<i>33</i>&nbsp;import java.io.IOException;
+<i>34</i>&nbsp;import java.util.ArrayList;
+<i>35</i>&nbsp;import java.util.Calendar;
+<i>36</i>&nbsp;import java.util.Collection;
+<i>37</i>&nbsp;import java.util.HashSet;
+<i>38</i>&nbsp;import java.util.LinkedHashSet;
+<i>39</i>&nbsp;import java.util.List;
+<i>40</i>&nbsp;import java.util.Map;
+<i>41</i>&nbsp;import java.util.Set;
+<i>42</i>&nbsp;
+<i>43</i>&nbsp;import javax.ws.rs.core.MediaType;
+<i>44</i>&nbsp;import javax.ws.rs.core.Response;
+<i>45</i>&nbsp;import javax.ws.rs.core.Response.Status;
+<i>46</i>&nbsp;
+<i>47</i>&nbsp;import edu.mit.ll.nics.common.entity.*;
+<i>48</i>&nbsp;import edu.mit.ll.nics.common.rabbitmq.RabbitFactory;
+<i>49</i>&nbsp;import edu.mit.ll.nics.common.rabbitmq.RabbitPubSubProducer;
+<i>50</i>&nbsp;import edu.mit.ll.nics.nicsdao.impl.*;
+<i>51</i>&nbsp;import org.apache.commons.io.FileUtils;
+<i>52</i>&nbsp;import org.apache.cxf.jaxrs.ext.multipart.Attachment;
+<i>53</i>&nbsp;import org.apache.cxf.jaxrs.ext.multipart.MultipartBody;
+<i>54</i>&nbsp;import org.codehaus.jackson.map.ObjectMapper;
+<i>55</i>&nbsp;import org.json.JSONException;
+<i>56</i>&nbsp;import org.json.JSONObject;
+<i>57</i>&nbsp;
+<i>58</i>&nbsp;import com.vividsolutions.jts.geom.Coordinate;
+<i>59</i>&nbsp;import com.vividsolutions.jts.geom.GeometryFactory;
+<i>60</i>&nbsp;import com.vividsolutions.jts.geom.PrecisionModel;
+<i>61</i>&nbsp;
+<i>62</i>&nbsp;import edu.mit.ll.em.api.dataaccess.EntityCacheMgr;
+<i>63</i>&nbsp;import edu.mit.ll.em.api.dataaccess.ICSDatastoreException;
+<i>64</i>&nbsp;import edu.mit.ll.em.api.dataaccess.ReportDAO;
+<i>65</i>&nbsp;import edu.mit.ll.em.api.exception.BadContentException;
+<i>66</i>&nbsp;import edu.mit.ll.em.api.rs.QueryConstraintHelper;
+<i>67</i>&nbsp;import edu.mit.ll.em.api.rs.Report;
+<i>68</i>&nbsp;import edu.mit.ll.em.api.rs.ReportOptParms;
+<i>69</i>&nbsp;import edu.mit.ll.em.api.rs.ReportService;
+<i>70</i>&nbsp;import edu.mit.ll.em.api.rs.ReportServiceResponse;
+<i>71</i>&nbsp;import edu.mit.ll.em.api.util.APIConfig;
+<i>72</i>&nbsp;import edu.mit.ll.em.api.util.APILogger;
+<i>73</i>&nbsp;import edu.mit.ll.nics.common.rabbitmq.client.RabbitProducer;
+<i>74</i>&nbsp;
+<i>75</i>&nbsp;/**
+<i>76</i>&nbsp; * 
+<i>77</i>&nbsp; * @AUTHOR sa23148
+<i>78</i>&nbsp; *
+<i>79</i>&nbsp; */
+<b class="nc"><i>80</i>&nbsp;public class ReportServiceImpl implements ReportService {</b>
+<i>81</i>&nbsp;
+<b class="nc"><i>82</i>&nbsp;	private static final String CNAME = ReportServiceImpl.class.getName();</b>
+<i>83</i>&nbsp;	
+<b class="nc"><i>84</i>&nbsp;	private static final IncidentDAOImpl incidentDao = new IncidentDAOImpl();</b>
+<b class="nc"><i>85</i>&nbsp;	private static final UserDAOImpl userDao = new UserDAOImpl();</b>
+<b class="nc"><i>86</i>&nbsp;	private static final FormDAOImpl formDao = new FormDAOImpl();</b>
+<b class="nc"><i>87</i>&nbsp;	private static final PhiDAOImpl phiDao = new PhiDAOImpl();</b>
+<b class="nc"><i>88</i>&nbsp;	private static final UserSessionDAOImpl userSessDao = new UserSessionDAOImpl();</b>
+<b class="nc"><i>89</i>&nbsp;    private static final UxoreportDAOImpl uxoreportDao = new UxoreportDAOImpl();</b>
+<i>90</i>&nbsp;	
+<b class="nc"><i>91</i>&nbsp;	private RabbitPubSubProducer rabbitProducer = null;</b>
+<i>92</i>&nbsp;	
+<i>93</i>&nbsp;	/**
+<i>94</i>&nbsp;	 * Read and return all Report items.
+<i>95</i>&nbsp;	 * @return Response
+<i>96</i>&nbsp;	 * @see ReportResponse
+<i>97</i>&nbsp;	 */
+<i>98</i>&nbsp;	public Response getReports(int incidentId, String reportType, ReportOptParms optParms) {
+<i>99</i>&nbsp;		// Make sure we support this type of form.
+<b class="nc"><i>100</i>&nbsp;		Response response = validateReportType(reportType, &quot;GET&quot;);</b>
+<b class="nc"><i>101</i>&nbsp;		if (response != null) {</b>
+<b class="nc"><i>102</i>&nbsp;			return response;</b>
+<i>103</i>&nbsp;		}
+<i>104</i>&nbsp;
+<i>105</i>&nbsp;		// Provide some reasonable defaults where needed.
+<b class="nc"><i>106</i>&nbsp;		if (optParms.getDateColumn() == null) {</b>
+<b class="nc"><i>107</i>&nbsp;			optParms.setDateColumn(&quot;seqtime&quot;);</b>
+<i>108</i>&nbsp;		}
+<b class="nc"><i>109</i>&nbsp;		if (optParms.getSortByColumn() == null) {</b>
+<b class="nc"><i>110</i>&nbsp;			optParms.setSortByColumn(&quot;seqtime&quot;);</b>
+<i>111</i>&nbsp;		}
+<b class="nc"><i>112</i>&nbsp;		if (optParms.getSortOrder() == null) {</b>
+<b class="nc"><i>113</i>&nbsp;			optParms.setSortOrder(&quot;DESC&quot;);</b>
+<i>114</i>&nbsp;		}
+<b class="nc"><i>115</i>&nbsp;		int maxRowsLimit = APIConfig.getInstance().getConfiguration().getInt(APIConfig.DB_MAX_ROWS, 1000);</b>
+<b class="nc"><i>116</i>&nbsp;		if (optParms.getLimit() == null || optParms.getLimit() &gt; maxRowsLimit) {</b>
+<b class="nc"><i>117</i>&nbsp;			APILogger.getInstance().i(CNAME, &quot;Rewriting max. rows LIMIT as &quot; + maxRowsLimit);			</b>
+<b class="nc"><i>118</i>&nbsp;			optParms.setLimit(maxRowsLimit);</b>
+<i>119</i>&nbsp;		}
+<i>120</i>&nbsp;
+<i>121</i>&nbsp;		// Collect optional parameters common to all resources.
+<b class="nc"><i>122</i>&nbsp;		Map&lt;String, Object&gt; queryConstraints = QueryConstraintHelper.parseOptions(optParms);		</b>
+<i>123</i>&nbsp;		// The &quot;incidentId&quot; is a parameter specific to this resource so QueryConstraintHelper
+<i>124</i>&nbsp;		// does not parse it.
+<i>125</i>&nbsp;		//if (optParms.getIncidentId() != null) {
+<i>126</i>&nbsp;			//queryConstraints.put(&quot;incidentid&quot;, optParms.getIncidentId());
+<b class="nc"><i>127</i>&nbsp;			queryConstraints.put(&quot;incidentid&quot;, incidentId);</b>
+<i>128</i>&nbsp;		//}
+<i>129</i>&nbsp;		
+<i>130</i>&nbsp;		//Set&lt;Report&gt; reports = null;
+<i>131</i>&nbsp;		
+<i>132</i>&nbsp;
+<b class="nc"><i>133</i>&nbsp;		ReportServiceResponse reportResponse = new ReportServiceResponse();</b>
+<b class="nc"><i>134</i>&nbsp;		int formTypeId = -1;</b>
+<i>135</i>&nbsp;		try {
+<b class="nc"><i>136</i>&nbsp;			FormType ft = EntityCacheMgr.getInstance().getFormTypeByName(reportType);</b>
+<b class="nc"><i>137</i>&nbsp;			formTypeId = ft.getFormTypeId();</b>
+<b class="nc"><i>138</i>&nbsp;		} catch(ICSDatastoreException e) {</b>
+<b class="nc"><i>139</i>&nbsp;			APILogger.getInstance().e(&quot;ReportService:getReports()&quot;, </b>
+<b class="nc"><i>140</i>&nbsp;					String.format(&quot;Exception getting formTypeId for type(%s): %s&quot;, reportType, e.getMessage()));</b>
+<i>141</i>&nbsp;			
+<b class="nc"><i>142</i>&nbsp;			reportResponse.setMessage(String.format(&quot;Exception getting formTypeId for type(%s): %s&quot;, </b>
+<b class="nc"><i>143</i>&nbsp;					reportType,  e.getMessage()));</b>
+<i>144</i>&nbsp;			
+<b class="nc"><i>145</i>&nbsp;			return Response.ok(reportResponse).status(Status.INTERNAL_SERVER_ERROR).build();</b>
+<b class="nc"><i>146</i>&nbsp;		}</b>
+<i>147</i>&nbsp;		
+<i>148</i>&nbsp;		//int formTypeId = -1;   // -1 means &quot;All types of PHINICS reports.
+<i>149</i>&nbsp;		/*if (!&quot;PHI&quot;.equalsIgnoreCase(reportType)) {
+<i>150</i>&nbsp;			// A specific type of report is	being requested.
+<i>151</i>&nbsp;			try {
+<i>152</i>&nbsp;				FormType ft = EntityCacheMgr.getInstance().getFormTypeByName(reportType);
+<i>153</i>&nbsp;				formTypeId = ft.getFormTypeId();
+<i>154</i>&nbsp;			} catch (ICSDatastoreException e) {
+<i>155</i>&nbsp;				APILogger.getInstance().e(CNAME, e.getMessage());
+<i>156</i>&nbsp;				reportResponse.setMessage(&quot;Failure. &quot; + e.getMessage());
+<i>157</i>&nbsp;				reportResponse.setCount(0);
+<i>158</i>&nbsp;				response = Response.ok(reportResponse).status(Status.PRECONDITION_FAILED).build();
+<i>159</i>&nbsp;				return response;
+<i>160</i>&nbsp;			}
+<i>161</i>&nbsp;		}*/	
+<i>162</i>&nbsp;		try {
+<i>163</i>&nbsp;			//reports = ReportDAO.getInstance().getReports(formTypeId, userName, queryConstraints);
+<b class="nc"><i>164</i>&nbsp;			Set&lt;Integer&gt; formTypeIds = new HashSet&lt;Integer&gt;();</b>
+<b class="nc"><i>165</i>&nbsp;			formTypeIds.add(formTypeId);</b>
+<b class="nc"><i>166</i>&nbsp;			List&lt;Form&gt; forms = formDao.readForms(formTypeIds, queryConstraints);</b>
+<i>167</i>&nbsp;			
+<i>168</i>&nbsp;			/*User u = null;
+<i>169</i>&nbsp;			try {
+<i>170</i>&nbsp;				if (userName != null &amp;&amp; !userName.isEmpty()) {
+<i>171</i>&nbsp;					u = EntityCacheMgr.getInstance().getUserEntityByUsername(userName);
+<i>172</i>&nbsp;				}
+<i>173</i>&nbsp;			} catch (Exception e) {
+<i>174</i>&nbsp;				// Ignore it. We just need the User ID out of the entire entity.
+<i>175</i>&nbsp;			}*/
+<i>176</i>&nbsp;			
+<i>177</i>&nbsp;			/*Report rep = null;
+<i>178</i>&nbsp;			reports = new LinkedHashSet&lt;Report&gt;();
+<i>179</i>&nbsp;			for(Form form : forms) {
+<i>180</i>&nbsp;				rep = new Report();
+<i>181</i>&nbsp;				rep.setFormId(form.getFormId());
+<i>182</i>&nbsp;				rep.setFormTypeId(form.getFormtypeid());
+<i>183</i>&nbsp;				if (u != null) {
+<i>184</i>&nbsp;					rep.setSenderUserId(u.getUserId());
+<i>185</i>&nbsp;				}
+<i>186</i>&nbsp;				rep.setMessage(form.getMessage());
+<i>187</i>&nbsp;				rep.setIncidentId(form.getIncidentid());
+<i>188</i>&nbsp;				rep.setIncidentName(form.getIncidentname());
+<i>189</i>&nbsp;				rep.setUserSessionId(form.getUsersessionid());
+<i>190</i>&nbsp;				rep.setSeqTime(form.getSeqtime());
+<i>191</i>&nbsp;				rep.setCreatedUTC(form.getSeqtime());
+<i>192</i>&nbsp;				rep.setLastUpdatedUTC(form.getSeqtime());
+<i>193</i>&nbsp;				rep.setSeqNum(form.getSeqnum());
+<i>194</i>&nbsp;				reports.add(rep);
+<i>195</i>&nbsp;			}*/
+<i>196</i>&nbsp;			
+<b class="nc"><i>197</i>&nbsp;			reportResponse.setReports(forms);</b>
+<b class="nc"><i>198</i>&nbsp;			reportResponse.setMessage(&quot;ok&quot;);</b>
+<b class="nc"><i>199</i>&nbsp;			reportResponse.setCount(reportResponse.getReports().size());</b>
+<b class="nc"><i>200</i>&nbsp;			response = Response.ok(reportResponse).status(Status.OK).build();</b>
+<b class="nc"><i>201</i>&nbsp;		} catch (Exception e) {</b>
+<b class="nc"><i>202</i>&nbsp;			e.printStackTrace();</b>
+<b class="nc"><i>203</i>&nbsp;			APILogger.getInstance().e(CNAME, e.getMessage());</b>
+<b class="nc"><i>204</i>&nbsp;			reportResponse.setMessage(&quot;Datastore exception, failed to read &quot; +</b>
+<i>205</i>&nbsp;					&quot;reports for incidentid &quot; + incidentId + &quot; of form type &quot; + reportType);
+<b class="nc"><i>206</i>&nbsp;			response = Response.ok(reportResponse).status(Status.INTERNAL_SERVER_ERROR).build();			</b>
+<b class="nc"><i>207</i>&nbsp;		}</b>
+<b class="nc"><i>208</i>&nbsp;		return response;</b>
+<i>209</i>&nbsp;	}
+<i>210</i>&nbsp;
+<i>211</i>&nbsp;	/**
+<i>212</i>&nbsp;	 * Delete all Report items.
+<i>213</i>&nbsp;	 * This is an unsupported operation.
+<i>214</i>&nbsp;	 *  Response
+<i>215</i>&nbsp;	 *  ReportResponse
+<i>216</i>&nbsp;	 */
+<i>217</i>&nbsp;	public Response deleteReports(int reportType) {
+<b class="nc"><i>218</i>&nbsp;		return makeUnsupportedOpRequestResponse();</b>
+<i>219</i>&nbsp;	}
+<i>220</i>&nbsp;
+<i>221</i>&nbsp;	/**
+<i>222</i>&nbsp;	 * Bulk creation of Report items.
+<i>223</i>&nbsp;	 *  A collection of Report items to be created.
+<i>224</i>&nbsp;	 *  Response
+<i>225</i>&nbsp;	 *  ReportResponse
+<i>226</i>&nbsp;	 */
+<i>227</i>&nbsp;	public Response putReports(int reportType, Collection&lt;Report&gt; reports) {
+<i>228</i>&nbsp;		// TODO: Needs implementation.
+<b class="nc"><i>229</i>&nbsp;		return makeUnsupportedOpRequestResponse();</b>
+<i>230</i>&nbsp;	}
+<i>231</i>&nbsp;	
+<i>232</i>&nbsp;	/**
+<i>233</i>&nbsp;	 * Bulk creation of Form entities
+<i>234</i>&nbsp;	 * 
+<i>235</i>&nbsp;	 * @param forms
+<i>236</i>&nbsp;	 * @return
+<i>237</i>&nbsp;	 */
+<i>238</i>&nbsp;	public Response postReports(Collection&lt;Form&gt; forms) {
+<b class="nc"><i>239</i>&nbsp;		return makeUnsupportedOpRequestResponse();		</b>
+<i>240</i>&nbsp;	}
+<i>241</i>&nbsp;	
+<i>242</i>&nbsp;	
+<i>243</i>&nbsp;	/**
+<i>244</i>&nbsp;	 * Persists a single Form entity. If the Form has a valid and existing formid, it is
+<i>245</i>&nbsp;	 * updated. Otherwise, it is persisted as a new form.
+<i>246</i>&nbsp;	 * 
+<i>247</i>&nbsp;	 * @param form Form to update/persist
+<i>248</i>&nbsp;	 * @return
+<i>249</i>&nbsp;	 */
+<i>250</i>&nbsp;	public Response postReport(int incidentId, String reportType, Form form) {
+<b class="nc"><i>251</i>&nbsp;		ReportServiceResponse reportServiceResponse = new ReportServiceResponse();</b>
+<i>252</i>&nbsp;		
+<b class="nc"><i>253</i>&nbsp;		if(form == null) {</b>
+<b class="nc"><i>254</i>&nbsp;			reportServiceResponse.setMessage(&quot;failure: Invalid Form entity&quot;);</b>
+<b class="nc"><i>255</i>&nbsp;			return Response.ok(reportServiceResponse).status(Status.BAD_REQUEST).build();</b>
+<i>256</i>&nbsp;		}
+<i>257</i>&nbsp;		
+<b class="nc"><i>258</i>&nbsp;		APILogger.getInstance().i(&quot;postReport&quot;, &quot;Got report:\nincidentId: &quot; + incidentId + </b>
+<b class="nc"><i>259</i>&nbsp;				&quot;\nreportType: &quot; + reportType + &quot;\nForm:\n&quot; + form.toString());</b>
+<b class="nc"><i>260</i>&nbsp;		FormType formType = null;</b>
+<i>261</i>&nbsp;		try {
+<b class="nc"><i>262</i>&nbsp;			formType = EntityCacheMgr.getInstance().getFormTypeByName(reportType);</b>
+<b class="nc"><i>263</i>&nbsp;		} catch (NullPointerException e) {</b>
+<i>264</i>&nbsp;			// TODO Auto-generated catch block
+<b class="nc"><i>265</i>&nbsp;			e.printStackTrace();</b>
+<b class="nc"><i>266</i>&nbsp;		} catch (ICSDatastoreException e) {</b>
+<i>267</i>&nbsp;			// TODO Auto-generated catch block
+<b class="nc"><i>268</i>&nbsp;			e.printStackTrace();</b>
+<b class="nc"><i>269</i>&nbsp;		}</b>
+<i>270</i>&nbsp;		
+<b class="nc"><i>271</i>&nbsp;		if(formType == null) {</b>
+<b class="nc"><i>272</i>&nbsp;			reportServiceResponse.setMessage(&quot;failure: Invalid report type: &quot; + reportType);</b>
+<b class="nc"><i>273</i>&nbsp;			return Response.ok(reportServiceResponse).status(Status.BAD_REQUEST).build();</b>
+<i>274</i>&nbsp;		}
+<i>275</i>&nbsp;		
+<b class="nc"><i>276</i>&nbsp;		Response response = null;</b>
+<i>277</i>&nbsp;						
+<b class="nc"><i>278</i>&nbsp;		String valid = null;</b>
+<b class="nc"><i>279</i>&nbsp;		String responseMessage = &quot;&quot;;</b>
+<i>280</i>&nbsp;		
+<b class="nc"><i>281</i>&nbsp;		valid = validateForm(form);</b>
+<b class="nc"><i>282</i>&nbsp;		if(!valid.isEmpty()) {</b>
+<i>283</i>&nbsp;			
+<b class="nc"><i>284</i>&nbsp;			responseMessage += valid;</b>
+<b class="nc"><i>285</i>&nbsp;			reportServiceResponse.setMessage(&quot;failure: &quot; + responseMessage);</b>
+<b class="nc"><i>286</i>&nbsp;			response = Response.ok(reportServiceResponse).status(Status.EXPECTATION_FAILED).build();</b>
+<i>287</i>&nbsp;			
+<i>288</i>&nbsp;		} else {
+<i>289</i>&nbsp;			
+<b class="nc"><i>290</i>&nbsp;			Form affected = null;</b>
+<i>291</i>&nbsp;			
+<i>292</i>&nbsp;			try {
+<b class="nc"><i>293</i>&nbsp;				affected = formDao.persistForm(form);</b>
+<b class="nc"><i>294</i>&nbsp;			} catch(Exception e) {</b>
+<b class="nc"><i>295</i>&nbsp;				responseMessage += e.getMessage();</b>
+<b class="nc"><i>296</i>&nbsp;			}</b>
+<i>297</i>&nbsp;			
+<b class="nc"><i>298</i>&nbsp;			if(affected != null) {				</b>
+<b class="nc"><i>299</i>&nbsp;				responseMessage += &quot;persisted report&quot;;</b>
+<b class="nc"><i>300</i>&nbsp;				reportServiceResponse.setMessage(&quot;success: &quot; + responseMessage);</b>
+<b class="nc"><i>301</i>&nbsp;				reportServiceResponse.setCount(1);</b>
+<b class="nc"><i>302</i>&nbsp;				reportServiceResponse.getReports().add(affected);</b>
+<b class="nc"><i>303</i>&nbsp;				response = Response.ok(reportServiceResponse).status(Status.OK).build();</b>
+<i>304</i>&nbsp;				
+<i>305</i>&nbsp;				// Since it was successful, also send it out to new users, except now any persist/create calls
+<i>306</i>&nbsp;				// to dao need to return the new fully formed form, with formid and everything... 
+<i>307</i>&nbsp;				try {
+<b class="nc"><i>308</i>&nbsp;					String topic = String.format(&quot;iweb.NICS.incident.%d.report.%s.new&quot;, form.getIncidentid(), formType.getFormTypeName());</b>
+<b class="nc"><i>309</i>&nbsp;					notifyNewReport(topic, form);</b>
+<b class="nc"><i>310</i>&nbsp;				} catch (IOException e) {</b>
+<b class="nc"><i>311</i>&nbsp;					APILogger.getInstance().e(&quot;ReportServiceImpl&quot;, &quot;Exception publishing new form with type id: &quot; + </b>
+<b class="nc"><i>312</i>&nbsp;							form.getFormtypeid());</b>
+<b class="nc"><i>313</i>&nbsp;					e.printStackTrace();</b>
+<b class="nc"><i>314</i>&nbsp;				}</b>
+<i>315</i>&nbsp;			} else {
+<b class="nc"><i>316</i>&nbsp;				responseMessage = &quot;Failed to persist report: &quot; + responseMessage;</b>
+<b class="nc"><i>317</i>&nbsp;				reportServiceResponse.setMessage(&quot;failure: &quot; + responseMessage);</b>
+<b class="nc"><i>318</i>&nbsp;				response = Response.ok(reportServiceResponse).status(Status.EXPECTATION_FAILED).build();</b>
+<i>319</i>&nbsp;			}
+<i>320</i>&nbsp;		}		
+<i>321</i>&nbsp;		
+<b class="nc"><i>322</i>&nbsp;		return response;</b>
+<i>323</i>&nbsp;	}
+<i>324</i>&nbsp;		
+<i>325</i>&nbsp;	
+<i>326</i>&nbsp;	// TODO: better to return json with a boolean and the reasons why
+<i>327</i>&nbsp;	private String validateForm(Form form) {
+<b class="nc"><i>328</i>&nbsp;		StringBuilder sb = new StringBuilder();</b>
+<i>329</i>&nbsp;		
+<b class="nc"><i>330</i>&nbsp;		if(form == null) {</b>
+<b class="nc"><i>331</i>&nbsp;			sb.append(&quot;Form cannot be null&quot;);</b>
+<b class="nc"><i>332</i>&nbsp;			return sb.toString();</b>
+<i>333</i>&nbsp;		}
+<i>334</i>&nbsp;		
+<b class="nc"><i>335</i>&nbsp;		int incidentId = form.getIncidentid();</b>
+<b class="nc"><i>336</i>&nbsp;		if(incidentId &lt; 0) {</b>
+<b class="nc"><i>337</i>&nbsp;			sb.append(&quot; incidentId(&quot; + incidentId + &quot;) is not valid&quot;);</b>
+<i>338</i>&nbsp;		} else {
+<i>339</i>&nbsp;			try {
+<b class="nc"><i>340</i>&nbsp;				if(EntityCacheMgr.getInstance().getIncidentEntity(incidentId) == null) {</b>
+<b class="nc"><i>341</i>&nbsp;					sb.append(&quot; incidentId(&quot; + incidentId + &quot;) is not valid &quot;);</b>
+<i>342</i>&nbsp;				}
+<b class="nc"><i>343</i>&nbsp;			} catch(Exception e) {</b>
+<b class="nc"><i>344</i>&nbsp;				sb.append(&quot; error validating incidentId: &quot; + e.getMessage());</b>
+<b class="nc"><i>345</i>&nbsp;			}</b>
+<i>346</i>&nbsp;		}		
+<i>347</i>&nbsp;		
+<b class="nc"><i>348</i>&nbsp;		int formTypeId = form.getFormtypeid();</b>
+<b class="nc"><i>349</i>&nbsp;		if(formTypeId &lt; 0) {</b>
+<b class="nc"><i>350</i>&nbsp;			sb.append(&quot; formTypeId(&quot; + formTypeId + &quot;) is not valid&quot;);</b>
+<i>351</i>&nbsp;		} else {
+<i>352</i>&nbsp;			try {
+<b class="nc"><i>353</i>&nbsp;				if(EntityCacheMgr.getInstance().getFormTypeById(formTypeId) == null) {</b>
+<b class="nc"><i>354</i>&nbsp;					sb.append(&quot; formTypeId(&quot; + formTypeId + &quot;) is not valid&quot;);</b>
+<i>355</i>&nbsp;				}
+<b class="nc"><i>356</i>&nbsp;			} catch(Exception e) {</b>
+<b class="nc"><i>357</i>&nbsp;				sb.append(&quot; error validating formTypeId: &quot; + e.getMessage());</b>
+<b class="nc"><i>358</i>&nbsp;			}</b>
+<i>359</i>&nbsp;		}
+<i>360</i>&nbsp;				
+<b class="nc"><i>361</i>&nbsp;		int userSessionId = form.getUsersessionid();</b>
+<b class="nc"><i>362</i>&nbsp;		if(!userSessDao.userSessionIdExists(userSessionId)) {</b>
+<b class="nc"><i>363</i>&nbsp;			sb.append(&quot; UserSessionId(&quot; + userSessionId + &quot;) not found&quot;);</b>
+<i>364</i>&nbsp;		}
+<i>365</i>&nbsp;				
+<b class="nc"><i>366</i>&nbsp;		return (sb.toString().isEmpty()) ? &quot;&quot; : &quot;Form validation failed: &quot; + sb.toString();</b>
+<i>367</i>&nbsp;	}
+<i>368</i>&nbsp;	
+<i>369</i>&nbsp;	/**
+<i>370</i>&nbsp;	 *  Creation of a single Report item.
+<i>371</i>&nbsp;	 *  A collection of Report items to be created.
+<i>372</i>&nbsp;	 *  Response
+<i>373</i>&nbsp;	 *  ReportResponse
+<i>374</i>&nbsp;	 */
+<i>375</i>&nbsp;	@Deprecated
+<i>376</i>&nbsp;	public Response postReports(int incidentId, int reportType, Report report) {
+<i>377</i>&nbsp;		
+<b class="nc"><i>378</i>&nbsp;		return makeUnsupportedOpRequestResponse();</b>
+<i>379</i>&nbsp;		/*
+<i>380</i>&nbsp;		// Make sure we support this type of form.
+<i>381</i>&nbsp;		Response response = validateReportType(reportType, &quot;POST&quot;);
+<i>382</i>&nbsp;		if (response != null) {
+<i>383</i>&nbsp;			return response;
+<i>384</i>&nbsp;		}
+<i>385</i>&nbsp;
+<i>386</i>&nbsp;		List&lt;Report&gt; reports = new ArrayList&lt;Report&gt;();
+<i>387</i>&nbsp;		ReportServiceResponse reportResponse = new ReportServiceResponse();
+<i>388</i>&nbsp;		int formTypeId = -1;
+<i>389</i>&nbsp;		try {
+<i>390</i>&nbsp;			FormType ft = EntityCacheMgr.getInstance().getFormTypeById(reportType);
+<i>391</i>&nbsp;			formTypeId = ft.getFormTypeId();
+<i>392</i>&nbsp;		} catch (ICSDatastoreException e) {
+<i>393</i>&nbsp;			APILogger.getInstance().e(CNAME, e.getMessage());
+<i>394</i>&nbsp;			reportResponse.setMessage(&quot;Failure. &quot; + e.getMessage());
+<i>395</i>&nbsp;			reportResponse.setCount(0);
+<i>396</i>&nbsp;			response = Response.ok(reportResponse).status(Status.PRECONDITION_FAILED).build();
+<i>397</i>&nbsp;			return response;
+<i>398</i>&nbsp;		}
+<i>399</i>&nbsp;		
+<i>400</i>&nbsp;		try {
+<i>401</i>&nbsp;			// TODO:1209 workspaceId was changed to incidentId		
+<i>402</i>&nbsp;			reports.add(ReportDAO.getInstance().postReport(incidentId, formTypeId, report));
+<i>403</i>&nbsp;			
+<i>404</i>&nbsp;			reportResponse.setMessage(&quot;ok&quot;);
+<i>405</i>&nbsp;			reportResponse.setCount(reports.size());
+<i>406</i>&nbsp;			reportResponse.setReports(reports);
+<i>407</i>&nbsp;			response = Response.ok(reportResponse).status(Status.OK).build();			
+<i>408</i>&nbsp;		} catch (ICSDatastoreException e) {
+<i>409</i>&nbsp;			APILogger.getInstance().e(CNAME, e.getMessage());
+<i>410</i>&nbsp;			reportResponse.setMessage(&quot;Datastore exception, failed to publish form.&quot;);
+<i>411</i>&nbsp;			response = Response.ok(reportResponse).status(Status.INTERNAL_SERVER_ERROR).build();			
+<i>412</i>&nbsp;		}
+<i>413</i>&nbsp;		return response;*/
+<i>414</i>&nbsp;	}
+<i>415</i>&nbsp;
+<i>416</i>&nbsp;
+<i>417</i>&nbsp;	public Response postReports(int incidentId, String reportType, MultipartBody body) {
+<b class="nc"><i>418</i>&nbsp;		Response response = validateReportType(reportType, &quot;POST&quot;);</b>
+<b class="nc"><i>419</i>&nbsp;		ReportServiceResponse reportResponse = new ReportServiceResponse();</b>
+<i>420</i>&nbsp;		
+<b class="nc"><i>421</i>&nbsp;		int formTypeId = -1;</b>
+<b class="nc"><i>422</i>&nbsp;		FormType ft = null;</b>
+<i>423</i>&nbsp;		try {
+<b class="nc"><i>424</i>&nbsp;			ft = EntityCacheMgr.getInstance().getFormTypeByName(reportType);</b>
+<b class="nc"><i>425</i>&nbsp;			formTypeId = ft.getFormTypeId();</b>
+<b class="nc"><i>426</i>&nbsp;		} catch (ICSDatastoreException e) {</b>
+<b class="nc"><i>427</i>&nbsp;			APILogger.getInstance().e(CNAME, e.getMessage());</b>
+<b class="nc"><i>428</i>&nbsp;			reportResponse.setMessage(&quot;Failure. &quot; + e.getMessage());</b>
+<b class="nc"><i>429</i>&nbsp;			reportResponse.setCount(0);</b>
+<b class="nc"><i>430</i>&nbsp;			response = Response.ok(reportResponse).status(Status.PRECONDITION_FAILED).build();</b>
+<b class="nc"><i>431</i>&nbsp;			return response;</b>
+<b class="nc"><i>432</i>&nbsp;		}</b>
+<i>433</i>&nbsp;		try {
+<b class="nc"><i>434</i>&nbsp;			if(ft.getFormTypeName().toUpperCase().equals(&quot;SR&quot;)) {</b>
+<b class="nc"><i>435</i>&nbsp;				return handleSimpleReport(incidentId, formTypeId, body);</b>
+<b class="nc"><i>436</i>&nbsp;			} else if(ft.getFormTypeName().toUpperCase().equals(&quot;DMGRPT&quot;)) {</b>
+<b class="nc"><i>437</i>&nbsp;				return handleDamageReport(incidentId, formTypeId, body);</b>
+<b class="nc"><i>438</i>&nbsp;			}else if(ft.getFormTypeName().toUpperCase().equals(&quot;UXO&quot;)) {</b>
+<b class="nc"><i>439</i>&nbsp;				return handleUXOReport(incidentId, formTypeId, body);</b>
+<i>440</i>&nbsp;			}
+<b class="nc"><i>441</i>&nbsp;		} catch (BadContentException e) {</b>
+<b class="nc"><i>442</i>&nbsp;			APILogger.getInstance().e(CNAME, e.getMessage());</b>
+<b class="nc"><i>443</i>&nbsp;			reportResponse.setMessage(&quot;Failure. &quot; + e.getMessage());</b>
+<b class="nc"><i>444</i>&nbsp;			reportResponse.setCount(0);</b>
+<b class="nc"><i>445</i>&nbsp;			response = Response.ok(reportResponse).status(Status.BAD_REQUEST).build();</b>
+<b class="nc"><i>446</i>&nbsp;			return response;</b>
+<b class="nc"><i>447</i>&nbsp;		} catch (JSONException e) {</b>
+<b class="nc"><i>448</i>&nbsp;			APILogger.getInstance().e(CNAME, e.getMessage());</b>
+<b class="nc"><i>449</i>&nbsp;			reportResponse.setMessage(&quot;Failure. &quot; + e.getMessage());</b>
+<b class="nc"><i>450</i>&nbsp;			reportResponse.setCount(0);</b>
+<b class="nc"><i>451</i>&nbsp;			response = Response.ok(reportResponse).status(Status.INTERNAL_SERVER_ERROR).build();</b>
+<b class="nc"><i>452</i>&nbsp;			return response;</b>
+<b class="nc"><i>453</i>&nbsp;		} catch (Exception e) {</b>
+<b class="nc"><i>454</i>&nbsp;			APILogger.getInstance().e(CNAME, e.getMessage());</b>
+<b class="nc"><i>455</i>&nbsp;			reportResponse.setMessage(&quot;Failure. &quot; + e.getMessage());</b>
+<b class="nc"><i>456</i>&nbsp;			reportResponse.setCount(0);</b>
+<b class="nc"><i>457</i>&nbsp;			response = Response.ok(reportResponse).status(Status.PRECONDITION_FAILED).build();</b>
+<b class="nc"><i>458</i>&nbsp;			return response;</b>
+<b class="nc"><i>459</i>&nbsp;		}		</b>
+<i>460</i>&nbsp;		
+<b class="nc"><i>461</i>&nbsp;		return response;</b>
+<i>462</i>&nbsp;	}
+<i>463</i>&nbsp;	
+<i>464</i>&nbsp;	/**
+<i>465</i>&nbsp;	 *  Read a single Report item.
+<i>466</i>&nbsp;	 *  ID of Report item to be read.
+<i>467</i>&nbsp;	 *  Response
+<i>468</i>&nbsp;	 *  ReportResponse
+<i>469</i>&nbsp;	 */	
+<i>470</i>&nbsp;	public Response getReport(int reportType, int reportId, String fields) {
+<i>471</i>&nbsp;		// TODO: Needs implementation.
+<b class="nc"><i>472</i>&nbsp;		return makeUnsupportedOpRequestResponse();</b>
+<i>473</i>&nbsp;	}
+<i>474</i>&nbsp;
+<i>475</i>&nbsp;	/**
+<i>476</i>&nbsp;	 *  Delete a single Report item.
+<i>477</i>&nbsp;	 *  ID of Report item to be read.
+<i>478</i>&nbsp;	 *  Response
+<i>479</i>&nbsp;	 *  ReportResponse
+<i>480</i>&nbsp;	 */	
+<i>481</i>&nbsp;	public Response deleteReport(int reportType, int reportId) {
+<i>482</i>&nbsp;		// TODO: Needs implementation.
+<b class="nc"><i>483</i>&nbsp;		return makeUnsupportedOpRequestResponse();</b>
+<i>484</i>&nbsp;	}
+<i>485</i>&nbsp;
+<i>486</i>&nbsp;	/**
+<i>487</i>&nbsp;	 *  Update a single Report item.
+<i>488</i>&nbsp;	 *  ID of Report item to be read.
+<i>489</i>&nbsp;	 *  Response
+<i>490</i>&nbsp;	 *  ReportResponse
+<i>491</i>&nbsp;	 */	
+<i>492</i>&nbsp;	public Response putReport(int reportType, int reportId, Report report) {
+<i>493</i>&nbsp;		// TODO: Needs implementation.
+<b class="nc"><i>494</i>&nbsp;		return makeUnsupportedOpRequestResponse();</b>
+<i>495</i>&nbsp;	}
+<i>496</i>&nbsp;
+<i>497</i>&nbsp;	/**
+<i>498</i>&nbsp;	 *  Post a single Report item.
+<i>499</i>&nbsp;	 *  This is an illegal operation. 
+<i>500</i>&nbsp;	 *  ID of Report item to be read.
+<i>501</i>&nbsp;	 *  Response
+<i>502</i>&nbsp;	 *  ReportResponse
+<i>503</i>&nbsp;	 */	
+<i>504</i>&nbsp;	public Response postReport(int reportType, int reportId) {
+<i>505</i>&nbsp;		// Illegal as per RESTful guidelines.
+<b class="nc"><i>506</i>&nbsp;		return makeIllegalOpRequestResponse();</b>
+<i>507</i>&nbsp;	}
+<i>508</i>&nbsp;
+<i>509</i>&nbsp;	/**
+<i>510</i>&nbsp;	 *  Return the number of Report items stored. 
+<i>511</i>&nbsp;	 *  Response
+<i>512</i>&nbsp;	 *  ReportResponse
+<i>513</i>&nbsp;	 */		
+<i>514</i>&nbsp;	public Response getReportCount(int reportType) {
+<i>515</i>&nbsp;		// TODO: Needs implementation.
+<b class="nc"><i>516</i>&nbsp;		return makeUnsupportedOpRequestResponse();</b>
+<i>517</i>&nbsp;	}
+<i>518</i>&nbsp;
+<i>519</i>&nbsp;
+<i>520</i>&nbsp;	/**
+<i>521</i>&nbsp;	 *  Search the Report items stored. 
+<i>522</i>&nbsp;	 *  Response
+<i>523</i>&nbsp;	 *  ReportResponse
+<i>524</i>&nbsp;	 */		
+<i>525</i>&nbsp;	public Response searchReportResources(int reportType, ReportOptParms optParms) {
+<i>526</i>&nbsp;		// TODO: Needs implementation.
+<b class="nc"><i>527</i>&nbsp;		return makeUnsupportedOpRequestResponse();</b>
+<i>528</i>&nbsp;	}
+<i>529</i>&nbsp;
+<i>530</i>&nbsp;	private Response makeIllegalOpRequestResponse() {
+<b class="nc"><i>531</i>&nbsp;		ReportServiceResponse reportResponse = new ReportServiceResponse();</b>
+<b class="nc"><i>532</i>&nbsp;		reportResponse.setMessage(&quot;Request ignored.&quot;) ;</b>
+<b class="nc"><i>533</i>&nbsp;		Response response = Response.notModified(&quot;Illegal operation requested&quot;).</b>
+<b class="nc"><i>534</i>&nbsp;				status(Status.FORBIDDEN).build();</b>
+<b class="nc"><i>535</i>&nbsp;		return response;</b>
+<i>536</i>&nbsp;	}
+<i>537</i>&nbsp;
+<i>538</i>&nbsp;	private Response makeUnsupportedOpRequestResponse() {
+<b class="nc"><i>539</i>&nbsp;		ReportServiceResponse reportResponse = new ReportServiceResponse();</b>
+<b class="nc"><i>540</i>&nbsp;		reportResponse.setMessage(&quot;Request ignored.&quot;) ;</b>
+<b class="nc"><i>541</i>&nbsp;		Response response = Response.notModified(&quot;Unsupported operation requested&quot;).</b>
+<b class="nc"><i>542</i>&nbsp;				status(Status.NOT_IMPLEMENTED).build();</b>
+<b class="nc"><i>543</i>&nbsp;		return response;</b>
+<i>544</i>&nbsp;	}
+<i>545</i>&nbsp;
+<i>546</i>&nbsp;	private Response validateReportType(String reportType, String htmlOp) {
+<b class="nc"><i>547</i>&nbsp;		Response response = null;</b>
+<b class="nc"><i>548</i>&nbsp;		ReportServiceResponse reportResponse = new ReportServiceResponse();</b>
+<i>549</i>&nbsp;		
+<i>550</i>&nbsp;		try {			
+<b class="nc"><i>551</i>&nbsp;			FormType ft = EntityCacheMgr.getInstance().getFormTypeByName(reportType);</b>
+<b class="nc"><i>552</i>&nbsp;			if (ft == null) {</b>
+<b class="nc"><i>553</i>&nbsp;				Set&lt;String&gt; validTypes = EntityCacheMgr.getInstance().getFormTypeNames();</b>
+<b class="nc"><i>554</i>&nbsp;				StringBuilder sb = new StringBuilder();</b>
+<b class="nc"><i>555</i>&nbsp;				sb.append(&quot;Failure. Report type [&quot;).append(reportType)</b>
+<b class="nc"><i>556</i>&nbsp;				.append(&quot;] not supported. Valid types are [&quot;)</b>
+<b class="nc"><i>557</i>&nbsp;				.append(org.apache.commons.lang.StringUtils.join(validTypes, &quot;,&quot;))</b>
+<b class="nc"><i>558</i>&nbsp;				.append(&quot;].&quot;);</b>
+<b class="nc"><i>559</i>&nbsp;				APILogger.getInstance().e(CNAME, sb.toString());</b>
+<b class="nc"><i>560</i>&nbsp;				reportResponse.setMessage(sb.toString());</b>
+<b class="nc"><i>561</i>&nbsp;				reportResponse.setCount(0);</b>
+<b class="nc"><i>562</i>&nbsp;				response = Response.ok(reportResponse).status(Status.BAD_REQUEST).build();</b>
+<i>563</i>&nbsp;			}
+<b class="nc"><i>564</i>&nbsp;		} catch (NullPointerException e) {</b>
+<b class="nc"><i>565</i>&nbsp;			APILogger.getInstance().e(CNAME, &quot;Missing reportType URI argument.&quot;);			</b>
+<b class="nc"><i>566</i>&nbsp;			reportResponse.setMessage(&quot;Failure. Missing reportType URI argument.&quot;);</b>
+<b class="nc"><i>567</i>&nbsp;			reportResponse.setCount(0);</b>
+<b class="nc"><i>568</i>&nbsp;			response = Response.ok(reportResponse).status(Status.BAD_REQUEST).build();</b>
+<b class="nc"><i>569</i>&nbsp;		} catch (ICSDatastoreException e) {</b>
+<b class="nc"><i>570</i>&nbsp;			APILogger.getInstance().e(CNAME, e.getMessage());</b>
+<b class="nc"><i>571</i>&nbsp;			reportResponse.setMessage(&quot;Failure. &quot; + e.getMessage());</b>
+<b class="nc"><i>572</i>&nbsp;			reportResponse.setCount(0);</b>
+<b class="nc"><i>573</i>&nbsp;			response = Response.ok(reportResponse).status(Status.BAD_REQUEST).build();</b>
+<b class="nc"><i>574</i>&nbsp;		} catch(Exception e) {</b>
+<b class="nc"><i>575</i>&nbsp;			APILogger.getInstance().e(CNAME, e.getMessage());</b>
+<b class="nc"><i>576</i>&nbsp;			reportResponse.setMessage(&quot;Failure. &quot; + e.getMessage());</b>
+<b class="nc"><i>577</i>&nbsp;			reportResponse.setCount(0);</b>
+<b class="nc"><i>578</i>&nbsp;			response = Response.ok(reportResponse).status(Status.BAD_REQUEST).build();</b>
+<b class="nc"><i>579</i>&nbsp;		}</b>
+<i>580</i>&nbsp;
+<b class="nc"><i>581</i>&nbsp;		return response;</b>
+<i>582</i>&nbsp;	}
+<i>583</i>&nbsp;	
+<i>584</i>&nbsp;	private Response handleSimpleReport(int incidentId,
+<i>585</i>&nbsp;			int formTypeId, MultipartBody body) throws JSONException, 
+<i>586</i>&nbsp;			BadContentException {
+<b class="nc"><i>587</i>&nbsp;		Response response = null;</b>
+<b class="nc"><i>588</i>&nbsp;		ReportServiceResponse reportResponse = new ReportServiceResponse();</b>
+<i>589</i>&nbsp;		
+<b class="nc"><i>590</i>&nbsp;		List&lt;Attachment&gt; attachments = body.getAllAttachments();</b>
+<i>591</i>&nbsp;		String key, value;
+<i>592</i>&nbsp;		
+<i>593</i>&nbsp;		// TODO:refactor remove phinics-dev url, and ensure defaults are
+<i>594</i>&nbsp;		// up to date with our newer Ubuntu 14.04 VM deployments
+<b class="nc"><i>595</i>&nbsp;		String storagePath = APIConfig.getInstance().getConfiguration()</b>
+<b class="nc"><i>596</i>&nbsp;				.getString(APIConfig.REPORTS_SR_STORAGEPATH,</b>
+<i>597</i>&nbsp;						&quot;/opt/data/nics/upload/&quot;);
+<b class="nc"><i>598</i>&nbsp;		String url = APIConfig.getInstance().getConfiguration()</b>
+<b class="nc"><i>599</i>&nbsp;				.getString(APIConfig.REPORTS_SR_URL,</b>
+<i>600</i>&nbsp;				&quot;/data/nics/static/image-upload/&quot;);
+<b class="nc"><i>601</i>&nbsp;		String path = APIConfig.getInstance().getConfiguration()</b>
+<b class="nc"><i>602</i>&nbsp;				.getString(APIConfig.REPORTS_SR_PATH,</b>
+<i>603</i>&nbsp;				&quot;https://phinics-dev.ll.mit.edu/static/image-upload/&quot;);
+<i>604</i>&nbsp;		
+<i>605</i>&nbsp;		// DB
+<i>606</i>&nbsp;		//PhinicsDbFacade db = PhinicsDbFactory.getInstance().getPhinicsDbFacadeSingleton();
+<b class="nc"><i>607</i>&nbsp;		Location location = new Location();</b>
+<b class="nc"><i>608</i>&nbsp;		location.setTime(-1);</b>
+<i>609</i>&nbsp;		
+<i>610</i>&nbsp;		// Other necessary entities
+<b class="nc"><i>611</i>&nbsp;		Incident inc = null;</b>
+<b class="nc"><i>612</i>&nbsp;		User user = null;</b>
+<b class="nc"><i>613</i>&nbsp;		Coordinate lla = new Coordinate();</b>
+<b class="nc"><i>614</i>&nbsp;		Report report = new Report();</b>
+<b class="nc"><i>615</i>&nbsp;		Form form = new Form();</b>
+<b class="nc"><i>616</i>&nbsp;		form.setIncidentid(incidentId);</b>
+<b class="nc"><i>617</i>&nbsp;		form.setFormtypeid(formTypeId);</b>
+<b class="nc"><i>618</i>&nbsp;		form.setUsersessionid(-1);</b>
+<b class="nc"><i>619</i>&nbsp;		JSONObject msg = new JSONObject();</b>
+<i>620</i>&nbsp;		String filename;
+<b class="nc"><i>621</i>&nbsp;		String ext = &quot;.png&quot;;</b>
+<b class="nc"><i>622</i>&nbsp;		GeometryFactory gf = new GeometryFactory(new PrecisionModel(), 4326);</b>
+<i>623</i>&nbsp;		
+<b class="nc"><i>624</i>&nbsp;		for(Attachment a : attachments) {</b>
+<b class="nc"><i>625</i>&nbsp;			MediaType type = a.getContentType();</b>
+<i>626</i>&nbsp;			
+<b class="nc"><i>627</i>&nbsp;			if(type.getType().contains(&quot;text&quot;)) {</b>
+<b class="nc"><i>628</i>&nbsp;				key = a.getContentDisposition().getParameter(&quot;name&quot;);</b>
+<b class="nc"><i>629</i>&nbsp;				value = a.getObject(String.class); </b>
+<i>630</i>&nbsp;				
+<b class="nc"><i>631</i>&nbsp;				if (key.equalsIgnoreCase(&quot;incidentid&quot;)) {</b>
+<b class="nc"><i>632</i>&nbsp;					report.setIncidentId(Integer.parseInt(value));					</b>
+<i>633</i>&nbsp;					//inc = db.readIncident(report.getIncidentId());
+<b class="nc"><i>634</i>&nbsp;					inc = incidentDao.getIncident(report.getIncidentId());</b>
+<b class="nc"><i>635</i>&nbsp;				} else if (key.equalsIgnoreCase(&quot;userid&quot;)) {</b>
+<b class="nc"><i>636</i>&nbsp;					location.setUserid(Integer.parseInt(value));</b>
+<i>637</i>&nbsp;					//user = db.readUser(location.getUserid());
+<b class="nc"><i>638</i>&nbsp;					user = userDao.getUserById(location.getUserid());</b>
+<b class="nc"><i>639</i>&nbsp;					if(form.getUsersessionid() &lt; 0) {</b>
+<b class="nc"><i>640</i>&nbsp;						form.setUsersessionid(userSessDao.getUserSessionid(Integer.parseInt(value)));</b>
+<i>641</i>&nbsp;					}
+<b class="nc"><i>642</i>&nbsp;					report.setSenderUserId(user.getUserId());</b>
+<b class="nc"><i>643</i>&nbsp;					msg.put(&quot;user&quot;, user.getUsername());</b>
+<b class="nc"><i>644</i>&nbsp;				} else if (key.equalsIgnoreCase(&quot;usersessionid&quot;)) {</b>
+<b class="nc"><i>645</i>&nbsp;					int usersessid = Integer.parseInt(value);</b>
+<b class="nc"><i>646</i>&nbsp;					user = userDao.getUserBySessionId(usersessid);</b>
+<b class="nc"><i>647</i>&nbsp;					location.setUserid(user.getUserId());</b>
+<b class="nc"><i>648</i>&nbsp;					report.setUserSessionId(Integer.parseInt(value));</b>
+<b class="nc"><i>649</i>&nbsp;					if(usersessid &gt; 0 &amp;&amp; form.getUsersessionid() &lt; 0) {</b>
+<i>650</i>&nbsp;						// Set the usersessionid if it&#39;s valid and not already set
+<b class="nc"><i>651</i>&nbsp;						form.setUsersessionid(usersessid); 						</b>
+<i>652</i>&nbsp;					}
+<b class="nc"><i>653</i>&nbsp;					report.setSenderUserId(user.getUserId());</b>
+<b class="nc"><i>654</i>&nbsp;					msg.put(&quot;user&quot;, user.getUsername());</b>
+<i>655</i>&nbsp;					
+<b class="nc"><i>656</i>&nbsp;				} else if (key.equalsIgnoreCase(&quot;deviceid&quot;)) {</b>
+<b class="nc"><i>657</i>&nbsp;					location.setDeviceId(value);</b>
+<b class="nc"><i>658</i>&nbsp;				} else if (key.equalsIgnoreCase(&quot;latitude&quot;)) {</b>
+<b class="nc"><i>659</i>&nbsp;					lla.y = Double.parseDouble(value);</b>
+<b class="nc"><i>660</i>&nbsp;					msg.put(&quot;lat&quot;, lla.y);</b>
+<b class="nc"><i>661</i>&nbsp;				} else if (key.equalsIgnoreCase(&quot;longitude&quot;)) {</b>
+<b class="nc"><i>662</i>&nbsp;					lla.x = Double.parseDouble(value);</b>
+<b class="nc"><i>663</i>&nbsp;					msg.put(&quot;lon&quot;, lla.x);</b>
+<b class="nc"><i>664</i>&nbsp;				} else if (key.equalsIgnoreCase(&quot;altitude&quot;)) {</b>
+<b class="nc"><i>665</i>&nbsp;					lla.z = Double.parseDouble(value);</b>
+<b class="nc"><i>666</i>&nbsp;				} else if (key.equalsIgnoreCase(&quot;track&quot;)) {</b>
+<b class="nc"><i>667</i>&nbsp;					location.setCourse(Double.parseDouble(value));</b>
+<b class="nc"><i>668</i>&nbsp;				} else if (key.equalsIgnoreCase(&quot;speed&quot;)) {</b>
+<b class="nc"><i>669</i>&nbsp;					location.setSpeed(Double.parseDouble(value));</b>
+<b class="nc"><i>670</i>&nbsp;				} else if (key.equalsIgnoreCase(&quot;accuracy&quot;)) {</b>
+<b class="nc"><i>671</i>&nbsp;					location.setAccuracy(Double.parseDouble(value));</b>
+<b class="nc"><i>672</i>&nbsp;				} else if (key.equalsIgnoreCase(&quot;seqtime&quot;)) {</b>
+<b class="nc"><i>673</i>&nbsp;					location.setTime(Long.parseLong(value));</b>
+<b class="nc"><i>674</i>&nbsp;				} else if (key.equalsIgnoreCase(&quot;description&quot;)) {</b>
+<b class="nc"><i>675</i>&nbsp;					msg.put(&quot;desc&quot;, value);</b>
+<b class="nc"><i>676</i>&nbsp;				} else if (key.equalsIgnoreCase(&quot;category&quot;)) {</b>
+<b class="nc"><i>677</i>&nbsp;					msg.put(&quot;cat&quot;, value);</b>
+<i>678</i>&nbsp;				}
+<i>679</i>&nbsp;			} else {
+<b class="nc"><i>680</i>&nbsp;				filename = Calendar.getInstance().getTimeInMillis() + &quot;-0&quot; + ext;</b>
+<b class="nc"><i>681</i>&nbsp;				msg.put(&quot;image&quot;, filename);</b>
+<i>682</i>&nbsp;				
+<b class="nc"><i>683</i>&nbsp;				byte[] content = a.getObject(byte[].class);</b>
+<b class="nc"><i>684</i>&nbsp;				if (content != null) {</b>
+<i>685</i>&nbsp;					// Write to file
+<b class="nc"><i>686</i>&nbsp;					File f = new File(storagePath.concat(filename));</b>
+<i>687</i>&nbsp;					try {
+<b class="nc"><i>688</i>&nbsp;						FileUtils.writeByteArrayToFile(f, content);</b>
+<b class="nc"><i>689</i>&nbsp;						msg.put(&quot;image&quot;, url.concat(filename));</b>
+<b class="nc"><i>690</i>&nbsp;						msg.put(&quot;fullpath&quot;, path.concat(filename));</b>
+<b class="nc"><i>691</i>&nbsp;					} catch (IOException e) {</b>
+<b class="nc"><i>692</i>&nbsp;						throw new BadContentException(&quot;Unable to write file: &quot; + e.getMessage());</b>
+<b class="nc"><i>693</i>&nbsp;					}</b>
+<b class="nc"><i>694</i>&nbsp;				} else {</b>
+<b class="nc"><i>695</i>&nbsp;					throw new BadContentException(&quot;No attachment&quot;);</b>
+<i>696</i>&nbsp;				}
+<i>697</i>&nbsp;			}	
+<b class="nc"><i>698</i>&nbsp;		}</b>
+<i>699</i>&nbsp;		
+<b class="nc"><i>700</i>&nbsp;		if(location.getTime() &lt; 0) {</b>
+<b class="nc"><i>701</i>&nbsp;			location.setTime(Calendar.getInstance().getTimeInMillis());</b>
+<i>702</i>&nbsp;		}
+<b class="nc"><i>703</i>&nbsp;		report.setSeqTime(location.getTime());</b>
+<b class="nc"><i>704</i>&nbsp;		report.setMessage(msg.toString());</b>
+<i>705</i>&nbsp;		
+<b class="nc"><i>706</i>&nbsp;		form.setSeqtime(location.getTime());</b>
+<b class="nc"><i>707</i>&nbsp;		form.setMessage(msg.toString());</b>
+<i>708</i>&nbsp;		
+<i>709</i>&nbsp;		// Set DB orm
+<b class="nc"><i>710</i>&nbsp;		if(!validLocation(lla)) {</b>
+<b class="nc"><i>711</i>&nbsp;			lla.x = inc.getLon();</b>
+<b class="nc"><i>712</i>&nbsp;			lla.y = inc.getLat();</b>
+<b class="nc"><i>713</i>&nbsp;			lla.z = 0;</b>
+<i>714</i>&nbsp;		}
+<b class="nc"><i>715</i>&nbsp;		location.setLocation(gf.createPoint(lla));</b>
+<i>716</i>&nbsp;
+<b class="nc"><i>717</i>&nbsp;		Image image = new Image();</b>
+<b class="nc"><i>718</i>&nbsp;		image.setIncident(inc);</b>
+<b class="nc"><i>719</i>&nbsp;		image.setLocation(location);</b>
+<b class="nc"><i>720</i>&nbsp;		image.setUrl(msg.getString(&quot;image&quot;));</b>
+<b class="nc"><i>721</i>&nbsp;		image.setFullPath(msg.getString(&quot;fullpath&quot;));</b>
+<i>722</i>&nbsp;		
+<i>723</i>&nbsp;		// Persist DB entries
+<i>724</i>&nbsp;		//db.persist(location);
+<i>725</i>&nbsp;		//db.persist(image);
+<i>726</i>&nbsp;		
+<i>727</i>&nbsp;		/* Not persisting image or location entities, because nothing uses them, it&#39;s a PHINICS holdover. Also, 
+<i>728</i>&nbsp;		 * in move to springjdbc, there&#39;s a complication with persisting Location&#39;s location field of type Geometry
+<i>729</i>&nbsp;		 * 
+<i>730</i>&nbsp;		 *
+<i>731</i>&nbsp;		try {
+<i>732</i>&nbsp;			phiDao.persistLocation(location);
+<i>733</i>&nbsp;			phiDao.persistImage(image);
+<i>734</i>&nbsp;		} catch(Exception e) {
+<i>735</i>&nbsp;			APILogger.getInstance().e(CNAME, &quot;Exception persisting location or image: &quot; + e.getMessage());
+<i>736</i>&nbsp;			reportResponse.setMessage(&quot;error. Problem persisting location and image entities&quot;);
+<i>737</i>&nbsp;			response = Response.ok(reportResponse).status(Status.INTERNAL_SERVER_ERROR).build();
+<i>738</i>&nbsp;			return response;
+<i>739</i>&nbsp;		}*/
+<i>740</i>&nbsp;		
+<i>741</i>&nbsp;		try {
+<i>742</i>&nbsp;			//reportResponse.getReports().add(ReportDAO.getInstance().postReport(
+<i>743</i>&nbsp;				//	incidentId, formTypeId, report));
+<i>744</i>&nbsp;			
+<b class="nc"><i>745</i>&nbsp;			Form ret = null; </b>
+<b class="nc"><i>746</i>&nbsp;			ret = formDao.persistForm(form);</b>
+<i>747</i>&nbsp;			
+<b class="nc"><i>748</i>&nbsp;			if(ret != null) {</b>
+<b class="nc"><i>749</i>&nbsp;				reportResponse.setCount(1);</b>
+<b class="nc"><i>750</i>&nbsp;				reportResponse.setMessage(&quot;ok&quot;);</b>
+<b class="nc"><i>751</i>&nbsp;				reportResponse.getReports().add(ret);</b>
+<b class="nc"><i>752</i>&nbsp;				response = Response.ok(reportResponse).status(Status.OK).build();</b>
+<i>753</i>&nbsp;				try {
+<b class="nc"><i>754</i>&nbsp;					String topic = String.format(&quot;iweb.NICS.incident.%d.report.SR.new&quot;, form.getIncidentid());</b>
+<b class="nc"><i>755</i>&nbsp;					notifyNewReport(topic, form);</b>
+<b class="nc"><i>756</i>&nbsp;				} catch (IOException e) {</b>
+<b class="nc"><i>757</i>&nbsp;					APILogger.getInstance().e(&quot;ReportServiceImpl&quot;, &quot;Exception publishing new form with type id: &quot; + </b>
+<b class="nc"><i>758</i>&nbsp;							form.getFormtypeid());</b>
+<b class="nc"><i>759</i>&nbsp;					e.printStackTrace();</b>
+<b class="nc"><i>760</i>&nbsp;				}</b>
+<i>761</i>&nbsp;			} else {
+<b class="nc"><i>762</i>&nbsp;				reportResponse.setCount(0);</b>
+<b class="nc"><i>763</i>&nbsp;				reportResponse.setMessage(&quot;Unable to persist report!&quot;);</b>
+<b class="nc"><i>764</i>&nbsp;				response = Response.ok(reportResponse).status(Status.EXPECTATION_FAILED).build();</b>
+<i>765</i>&nbsp;			}
+<b class="nc"><i>766</i>&nbsp;		} catch (ICSDatastoreException e) {</b>
+<b class="nc"><i>767</i>&nbsp;			reportResponse.setMessage(e.getMessage()) ;</b>
+<b class="nc"><i>768</i>&nbsp;			response = Response.ok(reportResponse).status(Status.NOT_FOUND).build();	</b>
+<b class="nc"><i>769</i>&nbsp;		} catch (Exception e) {</b>
+<b class="nc"><i>770</i>&nbsp;			reportResponse.setMessage(e.getMessage()) ;</b>
+<b class="nc"><i>771</i>&nbsp;			response = Response.ok(reportResponse).status(Status.EXPECTATION_FAILED).build();</b>
+<b class="nc"><i>772</i>&nbsp;		}</b>
+<i>773</i>&nbsp;		
+<b class="nc"><i>774</i>&nbsp;		return response;</b>
+<i>775</i>&nbsp;	}
+<i>776</i>&nbsp;	
+<i>777</i>&nbsp;	private Response handleDamageReport(int incidentId, int formTypeId, MultipartBody body) throws JSONException, 
+<i>778</i>&nbsp;			BadContentException {
+<i>779</i>&nbsp;		
+<b class="nc"><i>780</i>&nbsp;		Response response = null;</b>
+<b class="nc"><i>781</i>&nbsp;		ReportServiceResponse reportResponse = new ReportServiceResponse();</b>
+<i>782</i>&nbsp;		
+<b class="nc"><i>783</i>&nbsp;		List&lt;Attachment&gt; attachments = body.getAllAttachments();</b>
+<i>784</i>&nbsp;		String key, value;
+<i>785</i>&nbsp;		
+<b class="nc"><i>786</i>&nbsp;		String storagePath = APIConfig.getInstance().getConfiguration().getString(APIConfig.REPORTS_DR_STORAGEPATH, &quot;/opt/data/nics/upload/report/damage/&quot;);</b>
+<b class="nc"><i>787</i>&nbsp;		String url = APIConfig.getInstance().getConfiguration().getString(APIConfig.REPORTS_DR_URL, &quot;/data/nics/static/image-upload/report/damage/&quot;);</b>
+<b class="nc"><i>788</i>&nbsp;		String path = APIConfig.getInstance().getConfiguration().getString(APIConfig.REPORTS_DR_PATH, &quot;https://phinics-dev.ll.mit.edu/static/image-upload/report/damage/&quot;);</b>
+<i>789</i>&nbsp;				
+<b class="nc"><i>790</i>&nbsp;		Location location = new Location(); // TODO:refactor get rid of this type, or at least</b>
+<i>791</i>&nbsp;												  //   refactor to be a common Location object if we&#39;re not using
+<i>792</i>&nbsp;												  // one from a geo library
+<b class="nc"><i>793</i>&nbsp;		location.setTime(-1);</b>
+<i>794</i>&nbsp;		
+<i>795</i>&nbsp;		// Other necessary entities
+<b class="nc"><i>796</i>&nbsp;		Incident inc = null;</b>
+<b class="nc"><i>797</i>&nbsp;		User user = null;</b>
+<b class="nc"><i>798</i>&nbsp;		Coordinate lla = new Coordinate();</b>
+<i>799</i>&nbsp;		// TODO:refactor get rid of papi report, use nics Form
+<i>800</i>&nbsp;		//Report report = new Report();
+<b class="nc"><i>801</i>&nbsp;		Form form = new Form();</b>
+<b class="nc"><i>802</i>&nbsp;		form.setIncidentid(incidentId);</b>
+<b class="nc"><i>803</i>&nbsp;		form.setFormtypeid(formTypeId);</b>
+<b class="nc"><i>804</i>&nbsp;		form.setUsersessionid(-1);</b>
+<i>805</i>&nbsp;		String filename;
+<b class="nc"><i>806</i>&nbsp;		String ext = &quot;.png&quot;;</b>
+<b class="nc"><i>807</i>&nbsp;		JSONObject msg = null;</b>
+<b class="nc"><i>808</i>&nbsp;		GeometryFactory gf = new GeometryFactory(new PrecisionModel(), 4326);</b>
+<i>809</i>&nbsp;		
+<b class="nc"><i>810</i>&nbsp;		for(Attachment a : attachments) {</b>
+<b class="nc"><i>811</i>&nbsp;			MediaType type = a.getContentType();</b>
+<i>812</i>&nbsp;			
+<b class="nc"><i>813</i>&nbsp;			if(type.getType().contains(&quot;text&quot;)) {</b>
+<b class="nc"><i>814</i>&nbsp;				key = a.getContentDisposition().getParameter(&quot;name&quot;);</b>
+<b class="nc"><i>815</i>&nbsp;				value = a.getObject(String.class); </b>
+<i>816</i>&nbsp;				
+<b class="nc"><i>817</i>&nbsp;				if (key.equalsIgnoreCase(&quot;incidentid&quot;)) {</b>
+<i>818</i>&nbsp;					//report.setIncidentId(Integer.parseInt(value));
+<i>819</i>&nbsp;					
+<i>820</i>&nbsp;					//inc = incidentDao.getIncident(report.getIncidentId());
+<b class="nc"><i>821</i>&nbsp;					inc = incidentDao.getIncident(incidentId);</b>
+<b class="nc"><i>822</i>&nbsp;				} else if (key.equalsIgnoreCase(&quot;userid&quot;)) {</b>
+<i>823</i>&nbsp;					//location.setUserid(Integer.parseInt(value));
+<i>824</i>&nbsp;					//user = db.readUser(location.getUserid());
+<i>825</i>&nbsp;					
+<i>826</i>&nbsp;					// Removed this section because grabbing userid from currenusersessionid
+<i>827</i>&nbsp;					
+<i>828</i>&nbsp;					//user = userDao.getUserById(location.getUserid());
+<i>829</i>&nbsp;					//int usersessid = userSessDao.getUserSessionid(location.getUserid());
+<i>830</i>&nbsp;					//if(usersessid &gt; 0 &amp;&amp; form.getUsersessionid() &lt; 0) {
+<i>831</i>&nbsp;						//form.setUsersessionid(usersessid);						
+<i>832</i>&nbsp;					//}
+<i>833</i>&nbsp;					//report.setSenderUserId(user.getUserId());
+<b class="nc"><i>834</i>&nbsp;				} else if (key.equalsIgnoreCase(&quot;usersessionid&quot;)) {</b>
+<i>835</i>&nbsp;					//report.setUserSessionId(Integer.parseInt(value));
+<b class="nc"><i>836</i>&nbsp;					if(Integer.parseInt(value) &gt; 0 &amp;&amp; form.getUsersessionid() &lt; 0) {</b>
+<b class="nc"><i>837</i>&nbsp;						form.setUsersessionid(Integer.parseInt(value));</b>
+<i>838</i>&nbsp;					}
+<b class="nc"><i>839</i>&nbsp;					user = userDao.getUserBySessionId(Long.parseLong(value));</b>
+<b class="nc"><i>840</i>&nbsp;					location.setUserid(user.getUserId());</b>
+<i>841</i>&nbsp;					
+<b class="nc"><i>842</i>&nbsp;				} else if (key.equalsIgnoreCase(&quot;deviceid&quot;)) {</b>
+<b class="nc"><i>843</i>&nbsp;					location.setDeviceId(value);</b>
+<b class="nc"><i>844</i>&nbsp;				} else if (key.equalsIgnoreCase(&quot;msg&quot;)) {</b>
+<b class="nc"><i>845</i>&nbsp;					msg = new JSONObject(value);</b>
+<b class="nc"><i>846</i>&nbsp;				} else if (key.equalsIgnoreCase(&quot;seqtime&quot;)) {</b>
+<b class="nc"><i>847</i>&nbsp;					location.setTime(Long.parseLong(value));</b>
+<i>848</i>&nbsp;				}
+<i>849</i>&nbsp;				
+<i>850</i>&nbsp;			} else {
+<b class="nc"><i>851</i>&nbsp;				filename = Calendar.getInstance().getTimeInMillis() + &quot;-0&quot; + ext;</b>
+<b class="nc"><i>852</i>&nbsp;				msg.put(&quot;dr-D-image&quot;, filename);</b>
+<i>853</i>&nbsp;				
+<b class="nc"><i>854</i>&nbsp;				byte[] content = a.getObject(byte[].class);</b>
+<b class="nc"><i>855</i>&nbsp;				if (content != null) {</b>
+<i>856</i>&nbsp;					// Write to file
+<b class="nc"><i>857</i>&nbsp;					File f = new File(storagePath.concat(filename));</b>
+<i>858</i>&nbsp;					try {
+<b class="nc"><i>859</i>&nbsp;						FileUtils.writeByteArrayToFile(f, content);</b>
+<b class="nc"><i>860</i>&nbsp;						msg.put(&quot;dr-D-image&quot;, url.concat(filename));</b>
+<b class="nc"><i>861</i>&nbsp;						msg.put(&quot;dr-D-fullPath&quot;, path.concat(filename));</b>
+<b class="nc"><i>862</i>&nbsp;					} catch (IOException e) {</b>
+<b class="nc"><i>863</i>&nbsp;						throw new BadContentException(&quot;Unable to write file: &quot; + e.getMessage());</b>
+<b class="nc"><i>864</i>&nbsp;					}</b>
+<b class="nc"><i>865</i>&nbsp;				} else {</b>
+<b class="nc"><i>866</i>&nbsp;					throw new BadContentException(&quot;No attachment&quot;);</b>
+<i>867</i>&nbsp;				}
+<i>868</i>&nbsp;			}	
+<b class="nc"><i>869</i>&nbsp;		}</b>
+<i>870</i>&nbsp;
+<b class="nc"><i>871</i>&nbsp;		lla.x = msg.getDouble(&quot;dr-B-propertyLongitude&quot;);</b>
+<b class="nc"><i>872</i>&nbsp;		lla.y = msg.getDouble(&quot;dr-B-propertyLatitude&quot;);</b>
+<b class="nc"><i>873</i>&nbsp;		lla.z = 0;</b>
+<b class="nc"><i>874</i>&nbsp;		location.setCourse(0.0);</b>
+<b class="nc"><i>875</i>&nbsp;		location.setSpeed(0.0);</b>
+<b class="nc"><i>876</i>&nbsp;		location.setAccuracy(0.0);</b>
+<i>877</i>&nbsp;		
+<b class="nc"><i>878</i>&nbsp;		msg.put(&quot;user&quot;, user.getUsername());</b>
+<b class="nc"><i>879</i>&nbsp;		msg.put(&quot;userfull&quot;, user.getFirstname() + &quot; &quot; + user.getLastname());</b>
+<b class="nc"><i>880</i>&nbsp;		if(location.getTime() &lt; 0) {</b>
+<b class="nc"><i>881</i>&nbsp;			location.setTime(Calendar.getInstance().getTimeInMillis());</b>
+<i>882</i>&nbsp;		}
+<i>883</i>&nbsp;		//report.setSeqTime(location.getTime());
+<i>884</i>&nbsp;		//report.setMessage(msg.toString());
+<b class="nc"><i>885</i>&nbsp;		form.setSeqtime(location.getTime());</b>
+<b class="nc"><i>886</i>&nbsp;		form.setMessage(msg.toString());</b>
+<i>887</i>&nbsp;		
+<i>888</i>&nbsp;		// Set DB orm
+<b class="nc"><i>889</i>&nbsp;		if(!validLocation(lla)) {</b>
+<b class="nc"><i>890</i>&nbsp;			lla.x = inc.getLon();</b>
+<b class="nc"><i>891</i>&nbsp;			lla.y = inc.getLat();</b>
+<b class="nc"><i>892</i>&nbsp;			lla.z = 0;</b>
+<i>893</i>&nbsp;		}
+<b class="nc"><i>894</i>&nbsp;		location.setLocation(gf.createPoint(lla));</b>
+<i>895</i>&nbsp;
+<i>896</i>&nbsp;		// TODO:refactor don&#39;t use PhiImage, use NICS document of image type?
+<b class="nc"><i>897</i>&nbsp;		Image image = new Image();</b>
+<b class="nc"><i>898</i>&nbsp;		image.setIncident(inc);</b>
+<b class="nc"><i>899</i>&nbsp;		image.setLocation(location);</b>
+<b class="nc"><i>900</i>&nbsp;		image.setUrl(msg.getString(&quot;dr-D-image&quot;));</b>
+<b class="nc"><i>901</i>&nbsp;		image.setFullPath(msg.getString(&quot;dr-D-fullPath&quot;));</b>
+<i>902</i>&nbsp;		
+<i>903</i>&nbsp;		// Persist DB entries
+<i>904</i>&nbsp;		// TODO:refactor .... refactor these phi_image and phi_location objects.
+<i>905</i>&nbsp;		/*try {
+<i>906</i>&nbsp;			phiDao.persistLocation(location);
+<i>907</i>&nbsp;			phiDao.persistImage(image);
+<i>908</i>&nbsp;		} catch(Exception e) {
+<i>909</i>&nbsp;			APILogger.getInstance().e(CNAME, &quot;Exception persisting location or image: &quot; + e.getMessage());
+<i>910</i>&nbsp;			reportResponse.setMessage(&quot;error. Problem persisting location and image entities&quot;);
+<i>911</i>&nbsp;			response = Response.ok(reportResponse).status(Status.INTERNAL_SERVER_ERROR).build();
+<i>912</i>&nbsp;			return response;
+<i>913</i>&nbsp;		}*/
+<i>914</i>&nbsp;		
+<i>915</i>&nbsp;		try {
+<i>916</i>&nbsp;			
+<b class="nc"><i>917</i>&nbsp;			Form ret = formDao.persistForm(form);</b>
+<i>918</i>&nbsp;			
+<b class="nc"><i>919</i>&nbsp;			if(ret != null) {</b>
+<b class="nc"><i>920</i>&nbsp;				reportResponse.getReports().add(ret);				</b>
+<b class="nc"><i>921</i>&nbsp;				reportResponse.setCount(1);</b>
+<b class="nc"><i>922</i>&nbsp;				reportResponse.setMessage(&quot;ok&quot;);</b>
+<b class="nc"><i>923</i>&nbsp;				response = Response.ok(reportResponse).status(Status.OK).build();</b>
+<i>924</i>&nbsp;				
+<i>925</i>&nbsp;				try {
+<b class="nc"><i>926</i>&nbsp;					String topic = String.format(&quot;iweb.NICS.incident.%d.report.DMGRPT.new&quot;, form.getIncidentid());</b>
+<b class="nc"><i>927</i>&nbsp;					notifyNewReport(topic, form);</b>
+<b class="nc"><i>928</i>&nbsp;				} catch (IOException e) {</b>
+<b class="nc"><i>929</i>&nbsp;					APILogger.getInstance().e(&quot;ReportServiceImpl&quot;, &quot;Exception publishing new form with type id: &quot; + </b>
+<b class="nc"><i>930</i>&nbsp;							form.getFormtypeid());</b>
+<b class="nc"><i>931</i>&nbsp;					e.printStackTrace();</b>
+<b class="nc"><i>932</i>&nbsp;				}</b>
+<i>933</i>&nbsp;				
+<i>934</i>&nbsp;			} else {								
+<b class="nc"><i>935</i>&nbsp;				reportResponse.setCount(0);</b>
+<b class="nc"><i>936</i>&nbsp;				reportResponse.setMessage(&quot;Did not successfully persist report!&quot;);</b>
+<b class="nc"><i>937</i>&nbsp;				response = Response.ok(reportResponse).status(Status.EXPECTATION_FAILED).build();</b>
+<i>938</i>&nbsp;			}			
+<i>939</i>&nbsp;						
+<b class="nc"><i>940</i>&nbsp;		} catch (ICSDatastoreException e) {</b>
+<b class="nc"><i>941</i>&nbsp;			reportResponse.setMessage(e.getMessage()) ;</b>
+<b class="nc"><i>942</i>&nbsp;			response = Response.ok(reportResponse).status(Status.NOT_FOUND).build();	</b>
+<b class="nc"><i>943</i>&nbsp;		} catch (Exception e) {</b>
+<b class="nc"><i>944</i>&nbsp;			reportResponse.setMessage(e.getMessage()) ;</b>
+<b class="nc"><i>945</i>&nbsp;			response = Response.ok(reportResponse).status(Status.EXPECTATION_FAILED).build();</b>
+<b class="nc"><i>946</i>&nbsp;		}</b>
+<i>947</i>&nbsp;		
+<b class="nc"><i>948</i>&nbsp;		return response;</b>
+<i>949</i>&nbsp;	}
+<i>950</i>&nbsp;	
+<i>951</i>&nbsp;	private Response handleUXOReport(int incidentId, int formTypeId, MultipartBody body) throws JSONException, 
+<i>952</i>&nbsp;		BadContentException {
+<i>953</i>&nbsp;	
+<b class="nc"><i>954</i>&nbsp;		Response response = null;</b>
+<b class="nc"><i>955</i>&nbsp;		ReportServiceResponse reportResponse = new ReportServiceResponse();</b>
+<i>956</i>&nbsp;		
+<b class="nc"><i>957</i>&nbsp;		List&lt;Attachment&gt; attachments = body.getAllAttachments();</b>
+<i>958</i>&nbsp;		String key, value;
+<i>959</i>&nbsp;		
+<b class="nc"><i>960</i>&nbsp;		String storagePath = APIConfig.getInstance().getConfiguration().getString(APIConfig.REPORTS_UXO_STORAGEPATH, &quot;/opt/data/nics/upload/report/uxo/&quot;);</b>
+<b class="nc"><i>961</i>&nbsp;		String url = APIConfig.getInstance().getConfiguration().getString(APIConfig.REPORTS_UXO_URL, &quot;/data/nics/static/image-upload/report/uxo/&quot;);</b>
+<b class="nc"><i>962</i>&nbsp;		String path = APIConfig.getInstance().getConfiguration().getString(APIConfig.REPORTS_UXO_PATH, &quot;https://phinics-dev.ll.mit.edu/static/image-upload/report/uxo/&quot;);</b>
+<i>963</i>&nbsp;				
+<b class="nc"><i>964</i>&nbsp;		Location location = new Location(); // TODO:refactor get rid of this type, or at least</b>
+<i>965</i>&nbsp;												  //   refactor to be a common Location object if we&#39;re not using
+<i>966</i>&nbsp;												  // one from a geo library
+<b class="nc"><i>967</i>&nbsp;		location.setTime(-1);</b>
+<i>968</i>&nbsp;		
+<i>969</i>&nbsp;		// Other necessary entities
+<b class="nc"><i>970</i>&nbsp;		Incident inc = null;</b>
+<b class="nc"><i>971</i>&nbsp;		User user = null;</b>
+<b class="nc"><i>972</i>&nbsp;		Coordinate lla = new Coordinate();</b>
+<i>973</i>&nbsp;		// TODO:refactor get rid of papi report, use nics Form
+<i>974</i>&nbsp;		//Report report = new Report();
+<b class="nc"><i>975</i>&nbsp;		Form form = new Form();</b>
+<b class="nc"><i>976</i>&nbsp;		form.setIncidentid(incidentId);</b>
+<b class="nc"><i>977</i>&nbsp;		form.setFormtypeid(formTypeId);</b>
+<b class="nc"><i>978</i>&nbsp;		form.setUsersessionid(-1);</b>
+<i>979</i>&nbsp;		String filename;
+<b class="nc"><i>980</i>&nbsp;		String ext = &quot;.png&quot;;</b>
+<b class="nc"><i>981</i>&nbsp;		JSONObject msg = null;</b>
+<b class="nc"><i>982</i>&nbsp;		GeometryFactory gf = new GeometryFactory(new PrecisionModel(), 4326);</b>
+<i>983</i>&nbsp;		
+<b class="nc"><i>984</i>&nbsp;		for(Attachment a : attachments) {</b>
+<b class="nc"><i>985</i>&nbsp;			MediaType type = a.getContentType();</b>
+<i>986</i>&nbsp;			
+<b class="nc"><i>987</i>&nbsp;			if(type.getType().contains(&quot;text&quot;)) {</b>
+<b class="nc"><i>988</i>&nbsp;				key = a.getContentDisposition().getParameter(&quot;name&quot;);</b>
+<b class="nc"><i>989</i>&nbsp;				value = a.getObject(String.class); </b>
+<i>990</i>&nbsp;				
+<b class="nc"><i>991</i>&nbsp;				if (key.equalsIgnoreCase(&quot;incidentid&quot;)) {</b>
+<i>992</i>&nbsp;					//report.setIncidentId(Integer.parseInt(value));
+<i>993</i>&nbsp;					
+<i>994</i>&nbsp;					//inc = incidentDao.getIncident(report.getIncidentId());
+<b class="nc"><i>995</i>&nbsp;					inc = incidentDao.getIncident(incidentId);</b>
+<b class="nc"><i>996</i>&nbsp;				} else if (key.equalsIgnoreCase(&quot;userid&quot;)) {</b>
+<i>997</i>&nbsp;					//location.setUserid(Integer.parseInt(value));
+<i>998</i>&nbsp;					//user = db.readUser(location.getUserid());
+<i>999</i>&nbsp;					//user = userDao.getUserById(location.getUserid());
+<i>1000</i>&nbsp;					//int usersessid = userSessDao.getUserSessionid(location.getUserid());
+<i>1001</i>&nbsp;					//if(usersessid &gt; 0 &amp;&amp; form.getUsersessionid() &lt; 0) {
+<i>1002</i>&nbsp;					//	form.setUsersessionid(usersessid);						
+<i>1003</i>&nbsp;					//}
+<i>1004</i>&nbsp;					//report.setSenderUserId(user.getUserId());
+<b class="nc"><i>1005</i>&nbsp;				} else if (key.equalsIgnoreCase(&quot;usersessionid&quot;)) {</b>
+<i>1006</i>&nbsp;					//report.setUserSessionId(Integer.parseInt(value));
+<b class="nc"><i>1007</i>&nbsp;					if(Integer.parseInt(value) &gt; 0 &amp;&amp; form.getUsersessionid() &lt; 0) {</b>
+<b class="nc"><i>1008</i>&nbsp;						form.setUsersessionid(Integer.parseInt(value));</b>
+<i>1009</i>&nbsp;					}
+<b class="nc"><i>1010</i>&nbsp;					user = userDao.getUserBySessionId(Long.parseLong(value));</b>
+<b class="nc"><i>1011</i>&nbsp;					location.setUserid(user.getUserId());</b>
+<b class="nc"><i>1012</i>&nbsp;				} else if (key.equalsIgnoreCase(&quot;deviceid&quot;)) {</b>
+<b class="nc"><i>1013</i>&nbsp;					location.setDeviceId(value);</b>
+<b class="nc"><i>1014</i>&nbsp;				} else if (key.equalsIgnoreCase(&quot;msg&quot;)) {</b>
+<b class="nc"><i>1015</i>&nbsp;					msg = new JSONObject(value);</b>
+<b class="nc"><i>1016</i>&nbsp;				} else if (key.equalsIgnoreCase(&quot;seqtime&quot;)) {</b>
+<b class="nc"><i>1017</i>&nbsp;					location.setTime(Long.parseLong(value));</b>
+<i>1018</i>&nbsp;				}
+<i>1019</i>&nbsp;				
+<i>1020</i>&nbsp;			} else {
+<b class="nc"><i>1021</i>&nbsp;				filename = Calendar.getInstance().getTimeInMillis() + &quot;-0&quot; + ext;</b>
+<b class="nc"><i>1022</i>&nbsp;				msg.put(&quot;ur-image&quot;, filename);</b>
+<i>1023</i>&nbsp;				
+<b class="nc"><i>1024</i>&nbsp;				byte[] content = a.getObject(byte[].class);</b>
+<b class="nc"><i>1025</i>&nbsp;				if (content != null) {</b>
+<i>1026</i>&nbsp;					// Write to file
+<b class="nc"><i>1027</i>&nbsp;					File f = new File(storagePath.concat(filename));</b>
+<i>1028</i>&nbsp;					try {
+<b class="nc"><i>1029</i>&nbsp;						FileUtils.writeByteArrayToFile(f, content);</b>
+<b class="nc"><i>1030</i>&nbsp;						msg.put(&quot;ur-image&quot;, url.concat(filename));</b>
+<b class="nc"><i>1031</i>&nbsp;						msg.put(&quot;ur-fullPath&quot;, path.concat(filename));</b>
+<b class="nc"><i>1032</i>&nbsp;					} catch (IOException e) {</b>
+<b class="nc"><i>1033</i>&nbsp;						throw new BadContentException(&quot;Unable to write file: &quot; + e.getMessage());</b>
+<b class="nc"><i>1034</i>&nbsp;					}</b>
+<b class="nc"><i>1035</i>&nbsp;				} else {</b>
+<b class="nc"><i>1036</i>&nbsp;					throw new BadContentException(&quot;No attachment&quot;);</b>
+<i>1037</i>&nbsp;				}
+<i>1038</i>&nbsp;			}	
+<b class="nc"><i>1039</i>&nbsp;		}</b>
+<i>1040</i>&nbsp;		
+<b class="nc"><i>1041</i>&nbsp;		lla.x = msg.getDouble(&quot;ur-longitude&quot;);</b>
+<b class="nc"><i>1042</i>&nbsp;		lla.y = msg.getDouble(&quot;ur-latitude&quot;);</b>
+<b class="nc"><i>1043</i>&nbsp;		lla.z = 0;</b>
+<b class="nc"><i>1044</i>&nbsp;		location.setCourse(0.0);</b>
+<b class="nc"><i>1045</i>&nbsp;		location.setSpeed(0.0);</b>
+<b class="nc"><i>1046</i>&nbsp;		location.setAccuracy(0.0);</b>
+<i>1047</i>&nbsp;		
+<i>1048</i>&nbsp;		
+<b class="nc"><i>1049</i>&nbsp;		msg.put(&quot;user&quot;, user.getUsername());</b>
+<b class="nc"><i>1050</i>&nbsp;		msg.put(&quot;userfull&quot;, user.getFirstname() + &quot; &quot; + user.getLastname());</b>
+<b class="nc"><i>1051</i>&nbsp;		if(location.getTime() &lt; 0) {</b>
+<b class="nc"><i>1052</i>&nbsp;			location.setTime(Calendar.getInstance().getTimeInMillis());</b>
+<i>1053</i>&nbsp;		}
+<i>1054</i>&nbsp;		//report.setSeqTime(location.getTime());
+<i>1055</i>&nbsp;		//report.setMessage(msg.toString());
+<b class="nc"><i>1056</i>&nbsp;		form.setSeqtime(location.getTime());</b>
+<b class="nc"><i>1057</i>&nbsp;		form.setMessage(msg.toString());</b>
+<i>1058</i>&nbsp;		
+<i>1059</i>&nbsp;		// Set DB orm
+<b class="nc"><i>1060</i>&nbsp;		if(!validLocation(lla)) {</b>
+<b class="nc"><i>1061</i>&nbsp;			lla.x = inc.getLon();</b>
+<b class="nc"><i>1062</i>&nbsp;			lla.y = inc.getLat();</b>
+<b class="nc"><i>1063</i>&nbsp;			lla.z = 0;</b>
+<i>1064</i>&nbsp;		}
+<b class="nc"><i>1065</i>&nbsp;		location.setLocation(gf.createPoint(lla));</b>
+<i>1066</i>&nbsp;		
+<i>1067</i>&nbsp;		// TODO:refactor don&#39;t use PhiImage, use NICS document of image type?
+<b class="nc"><i>1068</i>&nbsp;		Image image = new Image();</b>
+<b class="nc"><i>1069</i>&nbsp;		image.setIncident(inc);</b>
+<b class="nc"><i>1070</i>&nbsp;		image.setLocation(location);</b>
+<b class="nc"><i>1071</i>&nbsp;		image.setUrl(msg.getString(&quot;ur-image&quot;));</b>
+<b class="nc"><i>1072</i>&nbsp;		image.setFullPath(msg.getString(&quot;ur-fullPath&quot;));</b>
+<i>1073</i>&nbsp;		
+<i>1074</i>&nbsp;		// Persist DB entries
+<i>1075</i>&nbsp;		// TODO:refactor .... refactor these phi_image and phi_location objects.
+<i>1076</i>&nbsp;		/*try {
+<i>1077</i>&nbsp;			phiDao.persistLocation(location);
+<i>1078</i>&nbsp;			phiDao.persistImage(image);
+<i>1079</i>&nbsp;		} catch(Exception e) {
+<i>1080</i>&nbsp;			APILogger.getInstance().e(CNAME, &quot;Exception persisting location or image: &quot; + e.getMessage());
+<i>1081</i>&nbsp;			reportResponse.setMessage(&quot;error. Problem persisting location and image entities&quot;);
+<i>1082</i>&nbsp;			response = Response.ok(reportResponse).status(Status.INTERNAL_SERVER_ERROR).build();
+<i>1083</i>&nbsp;			return response;
+<i>1084</i>&nbsp;		}*/
+<i>1085</i>&nbsp;		
+<i>1086</i>&nbsp;		try {
+<b class="nc"><i>1087</i>&nbsp;			Form ret = formDao.persistForm(form);</b>
+<i>1088</i>&nbsp;			
+<b class="nc"><i>1089</i>&nbsp;			if(ret != null) {</b>
+<b class="nc"><i>1090</i>&nbsp;				reportResponse.getReports().add(ret);				</b>
+<b class="nc"><i>1091</i>&nbsp;				reportResponse.setCount(1);</b>
+<b class="nc"><i>1092</i>&nbsp;				reportResponse.setMessage(&quot;ok&quot;);</b>
+<b class="nc"><i>1093</i>&nbsp;				response = Response.ok(reportResponse).status(Status.OK).build();</b>
+<i>1094</i>&nbsp;				
+<i>1095</i>&nbsp;				try {
+<b class="nc"><i>1096</i>&nbsp;					String topic = String.format(&quot;iweb.NICS.incident.%d.report.UXO.new&quot;, form.getIncidentid());</b>
+<b class="nc"><i>1097</i>&nbsp;					System.out.println(&quot;DANS TOPIC : &quot; +  topic);</b>
+<b class="nc"><i>1098</i>&nbsp;					notifyNewReport(topic, form);</b>
+<b class="nc"><i>1099</i>&nbsp;				} catch (IOException e) {</b>
+<b class="nc"><i>1100</i>&nbsp;					APILogger.getInstance().e(&quot;ReportServiceImpl&quot;, &quot;Exception publishing new form with type id: &quot; + </b>
+<b class="nc"><i>1101</i>&nbsp;							form.getFormtypeid());</b>
+<b class="nc"><i>1102</i>&nbsp;					e.printStackTrace();</b>
+<b class="nc"><i>1103</i>&nbsp;				}</b>
+<i>1104</i>&nbsp;				
+<i>1105</i>&nbsp;			} else {								
+<b class="nc"><i>1106</i>&nbsp;				reportResponse.setCount(0);</b>
+<b class="nc"><i>1107</i>&nbsp;				reportResponse.setMessage(&quot;Did not successfully persist report!&quot;);</b>
+<b class="nc"><i>1108</i>&nbsp;				response = Response.ok(reportResponse).status(Status.EXPECTATION_FAILED).build();</b>
+<i>1109</i>&nbsp;			}			
+<i>1110</i>&nbsp;						
+<b class="nc"><i>1111</i>&nbsp;		} catch (ICSDatastoreException e) {</b>
+<b class="nc"><i>1112</i>&nbsp;			reportResponse.setMessage(e.getMessage()) ;</b>
+<b class="nc"><i>1113</i>&nbsp;			response = Response.ok(reportResponse).status(Status.NOT_FOUND).build();	</b>
+<b class="nc"><i>1114</i>&nbsp;		} catch (Exception e) {</b>
+<b class="nc"><i>1115</i>&nbsp;			reportResponse.setMessage(e.getMessage()) ;</b>
+<b class="nc"><i>1116</i>&nbsp;			response = Response.ok(reportResponse).status(Status.EXPECTATION_FAILED).build();</b>
+<b class="nc"><i>1117</i>&nbsp;		}</b>
+<i>1118</i>&nbsp;
+<i>1119</i>&nbsp;        try
+<i>1120</i>&nbsp;        {
+<b class="nc"><i>1121</i>&nbsp;            Uxoreport report = new Uxoreport();</b>
+<b class="nc"><i>1122</i>&nbsp;            report.setMessage(msg.toString());</b>
+<b class="nc"><i>1123</i>&nbsp;            report.setIncidentid(incidentId);</b>
+<b class="nc"><i>1124</i>&nbsp;            report.setLat(lla.y);</b>
+<b class="nc"><i>1125</i>&nbsp;            report.setLon(lla.x);</b>
+<i>1126</i>&nbsp;
+<b class="nc"><i>1127</i>&nbsp;            APILogger.getInstance().i(CNAME, &quot;Trying to insert uxoreport&quot;);</b>
+<b class="nc"><i>1128</i>&nbsp;            uxoreportDao.persistUxoreport(report);</b>
+<b class="nc"><i>1129</i>&nbsp;            APILogger.getInstance().i(CNAME, &quot;Inserted uxoreport&quot;);</b>
+<b class="nc"><i>1130</i>&nbsp;        } catch (Exception e)</b>
+<i>1131</i>&nbsp;        {
+<b class="nc"><i>1132</i>&nbsp;            APILogger.getInstance().e(CNAME, &quot;Exception trying to insert uxoreport&quot;);</b>
+<b class="nc"><i>1133</i>&nbsp;            e.printStackTrace();</b>
+<b class="nc"><i>1134</i>&nbsp;        }</b>
+<i>1135</i>&nbsp;
+<i>1136</i>&nbsp;
+<b class="nc"><i>1137</i>&nbsp;        return response;</b>
+<i>1138</i>&nbsp;	}
+<i>1139</i>&nbsp;		
+<i>1140</i>&nbsp;	private boolean validLocation(Coordinate lla) {
+<b class="nc"><i>1141</i>&nbsp;		if(lla.x &gt; 180 || lla.x &lt; -180 || lla.y &gt; 180 || lla.y &lt; -180) {</b>
+<b class="nc"><i>1142</i>&nbsp;			return false;</b>
+<i>1143</i>&nbsp;		} 
+<i>1144</i>&nbsp;			
+<b class="nc"><i>1145</i>&nbsp;		return true;</b>
+<i>1146</i>&nbsp;	}
+<i>1147</i>&nbsp;	
+<i>1148</i>&nbsp;	
+<i>1149</i>&nbsp;	private void notifyNewReport(String topic, Form form) throws IOException {
+<b class="nc"><i>1150</i>&nbsp;		if (form != null) {</b>
+<b class="nc"><i>1151</i>&nbsp;			ObjectMapper mapper = new ObjectMapper();</b>
+<b class="nc"><i>1152</i>&nbsp;			String message = mapper.writeValueAsString(form);</b>
+<b class="nc"><i>1153</i>&nbsp;			getRabbitProducer().produce(topic, message);</b>
+<i>1154</i>&nbsp;		}
+<i>1155</i>&nbsp;	}
+<i>1156</i>&nbsp;	
+<i>1157</i>&nbsp;	
+<i>1158</i>&nbsp;	/**
+<i>1159</i>&nbsp;	 * Get Rabbit producer to send message
+<i>1160</i>&nbsp;	 * @return
+<i>1161</i>&nbsp;	 * @throws IOException
+<i>1162</i>&nbsp;	 */
+<i>1163</i>&nbsp;	private RabbitPubSubProducer getRabbitProducer() throws IOException {
+<b class="nc"><i>1164</i>&nbsp;		if (rabbitProducer == null) {</b>
+<b class="nc"><i>1165</i>&nbsp;			rabbitProducer = RabbitFactory.makeRabbitPubSubProducer(</b>
+<b class="nc"><i>1166</i>&nbsp;					APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_HOSTNAME_KEY),</b>
+<b class="nc"><i>1167</i>&nbsp;					APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_EXCHANGENAME_KEY),</b>
+<b class="nc"><i>1168</i>&nbsp;					APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_USERNAME_KEY),</b>
+<b class="nc"><i>1169</i>&nbsp;					APIConfig.getInstance().getConfiguration().getString(APIConfig.RABBIT_USERPWD_KEY));</b>
+<i>1170</i>&nbsp;		}
+<b class="nc"><i>1171</i>&nbsp;		return rabbitProducer;</b>
+<i>1172</i>&nbsp;	}
+<i>1173</i>&nbsp;
+<i>1174</i>&nbsp;	@Override
+<i>1175</i>&nbsp;	public Response getReportTypes() {
+<b class="nc"><i>1176</i>&nbsp;		Response response = null;</b>
+<b class="nc"><i>1177</i>&nbsp;		ReportServiceResponse reportServiceResponse = new ReportServiceResponse();</b>
+<i>1178</i>&nbsp;		
+<b class="nc"><i>1179</i>&nbsp;		List&lt;FormType&gt; formTypes = EntityCacheMgr.getInstance().getFormTypes();</b>
+<b class="nc"><i>1180</i>&nbsp;		if(formTypes != null) {</b>
+<b class="nc"><i>1181</i>&nbsp;			reportServiceResponse.setMessage(&quot;Successfully retrieved ReportTypes&quot;);</b>
+<b class="nc"><i>1182</i>&nbsp;			reportServiceResponse.setTypes(formTypes);</b>
+<b class="nc"><i>1183</i>&nbsp;			reportServiceResponse.setCount(formTypes.size());</b>
+<b class="nc"><i>1184</i>&nbsp;			response = Response.ok(reportServiceResponse).status(Status.OK).build();</b>
+<i>1185</i>&nbsp;		} else {
+<b class="nc"><i>1186</i>&nbsp;			reportServiceResponse.setMessage(&quot;Unable to retrieve ReportTypes&quot;);</b>
+<b class="nc"><i>1187</i>&nbsp;			response = Response.ok(reportServiceResponse).status(Status.INTERNAL_SERVER_ERROR).build();</b>
+<i>1188</i>&nbsp;		}
+<i>1189</i>&nbsp;		
+<b class="nc"><i>1190</i>&nbsp;		return response;</b>
+<i>1191</i>&nbsp;	}
+<i>1192</i>&nbsp;}
+<i>1193</i>&nbsp;
+</div>
+</div>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2017-03-23 12:52</div>
+</div>
+</body>
+</html>

@@ -29,30 +29,46 @@
  */
 package edu.mit.ll.em.api.configuration;
 
-
+import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.mit.ll.em.api.dataaccess.EntityCacheMgr;
+import edu.mit.ll.em.api.rs.validator.ReportValidator;
+import edu.mit.ll.nics.nicsdao.*;
 import edu.mit.ll.em.api.notification.NotifyFailedUserRegistration;
 import edu.mit.ll.em.api.notification.NotifySuccessfulUserRegistration;
 import edu.mit.ll.em.api.openam.OpenAmGatewayFactory;
+import edu.mit.ll.em.api.gateway.geocode.GeocodeAPIGateway;
 import edu.mit.ll.em.api.service.UserRegistrationService;
 import edu.mit.ll.em.api.util.APIConfig;
 import edu.mit.ll.em.api.util.APILogger;
+import edu.mit.ll.em.api.util.CRSTransformer;
+import edu.mit.ll.nics.common.geoserver.api.GeoServer;
 import edu.mit.ll.nics.common.rabbitmq.RabbitFactory;
 import edu.mit.ll.nics.common.rabbitmq.RabbitPubSubProducer;
 import edu.mit.ll.nics.nicsdao.DatalayerDAO;
 import edu.mit.ll.nics.nicsdao.DocumentDAO;
 import edu.mit.ll.nics.nicsdao.FolderDAO;
 import edu.mit.ll.nics.nicsdao.impl.*;
+import edu.mit.ll.em.api.notification.RocReportNotification;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+import javax.sql.DataSource;
 import javax.validation.Validation;
 import javax.validation.Validator;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import java.io.IOException;
 
+
 @Configuration
 public class SpringConfiguration {
+    private DataSource datafeedsDataSource = null;
+    private DataSource datalayersDataSource = null;
+    private NamedParameterJdbcTemplate datafeedsJdbcTemplate = null;
+    private NamedParameterJdbcTemplate datalayersJdbcTemplate = null;
     private org.apache.commons.configuration.Configuration emApiConfiguration = null;
     private Client jerseyClient = null;
 
@@ -62,6 +78,47 @@ public class SpringConfiguration {
             this.emApiConfiguration = APIConfig.getInstance().getConfiguration();
         }
         return this.emApiConfiguration;
+    }
+
+    private DataSource dataFeedsDataSource() throws NamingException {
+        if(this.datafeedsDataSource == null) {
+            InitialContext e = new InitialContext();
+            this.datafeedsDataSource = (DataSource) e.lookup("java:comp/env/jboss/datafeedsDatasource");
+
+        }
+        return this.datafeedsDataSource;
+    }
+
+    private DataSource dataLayersDatasource() throws NamingException {
+        if(this.datalayersJdbcTemplate == null) {
+            InitialContext e = new InitialContext();
+            this.datalayersDataSource = (DataSource) e.lookup("java:comp/env/jboss/datalayersDatasource");
+        }
+        return this.datalayersDataSource;
+    }
+
+    private NamedParameterJdbcTemplate dataFeedsJdbcTemplate() throws NamingException {
+        if(this.datafeedsJdbcTemplate == null) {
+            this.datafeedsJdbcTemplate = new NamedParameterJdbcTemplate(this.dataFeedsDataSource());
+        }
+        return this.datafeedsJdbcTemplate;
+    }
+
+    private NamedParameterJdbcTemplate dataLayersJdbcTemplate() throws NamingException {
+        if(this.datalayersDataSource == null) {
+            this.datalayersJdbcTemplate = new NamedParameterJdbcTemplate(this.dataLayersDatasource());
+        }
+        return this.datalayersJdbcTemplate;
+    }
+
+    @Bean
+    public IncidentDAO incidentDao() {
+        return new IncidentDAOImpl();
+    }
+
+    @Bean
+    public JurisdictionDAO jurisdictionDao() throws NamingException {
+        return new JurisdictionDAOImpl(dataLayersJdbcTemplate());
     }
 
     @Bean
@@ -102,8 +159,18 @@ public class SpringConfiguration {
     }
 
     @Bean
+    public FormDAO formDao() {
+        return new FormDAOImpl();
+    }
+
+    @Bean
     public OpenAmGatewayFactory openAmGatewayFactory() {
         return new OpenAmGatewayFactory();
+    }
+
+    @Bean
+    public UxoreportDAO uxoReportDao() {
+        return new UxoreportDAOImpl();
     }
 
     @Bean
@@ -112,8 +179,23 @@ public class SpringConfiguration {
     }
 
     @Bean
+    WeatherDAO weatherDao() throws NamingException {
+        return new WeatherDAOImpl(this.dataFeedsJdbcTemplate());
+    }
+
+    @Bean
+    ReportValidator reportValidator() {
+        return new ReportValidator(EntityCacheMgr.getInstance());
+    }
+
+    @Bean
     public UserRegistrationService registrationService() throws IOException {
         return new UserRegistrationService(logger(), userDao(), orgDao(), userOrgDao(), workspaceDao(), openAmGatewayFactory(), successfulUserRegistrationNotification(), failedUserRegistrationNotification());
+    }
+
+    @Bean
+    public RocReportNotification rocReportNotification() throws IOException {
+        return new RocReportNotification(emApiConfiguration(),rabbitProducer());
     }
 
     @Bean
@@ -150,5 +232,22 @@ public class SpringConfiguration {
         if(this.jerseyClient != null) {
             this.jerseyClient.close();
         }
+    }
+
+    @Bean
+    CRSTransformer crsTransformer() {
+        return new CRSTransformer();
+    }
+
+    @Bean
+    Client jerseyClient() { return ClientBuilder.newClient(); }
+
+    @Bean
+    ObjectMapper objectMapper() { return new ObjectMapper(); }
+
+    @Bean
+    GeocodeAPIGateway geocodeAPIGateway() {
+        org.apache.commons.configuration.Configuration emApiConfiguration = emApiConfiguration();
+        return new GeocodeAPIGateway(jerseyClient(), objectMapper(), emApiConfiguration.getString(APIConfig.GEOCODE_API_URL), emApiConfiguration.getString(APIConfig.GEOCODE_API_KEY));
     }
 }

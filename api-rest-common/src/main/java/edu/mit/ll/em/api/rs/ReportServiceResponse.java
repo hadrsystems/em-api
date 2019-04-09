@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2016, Massachusetts Institute of Technology (MIT)
+ * Copyright (c) 2008-2018, Massachusetts Institute of Technology (MIT)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -37,6 +37,7 @@ import edu.mit.ll.nics.common.entity.FormType;
 
 public class ReportServiceResponse {
 
+	private Integer status;
 	private String message;
 		
 	private Collection<Form> Reports = new ArrayList<Form>();
@@ -45,6 +46,9 @@ public class ReportServiceResponse {
 	// TODO: Really used for returning a count REST request; i.e., do not get
 	// the list of Reports just the count.
 	private int count;
+
+	public Integer getStatus() { return status; }
+	public void setStatus(Integer status) { this.status = status; }
 
 	public String getMessage() {
 		return message;

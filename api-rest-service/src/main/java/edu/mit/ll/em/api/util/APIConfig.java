@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2016, Massachusetts Institute of Technology (MIT)
+ * Copyright (c) 2008-2018, Massachusetts Institute of Technology (MIT)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -120,6 +120,8 @@ public class APIConfig {
 	// Passwords
 	public static final String PASSWORD_PATTERN = "em.api.password.pattern";
 	public static final String PASSWORD_REQUIREMENTS = "em.api.password.requirements";
+    public static final String GEOCODE_API_URL = "geocode.api.url";
+    public static final String GEOCODE_API_KEY = "geocode.api.key";
 	
 	private Configuration config;
 	
