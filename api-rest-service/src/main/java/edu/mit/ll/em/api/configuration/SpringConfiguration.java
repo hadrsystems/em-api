@@ -129,6 +129,7 @@ public class SpringConfiguration {
         return this.jerseyClient;
     }
 
+
     @Bean
     public DatalayerDAO datalayerDao() { return new DatalayerDAOImpl(); }
 
@@ -239,8 +240,10 @@ public class SpringConfiguration {
         return new CRSTransformer();
     }
 
-    @Bean
-    Client jerseyClient() { return ClientBuilder.newClient(); }
+// Luis - Removed this function due to git merge conflicts (commit 595e1efff995ce03e9d0b4b02df18488bfcabdc9)
+// We need to verify that this method is the one to remove
+//    @Bean
+//    Client jerseyClient() { return ClientBuilder.newClient(); }
 
     @Bean
     ObjectMapper objectMapper() { return new ObjectMapper(); }
